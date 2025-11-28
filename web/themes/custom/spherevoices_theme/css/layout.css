@@ -1,0 +1,180 @@
+/**
+ * @file
+ * Styles de mise en page pour le thème SphereVoices.
+ */
+
+/* Layout Container */
+.page-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+}
+
+/* Grid Layouts */
+.layout-grid {
+  display: grid;
+  gap: 2rem;
+}
+
+.layout-grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.layout-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.layout-grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* Homepage Layout */
+.homepage-hero {
+  margin-bottom: 3rem;
+}
+
+.homepage-sections {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.homepage-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.homepage-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Category Page Layout */
+.category-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--color-primary);
+}
+
+.category-title {
+  font-size: 2.5rem;
+  color: var(--color-primary);
+  margin-bottom: 0.5rem;
+}
+
+.category-description {
+  color: var(--color-text-light);
+  font-size: 1.125rem;
+}
+
+/* Article Layout */
+.article-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.article-main {
+  min-width: 0;
+}
+
+.article-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Sidebar Widgets */
+.sidebar-widget {
+  background-color: var(--color-bg-light);
+  padding: 1.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+}
+
+.sidebar-widget h3 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--color-primary);
+}
+
+/* Responsive Grid Adjustments */
+@media (max-width: 1023px) {
+  .homepage-sections {
+    grid-template-columns: 1fr;
+  }
+
+  .article-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .layout-grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .layout-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .layout-grid-2,
+  .layout-grid-3,
+  .layout-grid-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Content Sections */
+.content-section {
+  margin-bottom: 3rem;
+}
+
+.section-title {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--color-primary);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.section-title::before {
+  content: "";
+  width: 4px;
+  height: 2rem;
+  background-color: var(--color-primary);
+}
+
+/* Spacing Utilities */
+.section-spacing {
+  padding: 2rem 0;
+}
+
+.section-spacing-large {
+  padding: 4rem 0;
+}
+
+/* Container Variations */
+.container-narrow {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-unit);
+}
+
+.container-wide {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-unit);
+}
+

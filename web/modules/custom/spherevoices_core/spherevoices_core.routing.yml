@@ -1,0 +1,8 @@
+spherevoices_core.breaking_news:
+  path: '/api/breaking-news'
+  defaults:
+    _controller: '\Drupal\spherevoices_core\Controller\BreakingNewsController::getBreakingNews'
+  methods: [GET]
+  requirements:
+    _access: 'TRUE'
+

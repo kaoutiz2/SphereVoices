@@ -1,0 +1,38 @@
+# Drupal
+web/sites/default/settings.php
+web/sites/default/files/
+web/sites/*/files/
+web/sites/*/private/
+
+# Composer
+/vendor/
+composer.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build
+*.log
+*.cache
+
+# Environment
+.env
+.env.local
+
+# Temporary files
+*.tmp
+*.temp
+

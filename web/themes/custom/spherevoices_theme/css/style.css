@@ -1,0 +1,927 @@
+/**
+ * @file
+ * Styles principaux pour le thème SphereVoices.
+ * Design moderne inspiré de CNN - Palette: rouge, noir, blanc.
+ */
+
+/* Variables CSS */
+:root {
+  --color-primary: #b80000;
+  --color-primary-dark: #8b0000;
+  --color-secondary: #000000;
+  --color-text: #333333;
+  --color-text-light: #666666;
+  --color-bg: #f7f7f7;
+  --color-bg-light: #ffffff;
+  --color-border: #E0E0E0;
+  --font-primary: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-heading: 'Roboto', 'Roboto Slab', 'Lora', Georgia, serif;
+  --spacing-unit: 1rem;
+  --max-width: 1200px;
+}
+
+/* Reset & Base */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-primary);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  margin: 0;
+  padding: 0;
+}
+
+/* Retirer le padding-top du body quand la toolbar est verticale */
+body.spherevoices-theme.toolbar-vertical,
+body.toolbar-vertical {
+  padding-top: 0 !important;
+}
+
+/* Titre de page */
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 2rem 0 1.5rem 0 !important;
+  padding: 0 !important;
+  padding-bottom: 1rem;
+  border-bottom: 3px solid var(--color-primary);
+  text-align: left !important;
+  width: 100%;
+  display: block !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  position: relative;
+  left: 0 !important;
+  /* Forcer l'alignement à gauche - annuler tout centrage */
+  float: none !important;
+  clear: both !important;
+  /* Le titre doit être aligné avec le début de la navigation */
+  /* La navigation commence à var(--spacing-unit) du bord gauche de .header-main */
+  /* Le titre doit commencer à var(--spacing-unit) du bord gauche de .main-content */
+  /* Comme .main-content a déjà padding: 2rem var(--spacing-unit), le titre est déjà aligné */
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-top: 0;
+  color: var(--color-secondary);
+}
+
+h1 {
+  font-size: 2.5rem;
+}
+
+h2 {
+  font-size: 2rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover,
+a:focus {
+  color: var(--color-primary-dark);
+  text-decoration: underline;
+}
+
+/* Header - Style CNN */
+.site-header {
+  background-color: var(--color-bg);
+  border-bottom: 4px solid var(--color-primary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100 !important; /* En dessous de la toolbar */
+  width: 100%;
+}
+
+
+.header-top {
+  background-color: var(--color-primary);
+  padding: 0.5rem 0;
+  text-align: center;
+  font-weight: 700;
+  color: var(--color-bg-light);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.header-main {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 1rem var(--spacing-unit);
+  display: flex;
+  align-items: flex-start;
+  gap: 2rem;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+  /* FORCER le padding horizontal pour l'alignement */
+  padding-left: var(--spacing-unit) !important;
+  padding-right: var(--spacing-unit) !important;
+  /* Le .main-content doit avoir EXACTEMENT le même padding horizontal */
+}
+
+/* Margin-top quand la toolbar est affichée */
+body.toolbar-oriented .header-main,
+body.toolbar-tray-open .header-main,
+body:has(#toolbar-administration) .header-main {
+  margin-top: 30px !important;
+}
+
+/* Variable pour le padding horizontal du header (utilisé pour aligner le contenu) */
+:root {
+  --header-padding-horizontal: var(--spacing-unit);
+}
+
+/* Section gauche : Logo + Menu */
+.header-left-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  width: auto;
+  min-width: 80px; /* Largeur minimale basée sur le logo */
+}
+
+/* Logo - À gauche */
+.site-branding {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-shrink: 0;
+  flex-direction: row;
+  padding: 0;
+  margin: 0;
+  width: 80px; /* Largeur fixe pour le logo */
+  position: relative;
+}
+
+/* Navigation - Sous le logo */
+.main-navigation {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  width: auto;
+  margin-left: 0 !important; /* S'assurer qu'il n'y a pas de marge qui décale */
+  position: relative;
+  left: 0;
+}
+
+/* Sur mobile, la navigation est cachée par défaut - géré dans responsive.css */
+@media (max-width: 767px) {
+  .main-navigation {
+    display: none !important;
+  }
+}
+
+/* S'assurer que le premier élément de navigation commence au même endroit que le titre */
+.main-navigation ul {
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+}
+
+.main-navigation li:first-child {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+/* Conteneur pour recherche + utilisateur à droite */
+.header-right-section {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1.5rem !important;
+  flex-shrink: 0 !important;
+  justify-content: flex-end !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+  padding-left: 1rem !important;
+  align-self: center !important; /* Aligner verticalement avec le logo */
+}
+
+/* Barre de recherche - Dans le conteneur droit */
+.header-search {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  align-self: stretch; /* Prendre toute la hauteur disponible */
+  height: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+/* Section utilisateur - Tout à droite */
+.header-user-section {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.5rem !important;
+  align-items: flex-end !important;
+  flex-shrink: 0 !important;
+  text-align: right !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  width: auto !important;
+  min-width: 0 !important;
+}
+
+/* Forcer tous les éléments dans la section utilisateur à droite */
+.header-user-section * {
+  text-align: right !important;
+}
+
+.header-user-links,
+.header-rss {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+/* Forcer TOUS les éléments utilisateur/RSS à droite - CSS très spécifique */
+.header-right-section {
+  position: relative !important;
+}
+
+.header-user-section,
+.header-user-links,
+.header-rss {
+  float: none !important;
+  clear: none !important;
+}
+
+.header-user-links ul,
+.header-rss ul,
+.header-user-links-list,
+.header-rss-links-list,
+.header-user-links .user-links,
+.header-rss .user-links {
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+  padding-left: 0 !important;
+  list-style: none !important;
+  width: 100% !important;
+  text-align: right !important;
+}
+
+.header-user-links li,
+.header-rss li,
+.header-user-links-list li,
+.header-rss-links-list li,
+.header-user-links .user-links li,
+.header-rss .user-links li {
+  margin-left: 0.5rem !important;
+  margin-right: 0 !important;
+  float: none !important;
+  text-align: right !important;
+}
+
+.header-user-links a,
+.header-rss a,
+.header-user-links-list a,
+.header-rss-links-list a {
+  text-align: right !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+/* Afficher le logo */
+.site-branding__logo,
+.site-branding .site-logo,
+.site-branding a.site-branding__logo {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  max-width: 80px;
+  max-height: 80px;
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  padding: 0 !important;
+  align-self: center !important; /* Centrer verticalement */
+}
+
+.site-branding__logo img,
+.site-branding .site-logo img,
+.site-branding a.site-branding__logo img {
+  display: block !important;
+  max-width: 100%;
+  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  margin: 0 !important;
+  padding: 0 !important;
+  vertical-align: middle !important;
+}
+
+/* Masquer uniquement le nom du site et le contenu sous le logo, pas le logo lui-même */
+.site-branding__text,
+.site-branding__name,
+.site-branding .site-name,
+.site-branding .block-content .site-branding__text,
+.site-branding .block-content .site-branding__name {
+  display: none !important;
+}
+
+.site-logo {
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--color-primary);
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.site-logo:hover {
+  text-decoration: none;
+}
+
+/* Navigation principale - Barre horizontale style CNN */
+.main-navigation {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin: 0 !important;
+  min-width: 0;
+}
+
+/* Sur mobile, la navigation est CACHÉE par défaut - FORCER le masquage */
+@media (max-width: 767px) {
+  .site-header .header-main .header-left-section .main-navigation,
+  .site-header .header-main .main-navigation,
+  .site-header .main-navigation,
+  .header-main .main-navigation,
+  .header-left-section .main-navigation,
+  .main-navigation {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+    pointer-events: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .main-navigation * {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+
+.main-navigation ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 0;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.main-navigation li {
+  position: relative;
+  white-space: nowrap;
+}
+
+.main-navigation a {
+  color: var(--color-text);
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 0.8125rem;
+  padding: 0.875rem 1rem;
+  display: block;
+  transition: all 0.2s ease;
+  border-bottom: 3px solid transparent;
+  letter-spacing: 0.02em;
+  font-family: var(--font-primary);
+}
+
+.main-navigation a:hover,
+.main-navigation a.is-active {
+  color: var(--color-primary);
+  text-decoration: none;
+  border-bottom-color: var(--color-primary);
+  background-color: transparent;
+}
+
+/* Barre de recherche intégrée - Style CNN */
+.header-search {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.header-search form,
+.search-form-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.header-search input[type="search"],
+.header-search input[type="text"],
+.search-input-inline {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  min-width: 200px;
+  background-color: var(--color-bg-light);
+  height: 36px;
+}
+
+.header-search input[type="search"]:focus,
+.header-search input[type="text"]:focus,
+.search-input-inline:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(184, 0, 0, 0.1);
+}
+
+.header-search button,
+.header-search input[type="submit"],
+.search-button-inline {
+  padding: 0.5rem 1.25rem;
+  background-color: var(--color-primary);
+  color: var(--color-bg-light);
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  height: 36px;
+  white-space: nowrap;
+}
+
+.header-search button:hover,
+.header-search input[type="submit"]:hover,
+.search-button-inline:hover {
+  background-color: var(--color-primary-dark);
+}
+
+/* Breaking News Banner */
+.breaking-news {
+  background-color: var(--color-primary);
+  color: var(--color-bg);
+  padding: 0.75rem var(--spacing-unit);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-weight: 600;
+}
+
+.breaking-news::before {
+  content: "BREAKING";
+  background-color: var(--color-secondary);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+}
+
+/* Hero Zone */
+.hero-zone {
+  position: relative;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--spacing-unit);
+}
+
+.hero-article {
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.hero-article img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.hero-article-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+  color: var(--color-bg);
+  padding: 2rem;
+}
+
+.hero-article-title {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.hero-article-title a {
+  color: var(--color-bg);
+}
+
+/* Main Content */
+.main-content {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 2rem var(--spacing-unit);
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 2rem;
+  background-color: var(--color-bg);
+  min-height: 60vh;
+  box-sizing: border-box;
+  /* FORCER l'alignement avec .header-main */
+  /* Les deux ont max-width: var(--max-width) et margin: 0 auto */
+  /* Les deux ont padding horizontal: var(--spacing-unit) */
+  /* Donc le contenu doit commencer exactement au même endroit */
+  width: 100%;
+  padding-left: var(--spacing-unit) !important;
+  padding-right: var(--spacing-unit) !important;
+}
+
+/* S'assurer que le content-wrapper n'a pas de padding supplémentaire */
+.main-content .content-wrapper {
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+  padding-right: 0;
+  margin-right: 0;
+}
+
+.content-wrapper {
+  min-width: 0;
+  text-align: left;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  /* Le .content-wrapper est dans la première colonne du grid de .main-content */
+  /* Le .main-content a padding: 2rem var(--spacing-unit), donc le contenu commence à var(--spacing-unit) du bord */
+  /* On s'assure qu'il n'y a pas de padding supplémentaire qui décale */
+  /* Le contenu doit commencer exactement au même endroit que la navigation */
+  box-sizing: border-box;
+}
+
+.content-wrapper .page-title {
+  text-align: left !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  max-width: 100%;
+  width: 400px !important;
+  position: relative;
+  left: 0 !important;
+  /* Aligner avec le début de la navigation */
+  /* Le .header-main a padding: 1rem var(--spacing-unit) */
+  /* Le .main-content a padding: 2rem var(--spacing-unit) */
+  /* Les deux ont le même padding horizontal (var(--spacing-unit)), donc ils devraient être alignés */
+  /* Le .main-navigation commence à var(--spacing-unit) du bord gauche de .header-main */
+  /* Le .page-title doit commencer à var(--spacing-unit) du bord gauche de .main-content */
+  box-sizing: border-box;
+  /* Forcer l'alignement à gauche - annuler tout centrage */
+  display: block !important;
+  float: none !important;
+  clear: both !important;
+  /* Annuler tout style qui pourrait centrer le titre */
+  transform: none !important;
+  justify-self: start !important;
+  align-self: start !important;
+  /* S'assurer qu'il n'y a pas de margin auto qui centre */
+  margin-top: 2rem !important;
+  margin-bottom: 1.5rem !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
+
+/* Amélioration du formatage HTML */
+.content-wrapper p,
+.content p,
+.article-body p {
+  margin-bottom: 1.25rem;
+  line-height: 1.75;
+  font-size: 1.0625rem;
+  color: var(--color-text);
+}
+
+.content-wrapper h1,
+.content-wrapper h2,
+.content-wrapper h3,
+.content-wrapper h4,
+.content-wrapper h5,
+.content-wrapper h6,
+.content h1,
+.content h2,
+.content h3,
+.content h4,
+.content h5,
+.content h6 {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  line-height: 1.3;
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.content-wrapper ul,
+.content-wrapper ol,
+.content ul,
+.content ol {
+  margin-bottom: 1.25rem;
+  padding-left: 2rem;
+  line-height: 1.75;
+}
+
+.content-wrapper li,
+.content li {
+  margin-bottom: 0.75rem;
+}
+
+.content-wrapper blockquote,
+.content blockquote {
+  border-left: 4px solid var(--color-primary);
+  padding-left: 1.5rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+  color: var(--color-text-light);
+  background-color: var(--color-bg);
+  padding: 1rem 1.5rem;
+  border-radius: 4px;
+}
+
+.content-wrapper img,
+.content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 1.5rem 0;
+  display: block;
+}
+
+.content-wrapper table,
+.content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  background-color: var(--color-bg-light);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.content-wrapper table th,
+.content-wrapper table td,
+.content table th,
+.content table td {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.content-wrapper table th,
+.content table th {
+  background-color: var(--color-bg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.content-wrapper strong,
+.content strong {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.content-wrapper em,
+.content em {
+  font-style: italic;
+}
+
+.content-wrapper code,
+.content code {
+  background-color: var(--color-bg);
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+  color: var(--color-primary);
+}
+
+/* Articles */
+.article-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.article-card {
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.article-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.article-card-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.article-card-content {
+  padding: 1.5rem;
+}
+
+.article-card-title {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.article-card-meta {
+  font-size: 0.875rem;
+  color: var(--color-text-light);
+  margin-top: 0.5rem;
+}
+
+/* Article Full */
+.article-full {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.article-header {
+  margin-bottom: 2rem;
+}
+
+.article-category {
+  display: inline-block;
+  background-color: var(--color-primary);
+  color: var(--color-bg);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.article-title {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.article-subtitle {
+  font-size: 1.25rem;
+  color: var(--color-text-light);
+  margin-bottom: 1rem;
+  font-weight: 400;
+}
+
+.article-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: var(--color-text-light);
+  margin-bottom: 1.5rem;
+}
+
+.article-featured-image {
+  margin-bottom: 2rem;
+}
+
+.article-featured-image img {
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.article-body {
+  font-size: 1.125rem;
+  line-height: 1.8;
+  margin-bottom: 2rem;
+}
+
+.article-body p {
+  margin-bottom: 1.5rem;
+}
+
+.article-body h2 {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.article-body h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Footer */
+.site-footer {
+  background-color: var(--color-secondary);
+  color: var(--color-bg-light);
+  margin-top: 4rem;
+  padding: 3rem var(--spacing-unit) 1rem;
+}
+
+.footer-content {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.footer-column h3 {
+  color: var(--color-bg-light);
+  margin-bottom: 1rem;
+}
+
+.footer-column a {
+  color: var(--color-bg-light);
+  opacity: 0.8;
+}
+
+.footer-column a:hover {
+  opacity: 1;
+  color: var(--color-primary);
+}
+
+.footer-bottom {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  text-align: center;
+  font-size: 0.875rem;
+  opacity: 0.7;
+}
+
+/* Masquer "Propulsé par Drupal" */
+.footer-bottom .powered-by,
+.footer-bottom a[href*="drupal.org"],
+.block-system-powered-by-block {
+  display: none !important;
+}
+
+/* Masquer le texte "Propulsé par Drupal" dans le footer */
+.footer-bottom span:contains("Propulsé"),
+.footer-bottom span:contains("Powered"),
+.site-footer .block-system-powered-by-block {
+  display: none !important;
+}
+
+/* Masquer "Bienvenue" - Utiliser une classe spécifique */
+.hide-welcome,
+.welcome-message,
+h1.welcome-title {
+  display: none !important;
+}
+
+/* Utilities */
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--spacing-unit);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.mt-1 { margin-top: var(--spacing-unit); }
+.mt-2 { margin-top: calc(var(--spacing-unit) * 2); }
+.mb-1 { margin-bottom: var(--spacing-unit); }
+.mb-2 { margin-bottom: calc(var(--spacing-unit) * 2); }
+

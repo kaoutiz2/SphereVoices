@@ -1,0 +1,88 @@
+{#
+/**
+ * @file
+ * Template pour les articles.
+ *
+ * Variables disponibles:
+ * - node: L'entité node de l'article
+ * - content: Tous les champs de l'article
+ */
+#}
+<article{{ attributes.addClass('article-full') }}>
+  <header class="article-header">
+    {% if content.field_category %}
+      <div class="article-category">
+        {{ content.field_category }}
+      </div>
+    {% endif %}
+    
+    <h1{{ title_attributes.addClass('article-title') }}>
+      {{ label }}
+    </h1>
+
+    {% if content.field_subtitle %}
+      <div class="article-subtitle">
+        {{ content.field_subtitle }}
+      </div>
+    {% endif %}
+
+    <div class="article-meta">
+      {% if content.field_author %}
+        <span class="article-author">
+          {{ content.field_author }}
+        </span>
+      {% endif %}
+      <time class="article-date" datetime="{{ node.created.value|date('Y-m-d\TH:i:s') }}">
+        {{ node.created.value|date('d/m/Y à H:i') }}
+      </time>
+    </div>
+  </header>
+
+  {% if content.field_image %}
+    <div class="article-featured-image">
+      {{ content.field_image }}
+    </div>
+  {% endif %}
+
+  <div class="article-body">
+    {{ content.body }}
+  </div>
+
+  {% if content.field_gallery %}
+    <div class="article-gallery">
+      {{ content.field_gallery }}
+    </div>
+  {% endif %}
+
+  {% if content.field_video %}
+    <div class="article-video">
+      {{ content.field_video }}
+    </div>
+  {% endif %}
+
+  {% if content.field_embeds %}
+    <div class="article-embeds">
+      {{ content.field_embeds }}
+    </div>
+  {% endif %}
+
+  {% if content.field_tags %}
+    <div class="article-tags">
+      <h3>Tags</h3>
+      {{ content.field_tags }}
+    </div>
+  {% endif %}
+
+  {% if content.field_related_articles %}
+    <div class="article-related">
+      <h3>À lire aussi</h3>
+      {{ content.field_related_articles }}
+    </div>
+  {% endif %}
+
+  <div class="article-share">
+    <h3>Partager</h3>
+    {# Les boutons de partage social seront ajoutés via le module social_share #}
+  </div>
+</article>
+

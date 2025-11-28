@@ -1,0 +1,488 @@
+<?php
+
+/**
+ * @file
+ * Functions and preprocess functions for the SphereVoices theme.
+ */
+
+use Drupal\Core\Url;
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_module_implements_alter().
+ * 
+ * S'assurer que notre hook_toolbar_alter s'exécute après celui du module announcements_feed.
+ */
+function spherevoices_theme_module_implements_alter(&$implementations, $hook) {
+  if ($hook === 'toolbar_alter') {
+    // Déplacer notre hook à la fin pour qu'il s'exécute après tous les autres
+    $group = $implementations['spherevoices_theme'];
+    unset($implementations['spherevoices_theme']);
+    $implementations['spherevoices_theme'] = $group;
+  }
+}
+
+/**
+ * Implements hook_toolbar_alter().
+ * 
+ * Remplace COMPLÈTEMENT l'item utilisateur pour éviter le lazy builder.
+ */
+function spherevoices_theme_toolbar_alter(&$items) {
+  // Supprimer l'élément "Annonces" de la toolbar
+  // Essayer toutes les clés possibles
+  if (isset($items['announcement'])) {
+    unset($items['announcement']);
+  }
+  if (isset($items['announcements'])) {
+    unset($items['announcements']);
+  }
+  // Supprimer aussi de manière plus agressive en parcourant tous les items
+  foreach ($items as $key => $item) {
+    if (strpos($key, 'announce') !== FALSE || strpos($key, 'Announce') !== FALSE) {
+      unset($items[$key]);
+    }
+  }
+  
+  $user = \Drupal::currentUser();
+  
+  // Ajouter un bouton "Modifier" en haut à droite de la toolbar
+  if ($user->isAuthenticated()) {
+    $route_match = \Drupal::routeMatch();
+    $route_name = $route_match->getRouteName();
+    $edit_url = NULL;
+    $node = NULL;
+    
+    // Si c'est une page de nœud, créer le lien d'édition
+    if ($route_name === 'entity.node.canonical') {
+      $node = $route_match->getParameter('node');
+      if ($node && $node->access('update', $user)) {
+        $edit_url = Url::fromRoute('entity.node.edit_form', ['node' => $node->id()]);
+      }
+    }
+    // Si c'est une page de taxonomie
+    elseif ($route_name === 'entity.taxonomy_term.canonical') {
+      $term = $route_match->getParameter('taxonomy_term');
+      if ($term && $term->access('update', $user)) {
+        $edit_url = Url::fromRoute('entity.taxonomy_term.edit_form', ['taxonomy_term' => $term->id()]);
+      }
+    }
+    // Si c'est une page utilisateur
+    elseif ($route_name === 'user.page') {
+      $account = $route_match->getParameter('user');
+      if (!$account) {
+        $account = \Drupal\user\Entity\User::load($user->id());
+      }
+      if ($account && $account->access('update', $user)) {
+        $edit_url = Url::fromRoute('entity.user.edit_form', ['user' => $account->id()]);
+      }
+    }
+    
+    // Ajouter le bouton "Modifier" si on a une URL d'édition
+    if ($edit_url) {
+      $node_id = 0;
+      if (isset($node) && $node) {
+        $node_id = $node->id();
+      }
+      
+      $items['edit_page'] = [
+        '#type' => 'toolbar_item',
+        'tab' => [
+          '#type' => 'link',
+          '#title' => t('Modifier'),
+          '#url' => $edit_url,
+          '#attributes' => [
+            'title' => t('Modifier cette page'),
+            'class' => ['toolbar-icon', 'toolbar-icon-edit'],
+          ],
+        ],
+        '#weight' => 999, // À droite
+        '#cache' => [
+          'contexts' => ['route', 'user.permissions'],
+          'tags' => $node_id > 0 ? ['node:' . $node_id] : [],
+          'max-age' => 0, // Désactiver le cache pour forcer l'affichage
+        ],
+      ];
+    }
+  }
+  
+  if ($user->isAuthenticated() && isset($items['user'])) {
+    // Récupérer le nom d'utilisateur
+    $account = \Drupal\user\Entity\User::load($user->id());
+    $username = $account ? $account->getDisplayName() : $user->getAccountName();
+    
+    // SUPPRIMER COMPLÈTEMENT l'item existant et le recréer
+    unset($items['user']);
+    
+    // Créer les liens utilisateur directement - SANS lazy builder
+    $links = [
+      'account' => [
+        'title' => t('Voir le profil'),
+        'url' => \Drupal\Core\Url::fromRoute('user.page'),
+        'attributes' => [
+          'title' => t('Compte utilisateur'),
+        ],
+      ],
+      'account_edit' => [
+        'title' => t('Modifier le profil'),
+        'url' => \Drupal\Core\Url::fromRoute('entity.user.edit_form', ['user' => $user->id()]),
+        'attributes' => [
+          'title' => t('Modifier le compte utilisateur'),
+        ],
+      ],
+      'logout' => [
+        'title' => t('Se déconnecter'),
+        'url' => \Drupal\Core\Url::fromRoute('user.logout'),
+      ],
+    ];
+    
+    // Recréer l'item utilisateur COMPLET sans lazy builder
+    $items['user'] = [
+      '#type' => 'toolbar_item',
+      'tab' => [
+        '#type' => 'link',
+        '#title' => $username ?: t('Mon compte'),
+        '#url' => \Drupal\Core\Url::fromRoute('user.page'),
+        '#attributes' => [
+          'title' => t('Mon compte'),
+          'class' => ['toolbar-icon', 'toolbar-icon-user'],
+        ],
+        '#cache' => [
+          'contexts' => ['user.roles:anonymous'],
+          'max-age' => 0, // Désactiver le cache
+        ],
+      ],
+      'tray' => [
+        '#heading' => t('User account actions'),
+        'user_links' => [
+          '#theme' => 'links__toolbar_user',
+          '#links' => $links,
+          '#attributes' => [
+            'class' => ['toolbar-menu'],
+          ],
+          '#cache' => [
+            'contexts' => ['user'],
+            'max-age' => 0, // Désactiver le cache
+          ],
+        ],
+      ],
+      '#weight' => 100,
+      '#attached' => [
+        'library' => [
+          'user/drupal.user.icons',
+        ],
+      ],
+    ];
+  }
+}
+
+/**
+ * Pre-render callback pour FORCER le rendu des liens utilisateur.
+ */
+function spherevoices_theme_force_render_user_links($element) {
+  // Supprimer TOUS les attributs de lazy builder
+  unset($element['#lazy_builder']);
+  unset($element['#create_placeholder']);
+  unset($element['#lazy_builder_preview']);
+  
+  // S'assurer que les liens sont bien définis
+  if (!isset($element['#links']) || empty($element['#links'])) {
+    $user = \Drupal::currentUser();
+    if ($user->isAuthenticated()) {
+      $element['#links'] = [
+        'account' => [
+          'title' => t('Voir le profil'),
+          'url' => \Drupal\Core\Url::fromRoute('user.page'),
+          'attributes' => [
+            'title' => t('Compte utilisateur'),
+          ],
+        ],
+        'account_edit' => [
+          'title' => t('Modifier le profil'),
+          'url' => \Drupal\Core\Url::fromRoute('entity.user.edit_form', ['user' => $user->id()]),
+          'attributes' => [
+            'title' => t('Modifier le compte utilisateur'),
+          ],
+        ],
+        'logout' => [
+          'title' => t('Se déconnecter'),
+          'url' => \Drupal\Core\Url::fromRoute('user.logout'),
+        ],
+      ];
+    }
+  }
+  
+  return $element;
+}
+
+/**
+ * Pre-render callback pour forcer le rendu des liens utilisateur.
+ */
+function spherevoices_theme_pre_render_user_links($element) {
+  // Si le lazy builder est toujours présent, le supprimer
+  if (isset($element['#lazy_builder'])) {
+    unset($element['#lazy_builder']);
+    unset($element['#create_placeholder']);
+    unset($element['#lazy_builder_preview']);
+  }
+  
+  // S'assurer que les liens sont bien définis
+  if (!isset($element['#links']) || empty($element['#links'])) {
+    $user = \Drupal::currentUser();
+    if ($user->isAuthenticated()) {
+      $element['#links'] = [
+        'account' => [
+          'title' => t('Voir le profil'),
+          'url' => \Drupal\Core\Url::fromRoute('user.page'),
+          'attributes' => [
+            'title' => t('Compte utilisateur'),
+          ],
+        ],
+        'account_edit' => [
+          'title' => t('Modifier le profil'),
+          'url' => \Drupal\Core\Url::fromRoute('entity.user.edit_form', ['user' => $user->id()]),
+          'attributes' => [
+            'title' => t('Modifier le compte utilisateur'),
+          ],
+        ],
+        'logout' => [
+          'title' => t('Se déconnecter'),
+          'url' => \Drupal\Core\Url::fromRoute('user.logout'),
+        ],
+      ];
+    }
+  }
+  
+  return $element;
+}
+
+/**
+ * Implements hook_page_attachments().
+ */
+function spherevoices_theme_page_attachments(array &$attachments) {
+  // Les bibliothèques définies dans .info.yml sont automatiquement attachées,
+  // mais on peut les forcer ici si nécessaire.
+  
+  // Ajouter le nom d'utilisateur et l'ID dans les settings JavaScript pour la toolbar
+  $user = \Drupal::currentUser();
+  if ($user->isAuthenticated()) {
+    $account = \Drupal\user\Entity\User::load($user->id());
+    $username = $account ? $account->getDisplayName() : $user->getAccountName();
+    $attachments['#attached']['drupalSettings']['user']['name'] = $username;
+    $attachments['#attached']['drupalSettings']['user']['uid'] = $user->id();
+  }
+}
+
+/**
+ * Implements hook_preprocess_footer().
+ */
+function spherevoices_theme_preprocess_footer(&$variables) {
+  // Masquer "Propulsé par Drupal" du footer
+  if (isset($variables['content']['system_powered_by'])) {
+    unset($variables['content']['system_powered_by']);
+  }
+}
+
+/**
+ * Implements hook_preprocess_block().
+ */
+function spherevoices_theme_preprocess_block(&$variables) {
+  // Masquer le bloc "Propulsé par Drupal" si présent
+  if (isset($variables['plugin_id']) && $variables['plugin_id'] === 'system_powered_by_block') {
+    $variables['#access'] = FALSE;
+  }
+  
+  // Masquer le nom du site dans le bloc de branding
+  if (isset($variables['plugin_id']) && $variables['plugin_id'] === 'system_branding_block') {
+    if (isset($variables['content']['site_name'])) {
+      $variables['content']['site_name']['#access'] = FALSE;
+    }
+  }
+  
+  // Retirer "Bienvenue" du contenu des blocs
+  if (isset($variables['content']['#markup'])) {
+    $content = $variables['content']['#markup'];
+    // Retirer les titres h1 avec "Bienvenue" ou "Welcome"
+    $content = preg_replace('/<h1[^>]*>.*?Bienvenue.*?<\/h1>/i', '', $content);
+    $content = preg_replace('/<h1[^>]*>.*?Welcome.*?<\/h1>/i', '', $content);
+    // Retirer aussi les divs ou autres éléments contenant "Bienvenue"
+    $content = preg_replace('/<div[^>]*>.*?Bienvenue.*?<\/div>/is', '', $content);
+    $content = preg_replace('/<div[^>]*>.*?Welcome.*?<\/div>/is', '', $content);
+    $variables['content']['#markup'] = $content;
+  }
+}
+
+/**
+ * Implements hook_preprocess_links().
+ */
+function spherevoices_theme_preprocess_links(&$variables) {
+  // Ajouter des classes pour identifier les liens utilisateur
+  foreach ($variables['links'] as $key => &$link) {
+    if (isset($link['url'])) {
+      $url = $link['url'];
+      if ($url instanceof \Drupal\Core\Url) {
+        $route_name = $url->getRouteName();
+        
+        // Ajouter des classes selon la route
+        if ($route_name === 'user.page') {
+          $link['attributes']['class'][] = 'account-link';
+        }
+        elseif ($route_name === 'user.logout') {
+          $link['attributes']['class'][] = 'logout-link';
+        }
+        elseif ($route_name === 'aggregator.feed_view' || $route_name === 'view.frontpage.feed_1') {
+          $link['attributes']['class'][] = 'rss-link';
+        }
+      }
+    }
+    
+    // Vérifier le texte du lien
+    if (isset($link['title'])) {
+      $title = is_string($link['title']) ? $link['title'] : (isset($link['title']['#markup']) ? $link['title']['#markup'] : '');
+      if (stripos($title, 'Bienvenue') !== FALSE || stripos($title, 'Welcome') !== FALSE) {
+        // Masquer les liens avec "Bienvenue"
+        unset($variables['links'][$key]);
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_preprocess_page().
+ */
+function spherevoices_theme_preprocess_page(&$variables) {
+  // Ajouter la variable is_front pour vérifier si c'est la page d'accueil
+  $variables['is_front'] = \Drupal::service('path.matcher')->isFrontPage();
+  
+  // Ajouter le titre de la page si disponible
+  if (isset($variables['page']['#title'])) {
+    $variables['page_title'] = $variables['page']['#title'];
+  }
+  elseif (isset($variables['page']['content']['system_main']['#title'])) {
+    $variables['page_title'] = $variables['page']['content']['system_main']['#title'];
+  }
+  else {
+    $variables['page_title'] = NULL;
+  }
+  
+  // Retirer "Bienvenue" du contenu principal
+  if (isset($variables['content']['system_main']['#markup'])) {
+    $content = $variables['content']['system_main']['#markup'];
+    $content = preg_replace('/<h1[^>]*>.*?Bienvenue.*?<\/h1>/i', '', $content);
+    $content = preg_replace('/<h1[^>]*>.*?Welcome.*?<\/h1>/i', '', $content);
+    $variables['content']['system_main']['#markup'] = $content;
+  }
+  
+  // Retirer "Bienvenue" des blocs
+  foreach ($variables['content'] as $key => &$block) {
+    if (is_array($block) && isset($block['#markup'])) {
+      $block['#markup'] = preg_replace('/<h1[^>]*>.*?Bienvenue.*?<\/h1>/i', '', $block['#markup']);
+      $block['#markup'] = preg_replace('/<h1[^>]*>.*?Welcome.*?<\/h1>/i', '', $block['#markup']);
+    }
+  }
+  
+  // Créer directement les liens utilisateur et RSS pour le header
+  $user = \Drupal::currentUser();
+  $user_links = [];
+  $rss_links = [];
+  
+  // Créer les liens utilisateur selon l'état de connexion
+  if ($user->isAuthenticated()) {
+    // Récupérer le nom d'utilisateur
+    $account = \Drupal\user\Entity\User::load($user->id());
+    $username = $account ? $account->getDisplayName() : $user->getAccountName();
+    
+    $user_links['account'] = [
+      'title' => $username ?: t('Mon compte'),
+      'url' => \Drupal\Core\Url::fromRoute('user.page'),
+      'attributes' => ['class' => ['account-link']],
+    ];
+    $user_links['logout'] = [
+      'title' => t('Se déconnecter'),
+      'url' => \Drupal\Core\Url::fromRoute('user.logout'),
+      'attributes' => ['class' => ['logout-link']],
+    ];
+  }
+  else {
+    $user_links['login'] = [
+      'title' => t('Se connecter'),
+      'url' => \Drupal\Core\Url::fromRoute('user.login'),
+      'attributes' => ['class' => ['login-link']],
+    ];
+  }
+  
+  // Créer le lien RSS
+  $rss_links['rss'] = [
+    'title' => t('Flux RSS'),
+    'url' => \Drupal\Core\Url::fromRoute('view.frontpage.feed_1'),
+    'attributes' => ['class' => ['rss-link', 'feed-icon']],
+  ];
+  
+  // Créer les blocs pour le header
+  if (!empty($user_links)) {
+    $variables['page']['header_user'] = [
+      '#theme' => 'links',
+      '#links' => $user_links,
+      '#attributes' => ['class' => ['user-links', 'header-user-links-list']],
+    ];
+  }
+  
+  if (!empty($rss_links)) {
+    $variables['page']['header_rss'] = [
+      '#theme' => 'links',
+      '#links' => $rss_links,
+      '#attributes' => ['class' => ['user-links', 'header-rss-links-list']],
+    ];
+  }
+}
+
+
+    /**
+     * Implements hook_preprocess_menu_local_task().
+     */
+    function spherevoices_theme_preprocess_menu_local_task(&$variables) {
+  // Récupérer les informations du lien depuis l'élément
+  $link = $variables['element']['#link'];
+  $link_text = $link['title'];
+  $route_name = $link['url']->getRouteName();
+  
+  // Déterminer l'icône selon le texte du lien et la route
+  $icon = '';
+  if (stripos($link_text, 'Voir') !== FALSE || stripos($link_text, 'View') !== FALSE || strpos($route_name, 'canonical') !== FALSE) {
+    $icon = '<svg class="task-link-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.73 5.11 0 8C1.73 10.89 4.5 13 8 13C11.5 13 14.27 10.89 16 8C14.27 5.11 11.5 3 8 3ZM8 11.5C6.07 11.5 4.5 9.93 4.5 8C4.5 6.07 6.07 4.5 8 4.5C9.93 4.5 11.5 6.07 11.5 8C11.5 9.93 9.93 11.5 8 11.5ZM8 6C6.9 6 6 6.9 6 8C6 9.1 6.9 10 8 10C9.1 10 10 9.1 10 8C10 6.9 9.1 6 8 6Z" fill="currentColor"/></svg>';
+  }
+  elseif (stripos($link_text, 'Modifier') !== FALSE || stripos($link_text, 'Edit') !== FALSE || strpos($route_name, 'edit_form') !== FALSE) {
+    $icon = '<svg class="task-link-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.5 1.5L14.5 4.5L5.5 13.5H2.5V10.5L11.5 1.5ZM12.5 0.5L14.5 0.5C14.7761 0.5 15 0.723858 15 1V3L13 5L9 1L12.5 0.5ZM8 2L4 6V11.5H9.5L13.5 7.5L8 2Z" fill="currentColor"/></svg>';
+  }
+  elseif (stripos($link_text, 'Supprimer') !== FALSE || stripos($link_text, 'Delete') !== FALSE || strpos($route_name, 'delete_form') !== FALSE) {
+    $icon = '<svg class="task-link-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.5 1.5C6.22386 1.5 6 1.72386 6 2V3H2.5C2.22386 3 2 3.22386 2 3.5C2 3.77614 2.22386 4 2.5 4H3V13.5C3 14.3284 3.67157 15 4.5 15H11.5C12.3284 15 13 14.3284 13 13.5V4H13.5C13.7761 4 14 3.77614 14 3.5C14 3.22386 13.7761 3 13.5 3H10V2C10 1.72386 9.77614 1.5 9.5 1.5H6.5ZM7 2.5H9V3H7V2.5ZM4 4H12V13.5C12 13.7761 11.7761 14 11.5 14H4.5C4.22386 14 4 13.7761 4 13.5V4ZM6 6V12H7V6H6ZM9 6V12H10V6H9Z" fill="currentColor"/></svg>';
+  }
+  elseif (stripos($link_text, 'Versions') !== FALSE || stripos($link_text, 'Revisions') !== FALSE || strpos($route_name, 'version_history') !== FALSE) {
+    $icon = '<svg class="task-link-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 0C3.58 0 0 3.58 0 8C0 12.42 3.58 16 8 16C12.42 16 16 12.42 16 8C16 3.58 12.42 0 8 0ZM8 14C4.69 14 2 11.31 2 8C2 4.69 4.69 2 8 2C11.31 2 14 4.69 14 8C14 11.31 11.31 14 8 14ZM7.5 4.5L4.5 7.5L7.5 10.5L8.5 9.5L6.5 7.5L8.5 5.5L7.5 4.5ZM8.5 11.5L9.5 10.5L11.5 8.5L9.5 6.5L8.5 5.5L11.5 8.5L8.5 11.5Z" fill="currentColor"/></svg>';
+  }
+  
+  // Ajouter l'icône au titre du lien - modifier après le preprocess par défaut
+  if ($icon && isset($variables['link']['#title'])) {
+    // Si le titre est déjà un render array, le modifier
+    if (is_array($variables['link']['#title'])) {
+      $variables['link']['#title']['#type'] = 'inline_template';
+      $variables['link']['#title']['#template'] = '<span class="task-link-content">{{ icon|raw }}<span class="task-link-text">{{ title }}</span></span>';
+      $variables['link']['#title']['#context'] = [
+        'icon' => $icon,
+        'title' => $link_text,
+      ];
+    }
+    else {
+      // Si c'est une chaîne, créer un render array
+      $variables['link']['#title'] = [
+        '#type' => 'inline_template',
+        '#template' => '<span class="task-link-content">{{ icon|raw }}<span class="task-link-text">{{ title }}</span></span>',
+        '#context' => [
+          'icon' => $icon,
+          'title' => $link_text,
+        ],
+      ];
+    }
+  }
+}
+
+
