@@ -42,10 +42,6 @@
 
 /* Tablet */
 @media (min-width: 768px) {
-  .main-content {
-    grid-template-columns: 1fr 300px;
-  }
-
   .article-list {
     grid-template-columns: repeat(2, 1fr);
   }
