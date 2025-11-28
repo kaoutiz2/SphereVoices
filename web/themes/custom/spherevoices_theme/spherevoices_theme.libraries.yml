@@ -21,6 +21,11 @@ responsive:
   css:
     theme:
       css/responsive.css: {}
+
+admin:
+  css:
+    theme:
+      css/admin.css: {}
   dependencies:
     - spherevoices_theme/global-styling
 

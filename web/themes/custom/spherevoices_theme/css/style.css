@@ -555,7 +555,6 @@ body:has(#toolbar-administration) .header-main {
   margin: 0 auto;
   padding: 2rem var(--spacing-unit);
   display: grid;
-  grid-template-columns: 1fr 300px;
   gap: 2rem;
   background-color: var(--color-bg);
   min-height: 60vh;

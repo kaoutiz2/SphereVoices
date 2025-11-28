@@ -8,6 +8,7 @@
  */
 
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\node\NodeInterface;
 
 /**
  * Implements hook_help().
@@ -21,6 +22,42 @@ function spherevoices_core_help($route_name, RouteMatchInterface $route_match) {
       return $output;
 
     default:
+  }
+}
+
+/**
+ * Implements hook_entity_presave().
+ */
+function spherevoices_core_entity_presave(\Drupal\Core\Entity\EntityInterface $entity) {
+  // Vérifier si c'est un nœud de type article.
+  if ($entity->getEntityTypeId() === 'node' && $entity->bundle() === 'article') {
+    /** @var \Drupal\node\NodeInterface $entity */
+    
+    // Vérifier si le nœud est en train d'être épinglé.
+    if ($entity->isSticky()) {
+      // Récupérer tous les autres articles épinglés (sauf celui en cours de sauvegarde).
+      $storage = \Drupal::entityTypeManager()->getStorage('node');
+      $query = $storage->getQuery()
+        ->accessCheck(FALSE)
+        ->condition('type', 'article')
+        ->condition('sticky', NodeInterface::STICKY);
+      
+      // Si ce n'est pas un nouveau nœud, exclure celui en cours de sauvegarde.
+      if (!$entity->isNew() && $entity->id()) {
+        $query->condition('nid', $entity->id(), '<>');
+      }
+      
+      $nids = $query->execute();
+      
+      // Désépingler tous les autres articles.
+      if (!empty($nids)) {
+        $nodes = $storage->loadMultiple($nids);
+        foreach ($nodes as $node) {
+          $node->setSticky(NodeInterface::NOT_STICKY);
+          $node->save();
+        }
+      }
+    }
   }
 }
 

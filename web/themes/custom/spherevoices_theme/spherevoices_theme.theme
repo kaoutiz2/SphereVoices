@@ -270,6 +270,12 @@ function spherevoices_theme_page_attachments(array &$attachments) {
     $attachments['#attached']['drupalSettings']['user']['name'] = $username;
     $attachments['#attached']['drupalSettings']['user']['uid'] = $user->id();
   }
+  
+  // Charger les styles admin sur toutes les pages d'administration
+  $route_name = \Drupal::routeMatch()->getRouteName();
+  if (strpos($route_name, 'node.') === 0 || strpos($route_name, 'entity.node.') === 0) {
+    $attachments['#attached']['library'][] = 'spherevoices_theme/admin';
+  }
 }
 
 /**
@@ -352,6 +358,175 @@ function spherevoices_theme_preprocess_links(&$variables) {
 function spherevoices_theme_preprocess_page(&$variables) {
   // Ajouter la variable is_front pour vérifier si c'est la page d'accueil
   $variables['is_front'] = \Drupal::service('path.matcher')->isFrontPage();
+  
+  // Récupérer les articles pour la page d'accueil style CNN
+  if ($variables['is_front']) {
+    $node_storage = \Drupal::entityTypeManager()->getStorage('node');
+    $view_builder = \Drupal::entityTypeManager()->getViewBuilder('node');
+    
+    // 1. Récupérer le Breaking News (article avec sticky = TRUE, épinglé en haut des listes)
+    $breaking_news_nids = [];
+    $breaking_news_query = \Drupal::entityQuery('node')
+      ->condition('type', 'article')
+      ->condition('status', 1)
+      ->condition('sticky', 1)
+      ->sort('created', 'DESC')
+      ->range(0, 1)
+      ->accessCheck(TRUE);
+    
+    $breaking_news_nids = $breaking_news_query->execute();
+    
+    // S'assurer que breaking_news_nids est toujours un tableau
+    if (empty($breaking_news_nids)) {
+      $breaking_news_nids = [];
+    }
+    
+    if (!empty($breaking_news_nids)) {
+      $breaking_news_node = $node_storage->load(reset($breaking_news_nids));
+      if ($breaking_news_node) {
+        // Marquer le node comme breaking news pour le template
+        $breaking_news_node->breaking_news_context = TRUE;
+        $variables['breaking_news'] = $view_builder->view($breaking_news_node, 'teaser');
+      }
+    }
+    
+    // 2. Récupérer l'article principal (promoted to front page, le plus récent)
+    // EXCLURE le breaking news pour éviter les doublons
+    $featured_query = \Drupal::entityQuery('node')
+      ->condition('type', 'article')
+      ->condition('status', 1)
+      ->condition('promote', 1)
+      ->sort('created', 'DESC')
+      ->range(0, 5) // Récupérer plus d'articles pour pouvoir exclure le breaking news
+      ->accessCheck(TRUE);
+    
+    // Exclure explicitement les articles sticky (breaking news)
+    $featured_query->condition('sticky', 0);
+    
+    // Exclure aussi par ID si on a le breaking news
+    if (!empty($breaking_news_nids)) {
+      $breaking_news_nid = (int) reset($breaking_news_nids);
+      $featured_query->condition('nid', $breaking_news_nid, '<>');
+    }
+    
+    $featured_nids = $featured_query->execute();
+    
+    // Prendre le premier qui n'est pas le breaking news
+    if (!empty($featured_nids)) {
+      // Filtrer pour s'assurer qu'on n'a pas le breaking news
+      $featured_nids = array_diff($featured_nids, $breaking_news_nids);
+      
+      if (!empty($featured_nids)) {
+        $featured_nid = reset($featured_nids);
+        $featured_node = $node_storage->load($featured_nid);
+        if ($featured_node) {
+          // Double vérification : ne pas utiliser le breaking news
+          if (empty($breaking_news_nids) || !in_array($featured_node->id(), $breaking_news_nids)) {
+            // Marquer le node comme featured pour le template
+            $featured_node->featured_context = TRUE;
+            // Utiliser le mode 'teaser' pour avoir un rendu cohérent avec les autres articles
+            // Le template featured sera utilisé grâce à la suggestion de template
+            $variables['featured_article'] = $view_builder->view($featured_node, 'teaser');
+            $featured_nids = [$featured_nid]; // Garder seulement l'ID utilisé
+          }
+          else {
+            $featured_nids = [];
+          }
+        }
+      }
+    }
+    
+    // S'assurer que featured_nids est un tableau
+    if (empty($featured_nids)) {
+      $featured_nids = [];
+    }
+    
+    // 3. Récupérer tous les articles restants pour les 3 colonnes (gauche, centre, droite)
+    // EXCLURE le breaking news ET l'article principal
+    $excluded_nids = [];
+    if (!empty($breaking_news_nids)) {
+      $excluded_nids = array_merge($excluded_nids, $breaking_news_nids);
+    }
+    if (!empty($featured_nids)) {
+      $excluded_nids = array_merge($excluded_nids, $featured_nids);
+    }
+    
+    // Récupérer tous les articles restants (9 articles pour 3 colonnes x 3 articles)
+    $all_articles_query = \Drupal::entityQuery('node')
+      ->condition('type', 'article')
+      ->condition('status', 1)
+      ->condition('promote', 1)
+      ->condition('sticky', 0) // Exclure les sticky (déjà affichés comme breaking news)
+      ->sort('created', 'DESC')
+      ->range(0, 9) // Récupérer 9 articles pour les 3 colonnes
+      ->accessCheck(TRUE);
+    
+    // Exclure tous les articles déjà affichés (breaking news + featured)
+    if (!empty($excluded_nids)) {
+      $excluded_nids_int = array_map('intval', $excluded_nids);
+      $all_articles_query->condition('nid', $excluded_nids_int, 'NOT IN');
+    }
+    
+    $all_articles_nids = $all_articles_query->execute();
+    
+    // Filtrer les IDs pour s'assurer qu'ils ne sont pas dans breaking_news_nids ou featured_nids
+    // Réindexer le tableau pour préserver l'ordre après array_diff
+    if (!empty($all_articles_nids)) {
+      $all_articles_nids = array_diff($all_articles_nids, $breaking_news_nids);
+      $all_articles_nids = array_diff($all_articles_nids, $featured_nids);
+      // Réindexer pour avoir des clés numériques séquentielles (0, 1, 2, ...)
+      $all_articles_nids = array_values($all_articles_nids);
+    }
+    
+    // Répartir les articles sur les 3 colonnes de manière équilibrée
+    $variables['left_articles'] = [];
+    $variables['center_articles'] = [];
+    $variables['right_articles'] = [];
+    
+    if (!empty($all_articles_nids)) {
+      // Charger les nodes dans l'ordre des IDs
+      $all_articles_nodes = $node_storage->loadMultiple($all_articles_nids);
+      
+      // Créer un tableau ordonné selon l'ordre des IDs (pour préserver l'ordre de création)
+      $ordered_nodes = [];
+      foreach ($all_articles_nids as $nid) {
+        if (isset($all_articles_nodes[$nid])) {
+          $node = $all_articles_nodes[$nid];
+          // Double vérification : ne pas inclure le breaking news ou featured
+          if (!empty($breaking_news_nids) && in_array($node->id(), $breaking_news_nids)) {
+            continue;
+          }
+          if (!empty($featured_nids) && in_array($node->id(), $featured_nids)) {
+            continue;
+          }
+          
+          // Marquer comme breaking news si sticky
+          if ($node->isSticky()) {
+            $node->breaking_news_context = TRUE;
+          }
+          
+          $ordered_nodes[] = $node;
+        }
+      }
+      
+      // Répartir équitablement sur les 3 colonnes
+      foreach ($ordered_nodes as $index => $node) {
+        $article_view = $view_builder->view($node, 'teaser');
+        
+        // Répartir de manière alternée stricte : gauche (0, 3, 6...), centre (1, 4, 7...), droite (2, 5, 8...)
+        $column = $index % 3;
+        if ($column === 0) {
+          $variables['left_articles'][] = $article_view;
+        }
+        elseif ($column === 1) {
+          $variables['center_articles'][] = $article_view;
+        }
+        else {
+          $variables['right_articles'][] = $article_view;
+        }
+      }
+    }
+  }
   
   // Ajouter le titre de la page si disponible
   if (isset($variables['page']['#title'])) {
@@ -436,10 +611,203 @@ function spherevoices_theme_preprocess_page(&$variables) {
 }
 
 
-    /**
-     * Implements hook_preprocess_menu_local_task().
-     */
-    function spherevoices_theme_preprocess_menu_local_task(&$variables) {
+/**
+ * Implements hook_field_widget_form_alter().
+ */
+function spherevoices_theme_field_widget_form_alter(&$element, \Drupal\Core\Form\FormStateInterface $form_state, $context) {
+  // Modifier le label du champ sticky pour les articles
+  if (isset($context['items']) && $context['items']->getEntity()) {
+    $entity = $context['items']->getEntity();
+    $field_name = $context['items']->getFieldDefinition()->getName();
+    
+    if ($entity->getEntityTypeId() === 'node' && $entity->bundle() === 'article' && $field_name === 'sticky') {
+      // Modifier le label de la checkbox directement
+      if (isset($element['value']['#title'])) {
+        $element['value']['#title'] = t('Épinglé en haut des listes (Breaking News)');
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function spherevoices_theme_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  // Modifier le label du champ sticky pour les articles (fallback)
+  if (($form_id === 'node_article_form' || $form_id === 'node_article_edit_form') && isset($form['sticky'])) {
+    $new_label = t('Épinglé en haut des listes (Breaking News)');
+    
+    // Modifier le label du wrapper principal
+    if (isset($form['sticky']['#title'])) {
+      $form['sticky']['#title'] = $new_label;
+    }
+    
+    // Modifier le label du widget
+    if (isset($form['sticky']['widget']['#title'])) {
+      $form['sticky']['widget']['#title'] = $new_label;
+    }
+    
+    // Modifier le label de la checkbox (boolean_checkbox avec display_label)
+    if (isset($form['sticky']['widget']['value']['#title'])) {
+      $form['sticky']['widget']['value']['#title'] = $new_label;
+    }
+    
+    // Pour boolean_checkbox avec display_label, le label peut aussi être dans widget[0][value]
+    if (isset($form['sticky']['widget'][0]['value']['#title'])) {
+      $form['sticky']['widget'][0]['value']['#title'] = $new_label;
+    }
+  }
+}
+
+/**
+ * Implements hook_form_node_form_alter().
+ */
+function spherevoices_theme_form_node_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  // Modifier le label du champ sticky pour les articles
+  if (isset($form['#entity']) && $form['#entity']->bundle() === 'article' && isset($form['sticky'])) {
+    $new_label = t('Épinglé en haut des listes (Breaking News)');
+    
+    // Modifier le label du wrapper principal
+    if (isset($form['sticky']['#title'])) {
+      $form['sticky']['#title'] = $new_label;
+    }
+    
+    // Modifier le label du widget
+    if (isset($form['sticky']['widget']['#title'])) {
+      $form['sticky']['widget']['#title'] = $new_label;
+    }
+    
+    // Modifier le label de la checkbox - c'est ici que le label est réellement utilisé
+    if (isset($form['sticky']['widget']['value']['#title'])) {
+      $form['sticky']['widget']['value']['#title'] = $new_label;
+    }
+    
+    // Pour boolean_checkbox avec display_label, le label peut aussi être dans widget[0][value]
+    if (isset($form['sticky']['widget'][0]['value']['#title'])) {
+      $form['sticky']['widget'][0]['value']['#title'] = $new_label;
+    }
+    
+    // Utiliser un #after_build pour s'assurer que le label est modifié après la construction complète
+    if (!isset($form['sticky']['#after_build'])) {
+      $form['sticky']['#after_build'] = [];
+    }
+    $form['sticky']['#after_build'][] = 'spherevoices_theme_sticky_field_after_build';
+  }
+}
+
+/**
+ * After build callback pour modifier le label du champ sticky.
+ */
+function spherevoices_theme_sticky_field_after_build($element, \Drupal\Core\Form\FormStateInterface $form_state) {
+  $new_label = t('Épinglé en haut des listes (Breaking News)');
+  
+  // Modifier le label à tous les niveaux possibles
+  if (isset($element['#title'])) {
+    $element['#title'] = $new_label;
+  }
+  
+  if (isset($element['widget']['#title'])) {
+    $element['widget']['#title'] = $new_label;
+  }
+  
+  if (isset($element['widget']['value']['#title'])) {
+    $element['widget']['value']['#title'] = $new_label;
+  }
+  
+  if (isset($element['widget'][0]['value']['#title'])) {
+    $element['widget'][0]['value']['#title'] = $new_label;
+  }
+  
+  return $element;
+}
+
+
+/**
+ * Implements hook_preprocess_image_widget().
+ * 
+ * S'assure que le preview est bien dans data.preview pour l'affichage dans le wrapper.
+ */
+function spherevoices_theme_preprocess_image_widget(&$variables) {
+  // S'assurer que le preview est bien dans data.preview
+  // Le preview est ajouté par ImageWidget::formElement() dans l'élément 'preview'
+  // template_preprocess_image_widget() devrait le mettre dans data['preview']
+  // Mais vérifions et forçons si nécessaire
+  if (isset($variables['element']['preview'])) {
+    // Le preview existe dans l'élément, s'assurer qu'il est dans data
+    if (!isset($variables['data']['preview'])) {
+      $variables['data']['preview'] = $variables['element']['preview'];
+    }
+  }
+}
+
+/**
+ * Implements hook_preprocess_node().
+ */
+function spherevoices_theme_preprocess_node(&$variables) {
+  $node = $variables['node'];
+  
+  // Marquer les articles sticky comme breaking news pour afficher le badge
+  if ($node->isSticky() && !isset($node->breaking_news_context)) {
+    $node->breaking_news_context = TRUE;
+  }
+  
+  // Ajouter des suggestions de templates pour le breaking news
+  if (isset($node->breaking_news_context) && $node->breaking_news_context) {
+    $variables['theme_hook_suggestions'][] = 'node__article__breaking_news';
+  }
+  
+  // Ajouter des suggestions de templates pour le featured
+  if (isset($node->featured_context) && $node->featured_context) {
+    $variables['theme_hook_suggestions'][] = 'node__article__featured';
+  }
+  
+  // S'assurer que le champ field_image est bien rendu
+  if ($node->hasField('field_image') && !$node->get('field_image')->isEmpty()) {
+    $view_mode = $variables['view_mode'] ?? 'full';
+    
+    // Vérifier si le champ est déjà dans content et s'il est vraiment rendu
+    $image_rendered = FALSE;
+    if (isset($variables['content']['field_image'])) {
+      // Vérifier si c'est un render array avec du contenu
+      if (is_array($variables['content']['field_image'])) {
+        $rendered = \Drupal::service('renderer')->renderPlain($variables['content']['field_image']);
+        $image_rendered = !empty(trim(strip_tags($rendered)));
+      }
+    }
+    
+    // Si l'image n'est pas rendue, forcer son rendu
+    if (!$image_rendered) {
+      // Récupérer la configuration du mode d'affichage
+      $entity_display = \Drupal::entityTypeManager()
+        ->getStorage('entity_view_display')
+        ->load('node.article.' . $view_mode);
+      
+      if ($entity_display && $entity_display->getComponent('field_image')) {
+        // Le champ est configuré dans le mode d'affichage, utiliser le view builder
+        $view_builder = \Drupal::entityTypeManager()->getViewBuilder('node');
+        $build = $view_builder->viewField($node->get('field_image'), $view_mode);
+        if ($build) {
+          $variables['content']['field_image'] = $build;
+        }
+      }
+      else {
+        // Le champ n'est pas configuré dans le mode d'affichage, le rendre directement
+        $field_items = $node->get('field_image');
+        if (!$field_items->isEmpty()) {
+          $field_view = $field_items->view(['label' => 'hidden', 'type' => 'image']);
+          if ($field_view) {
+            $variables['content']['field_image'] = $field_view;
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_preprocess_menu_local_task().
+ */
+function spherevoices_theme_preprocess_menu_local_task(&$variables) {
   // Récupérer les informations du lien depuis l'élément
   $link = $variables['element']['#link'];
   $link_text = $link['title'];
