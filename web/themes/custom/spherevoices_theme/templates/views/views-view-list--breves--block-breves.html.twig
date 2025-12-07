@@ -1,0 +1,22 @@
+{#
+/**
+ * @file
+ * Template pour la liste des brèves (sans puces).
+ */
+#}
+{%
+  set classes = [
+    'view-content',
+    'breves-list',
+  ]
+%}
+{% if rows %}
+  <div{{ attributes.addClass(classes) }}>
+    {{ rows }}
+  </div>
+{% elseif empty %}
+  <div class="view-empty">
+    {{ empty }}
+  </div>
+{% endif %}
+

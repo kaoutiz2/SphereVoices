@@ -414,5 +414,56 @@
   h3 {
     font-size: 1.25rem;
   }
+
+  /* En responsive, tous les articles ont la même taille que ceux du centre */
+  .article-card-side {
+    width: 100% !important;
+    max-width: 530px !important;
+    height: 320px !important;
+  }
+
+  .homepage-left-column .article-card-side,
+  .homepage-right-column .article-card-side,
+  .homepage-center-column .article-card-side {
+    width: 100% !important;
+    max-width: 530px !important;
+    height: 320px !important;
+  }
+
+  .homepage-center-column .article-card-side .article-featured-image {
+    height: 180px;
+  }
+
+  .homepage-left-column .article-card-side .article-featured-image,
+  .homepage-right-column .article-card-side .article-featured-image {
+    height: 180px;
+  }
+
+  /* Les articles teaser doivent aussi avoir la même taille */
+  .homepage-left-column .article-teaser,
+  .homepage-right-column .article-teaser {
+    width: 100% !important;
+    max-width: 530px !important;
+    height: 320px !important;
+  }
+
+  /* Les publicités des colonnes prennent toute la largeur en responsive */
+  .homepage-left-column .ad-banner-left-column,
+  .homepage-right-column .ad-banner-right-column {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* La première publicité (breaking news) prend toute la largeur en responsive */
+  .ad-banner-breaking-news {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+  }
+
+  .homepage-left-column .article-teaser .article-teaser-image-wrapper,
+  .homepage-right-column .article-teaser .article-teaser-image-wrapper {
+    height: 180px !important;
+  }
 }
 

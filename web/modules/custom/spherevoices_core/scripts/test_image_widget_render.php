@@ -70,3 +70,4 @@ else {
   echo "⚠ Widget field_image non trouvé dans le formulaire\n";
 }
 
+
