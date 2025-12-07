@@ -780,3 +780,147 @@
   }
 }
 
+/* Bloc Brèves */
+.breves-block {
+  background-color: var(--color-bg-light);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 1.5rem;
+}
+
+.breves-block ul,
+.breves-block .view-content ul,
+.breves-block .breves-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.breves-block li,
+.breves-block .view-content li,
+.breves-block .breves-list li {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.breves-block h2,
+.breves-block .view-header h2,
+.breves-block .views-element-container h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin: 0 0 1.5rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--color-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.breves-block .view-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.breves-block .views-row {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.breves-block .views-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.breves-block .views-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.5rem;
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-secondary);
+  border-radius: 50%;
+}
+
+/* Styles pour les items de brèves */
+.breve-item {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  position: relative;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.breve-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.breve-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.5rem;
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-secondary);
+  border-radius: 50%;
+}
+
+.breve-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.breve-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.4;
+}
+
+.breve-title a {
+  color: var(--color-secondary);
+  text-decoration: none;
+}
+
+.breve-title a:hover {
+  color: var(--color-secondary);
+  text-decoration: underline;
+}
+
+.breve-body {
+  font-size: 0.9rem;
+  color: var(--color-text);
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+}
+
+.breve-body p {
+  margin: 0 0 0.5rem 0;
+  padding: 0;
+}
+
+.breve-body p:last-child {
+  margin-bottom: 0;
+}
+
+.breve-meta {
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+  font-style: italic;
+}
+
+.breves-block .views-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--color-text-light);
+  font-style: italic;
+}
+

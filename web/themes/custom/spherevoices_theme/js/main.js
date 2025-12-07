@@ -17,6 +17,23 @@
    */
       Drupal.behaviors.spherevoicesTheme = {
         attach: function (context, settings) {
+          // Forcer l'affichage des champs de formulaire utilisateur
+          this.fixUserFormInputs(context);
+          // Exécuter aussi après plusieurs délais pour s'assurer que le DOM est complètement chargé
+          var self = this;
+          setTimeout(function() {
+            self.fixUserFormInputs(context);
+          }, 50);
+          setTimeout(function() {
+            self.fixUserFormInputs(context);
+          }, 200);
+          setTimeout(function() {
+            self.fixUserFormInputs(context);
+          }, 500);
+          setTimeout(function() {
+            self.fixUserFormInputs(context);
+          }, 1000);
+          
           // Forcer la toolbar en mode vertical par défaut
           this.forceVerticalToolbar(context);
           
@@ -57,6 +74,951 @@
 
           // Gestion du menu mobile
           this.initMobileMenu(context);
+
+          // Gestion du scroll pour la navigation sticky
+          this.handleStickyNav(context);
+        },
+
+        /**
+         * Force l'affichage des champs de formulaire utilisateur.
+         */
+        fixUserFormInputs: function (context) {
+          // Fonction pour injecter un input directement dans un form-item
+          const injectInputInFormItem = function(formItem, name, type, autocomplete) {
+            if (!formItem) return;
+            
+            // Ne pas injecter dans les descriptions ou les éléments details
+            if (formItem.classList.contains('description') || formItem.closest('.description') || formItem.tagName === 'DETAILS') {
+              return;
+            }
+            
+            const inputId = 'edit-' + name;
+            // Vérifier si l'input existe déjà dans le form-item
+            if (formItem.querySelector('#' + inputId) || formItem.querySelector('input[name="' + name + '"]')) {
+              return;
+            }
+            
+            // Vérifier que ce n'est pas un form-item pour contact ou user_picture
+            const classes = formItem.className || '';
+            if (classes.includes('form-item-contact') || classes.includes('form-item-user-picture') || classes.includes('js-form-item-contact') || classes.includes('js-form-item-user-picture')) {
+              return;
+            }
+            
+            // Créer l'input
+            const input = document.createElement('input');
+            input.type = type;
+            input.name = name;
+            input.id = inputId;
+            input.className = 'form-text';
+            input.required = true;
+            input.setAttribute('autocomplete', autocomplete);
+            input.size = 60;
+            if (type === 'password') {
+              input.maxLength = 128;
+            } else if (type === 'email') {
+              input.maxLength = 254;
+            } else {
+              input.maxLength = 60;
+            }
+            input.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; width: 100% !important; padding: 0.5rem 1rem !important; border: 1px solid #ccc !important; background: white !important; min-height: 2.5rem !important; margin-top: 0.5rem !important;';
+            
+            // Trouver le texte "Nom d'utilisateur" ou "Mot de passe" dans le form-item
+            const textNodes = [];
+            const walker = document.createTreeWalker(
+              formItem,
+              NodeFilter.SHOW_TEXT,
+              null,
+              false
+            );
+            let node;
+            while (node = walker.nextNode()) {
+              if (node.textContent.trim()) {
+                textNodes.push(node);
+              }
+            }
+            
+            // Trouver le nœud texte qui correspond au label
+            let targetTextNode = null;
+            textNodes.forEach(function(textNode) {
+              const text = textNode.textContent.trim().toLowerCase();
+              if ((name === 'name' && (text.includes('nom') || text.includes('username') || text.includes('utilisateur'))) ||
+                  (name === 'pass' && (text.includes('mot de passe') || text.includes('password'))) ||
+                  (name === 'mail' && (text.includes('email') || text.includes('e-mail') || text.includes('courriel')))) {
+                targetTextNode = textNode;
+              }
+            });
+            
+            if (targetTextNode) {
+              // Insérer l'input après le nœud texte
+              const parent = targetTextNode.parentNode;
+              if (parent) {
+                // Créer un saut de ligne si nécessaire
+                const br = document.createElement('br');
+                parent.insertBefore(br, targetTextNode.nextSibling);
+                parent.insertBefore(input, br.nextSibling);
+              } else {
+                formItem.appendChild(input);
+              }
+            } else {
+              // Pas de texte trouvé, ajouter à la fin du form-item
+              formItem.appendChild(input);
+            }
+          };
+          
+          // Trouver directement les form-items par leurs classes CSS (utiliser document pour être sûr)
+          // Utiliser querySelectorAll pour trouver tous les form-items possibles
+          const allFormItems = document.querySelectorAll('.form-item-name, .js-form-item-name, .form-item-pass, .js-form-item-pass, .form-item-mail, .js-form-item-mail, .form-item-user-picture, .js-form-item-user-picture, .form-item-contact, .js-form-item-contact, [class*="user-picture"], [class*="user_picture"]');
+          
+          // Chercher aussi les form-items pour user_picture avec différentes variantes
+          const userPictureItems = document.querySelectorAll('[class*="user-picture"], [class*="user_picture"], [id*="user-picture"], [id*="user_picture"]');
+          
+          // Trouver le conteneur du formulaire (block-spherevoices-theme-content)
+          const formContainer = document.querySelector('#block-spherevoices-theme-content');
+          
+          // Chercher d'abord les champs cachés existants dans le document
+          const existingFormId = document.querySelector('input[name="form_id"]');
+          const existingFormBuildId = document.querySelector('input[name="form_build_id"]');
+          const existingFormToken = document.querySelector('input[name="form_token"]');
+          
+          // Si le formulaire n'existe pas, le créer
+          let form = document.querySelector('form#user-login-form, form#user-register-form, form#user-pass');
+          const currentPath = window.location.pathname;
+          
+          // Vérifier si on est vraiment sur une page de formulaire utilisateur
+          const isUserFormPage = currentPath.includes('/user/login') || 
+                                 currentPath.includes('/user/register') || 
+                                 currentPath.includes('/user/password') ||
+                                 currentPath === '/user/login' ||
+                                 currentPath === '/user/register' ||
+                                 currentPath === '/user/password';
+          
+          // Ne créer le formulaire QUE si on est sur une page de formulaire utilisateur
+          if (!form && formContainer && isUserFormPage) {
+            // Déterminer l'ID et l'action du formulaire selon la page
+            let formId = 'user-login-form';
+            let formAction = '/user/login';
+            let formIdValue = 'user_login_form';
+            if (currentPath.includes('/user/register')) {
+              formId = 'user-register-form';
+              formAction = '/user/register';
+              formIdValue = 'user_register_form';
+            } else if (currentPath.includes('/user/password')) {
+              formId = 'user-pass';
+              formAction = '/user/password';
+              formIdValue = 'user_pass';
+            }
+            
+            // Créer le formulaire
+            form = document.createElement('form');
+            form.id = formId;
+            form.setAttribute('action', formAction);
+            form.setAttribute('method', 'post');
+            form.setAttribute('accept-charset', 'UTF-8');
+            // Pour le formulaire d'inscription, ajouter enctype pour l'upload de fichiers
+            if (currentPath.includes('/user/register')) {
+              form.setAttribute('enctype', 'multipart/form-data');
+            }
+            form.className = 'user-login-form user-form';
+            
+            // Ajouter les champs cachés nécessaires AVANT de déplacer les form-items
+            // form_id
+            const formIdInput = document.createElement('input');
+            formIdInput.type = 'hidden';
+            formIdInput.name = 'form_id';
+            formIdInput.value = existingFormId ? existingFormId.value : formIdValue;
+            formIdInput.id = existingFormId ? existingFormId.id : 'edit-' + formIdValue;
+            form.appendChild(formIdInput);
+            
+            // form_build_id
+            const buildIdInput = document.createElement('input');
+            buildIdInput.type = 'hidden';
+            buildIdInput.name = 'form_build_id';
+            buildIdInput.value = existingFormBuildId ? existingFormBuildId.value : 'form-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            buildIdInput.id = existingFormBuildId ? existingFormBuildId.id : 'edit-form-build-id';
+            buildIdInput.setAttribute('autocomplete', 'off');
+            form.appendChild(buildIdInput);
+            
+            // form_token (si présent, pour utilisateurs authentifiés)
+            if (existingFormToken) {
+              const tokenInput = document.createElement('input');
+              tokenInput.type = 'hidden';
+              tokenInput.name = 'form_token';
+              tokenInput.value = existingFormToken.value;
+              tokenInput.id = existingFormToken.id;
+              form.appendChild(tokenInput);
+            }
+            
+            // Déplacer tous les form-items dans le formulaire
+            if (formContainer) {
+              const formItems = formContainer.querySelectorAll('.form-item, .js-form-item, .form-actions');
+              formItems.forEach(function(item) {
+                form.appendChild(item);
+              });
+              
+              // Insérer le formulaire dans le conteneur (seulement sur les pages de formulaire)
+              formContainer.innerHTML = '';
+              formContainer.appendChild(form);
+            }
+          }
+          
+          // Fonction pour injecter un champ file upload (image)
+          const injectFileUploadInFormItem = function(formItem, name) {
+            if (!formItem) return;
+            
+            const inputId = 'edit-' + name.replace(/_/g, '-') + '-0-upload';
+            // Vérifier si l'input file existe déjà (dans le form-item ou ailleurs)
+            if (formItem.querySelector('#' + inputId) || formItem.querySelector('input[type="file"][name*="' + name + '"]') || document.getElementById(inputId)) {
+              return;
+            }
+            
+            // Créer le conteneur pour le champ file
+            const fileWrapper = document.createElement('div');
+            fileWrapper.className = 'js-form-managed-file form-managed-file';
+            
+            // Créer l'input file
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            // Drupal utilise files[FIELD_NAME_0] pour les champs d'image (ex: files[user_picture_0])
+            const fieldNameForFiles = name.replace(/-/g, '_') + '_0';
+            fileInput.name = 'files[' + fieldNameForFiles + ']';
+            fileInput.id = inputId;
+            fileInput.className = 'form-file';
+            fileInput.setAttribute('data-drupal-selector', name.replace(/_/g, '-') + '-0-upload');
+            fileInput.accept = '.png,.gif,.jpg,.jpeg,.webp,image/png,image/gif,image/jpeg,image/jpg,image/webp';
+            fileInput.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; width: 100% !important; padding: 0.5rem 1rem !important; border: 1px solid #ccc !important; background: white !important; min-height: 2.5rem !important; margin-top: 0.5rem !important;';
+            
+            fileWrapper.appendChild(fileInput);
+            
+            // Vérifier si la description existe déjà dans le form-item pour éviter les doublons
+            const existingDescription = formItem.querySelector('.description');
+            if (!existingDescription || !existingDescription.textContent.includes('1 seul fichier')) {
+              const description = document.createElement('div');
+              description.className = 'description';
+              description.innerHTML = '1 seul fichier.<br>Limité à 2 Mo.<br>Types autorisés : png gif jpg jpeg webp.';
+              description.style.cssText = 'margin-top: 0.5rem !important; font-size: 0.875rem !important; color: #666 !important;';
+              fileWrapper.appendChild(description);
+            }
+            
+            // Trouver le label ou le texte dans le form-item
+            const label = formItem.querySelector('label');
+            if (label) {
+              label.parentNode.insertBefore(fileWrapper, label.nextSibling);
+            } else {
+              // Chercher le texte "Image" ou "visage" ou "picture"
+              const textNodes = [];
+              const walker = document.createTreeWalker(
+                formItem,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+              );
+              let node;
+              while (node = walker.nextNode()) {
+                const text = node.textContent.trim().toLowerCase();
+                if (text && (text.includes('image') || text.includes('visage') || text.includes('picture') || text.includes('virtuel'))) {
+                  textNodes.push(node);
+                }
+              }
+              
+              if (textNodes.length > 0) {
+                const parent = textNodes[0].parentNode;
+                if (parent) {
+                  const br = document.createElement('br');
+                  parent.insertBefore(br, textNodes[0].nextSibling);
+                  parent.insertBefore(fileWrapper, br.nextSibling);
+                } else {
+                  formItem.appendChild(fileWrapper);
+                }
+              } else {
+                formItem.appendChild(fileWrapper);
+              }
+            }
+          };
+          
+          // Fonction pour injecter une case à cocher (checkbox)
+          const injectCheckboxInFormItem = function(formItem, name) {
+            if (!formItem) return;
+            
+            const inputId = 'edit-' + name.replace(/_/g, '-');
+            // Vérifier si l'input checkbox existe déjà (dans le form-item ou ailleurs)
+            if (formItem.querySelector('#' + inputId) || formItem.querySelector('input[type="checkbox"][name="' + name + '"]') || document.getElementById(inputId)) {
+              return;
+            }
+            
+            // Vérifier aussi si le texte de description existe déjà dans le form-item pour éviter les doublons
+            const existingText = formItem.textContent;
+            const textToCheck = 'Permettre aux autres utilisateurs de vous contacter';
+            const occurrences = (existingText.match(new RegExp(textToCheck, 'g')) || []).length;
+            if (occurrences >= 2) {
+              // Le texte apparaît déjà plusieurs fois, ne pas ajouter
+              return;
+            }
+            
+            // Créer le conteneur pour la checkbox
+            const checkboxWrapper = document.createElement('div');
+            checkboxWrapper.className = 'js-form-item form-item js-form-type-checkbox form-type-checkbox form-item-contact js-form-item-contact';
+            checkboxWrapper.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important;';
+            
+            // Créer la checkbox
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.name = name;
+            checkbox.id = inputId;
+            checkbox.className = 'form-checkbox';
+            checkbox.setAttribute('data-drupal-selector', name.replace(/_/g, '-'));
+            checkbox.value = '1';
+            checkbox.style.cssText = 'display: inline-block !important; visibility: visible !important; opacity: 1 !important; margin-right: 0.5rem !important; width: auto !important; height: auto !important; cursor: pointer !important; position: relative !important; z-index: 9999 !important; pointer-events: auto !important;';
+            checkbox.disabled = false;
+            checkbox.readOnly = false;
+            
+            // Ajouter un event listener pour s'assurer que la checkbox fonctionne
+            checkbox.addEventListener('click', function(e) {
+              e.stopPropagation();
+            }, true);
+            
+            // Créer le label pour la checkbox
+            const label = document.createElement('label');
+            label.setAttribute('for', inputId);
+            label.className = 'option';
+            label.textContent = 'Permettre aux autres utilisateurs de vous contacter à partir d\'un formulaire de contact personnel qui ne divulgue pas votre adresse de courriel. Il est à noter que certains utilisateurs privilégiés tels que les administrateurs du site restent en mesure de vous contacter même si vous décidez de désactiver cette fonctionnalité.';
+            label.style.cssText = 'display: inline !important; visibility: visible !important; opacity: 1 !important; font-weight: normal !important; cursor: pointer !important; width: auto !important; pointer-events: auto !important; position: relative !important; z-index: 1 !important;';
+            
+            // Ajouter un event listener sur le label pour cocher/décocher la checkbox
+            label.addEventListener('click', function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              checkbox.checked = !checkbox.checked;
+              checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+            
+            checkboxWrapper.appendChild(checkbox);
+            checkboxWrapper.appendChild(label);
+            
+            // S'assurer que le wrapper et tous les parents ont pointer-events: auto
+            checkboxWrapper.style.pointerEvents = 'auto';
+            let currentElement = checkboxWrapper;
+            while (currentElement && currentElement !== document.body) {
+              currentElement.style.pointerEvents = 'auto';
+              currentElement = currentElement.parentElement;
+            }
+            
+            // Trouver le texte "contact" dans le form-item ou le conteneur details
+            const details = formItem.closest('details') || formItem;
+            const existingLabel = details.querySelector('summary, .fieldset-legend, label');
+            
+            if (existingLabel) {
+              // Si c'est dans un details, ajouter après le summary
+              if (details.tagName === 'DETAILS') {
+                details.appendChild(checkboxWrapper);
+              } else {
+                existingLabel.parentNode.insertBefore(checkboxWrapper, existingLabel.nextSibling);
+              }
+            } else {
+              // Chercher le texte "contact" ou "formulaire"
+              const textNodes = [];
+              const walker = document.createTreeWalker(
+                formItem,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+              );
+              let node;
+              while (node = walker.nextNode()) {
+                const text = node.textContent.trim().toLowerCase();
+                if (text && (text.includes('contact') || text.includes('formulaire'))) {
+                  textNodes.push(node);
+                }
+              }
+              
+              if (textNodes.length > 0) {
+                const parent = textNodes[0].parentNode;
+                if (parent) {
+                  const br = document.createElement('br');
+                  parent.insertBefore(br, textNodes[0].nextSibling);
+                  parent.insertBefore(checkboxWrapper, br.nextSibling);
+                } else {
+                  formItem.appendChild(checkboxWrapper);
+                }
+              } else {
+                formItem.appendChild(checkboxWrapper);
+              }
+            }
+          };
+          
+          // Chercher TOUS les form-items de manière large pour s'assurer de trouver les champs
+          const allFormItemsWide = document.querySelectorAll('.form-item, .js-form-item');
+          
+          // Parcourir tous les form-items trouvés - traiter d'abord les champs de base (name, pass, mail)
+          allFormItemsWide.forEach(function(formItem) {
+            const classes = formItem.className || '';
+            const text = formItem.textContent.toLowerCase();
+            
+            // Chercher par classe d'abord - traiter chaque champ indépendamment
+            if ((classes.includes('form-item-name') || classes.includes('js-form-item-name')) && 
+                !formItem.querySelector('#edit-name') && 
+                !formItem.querySelector('input[name="name"]')) {
+              injectInputInFormItem(formItem, 'name', 'text', 'username');
+            }
+            
+            if ((classes.includes('form-item-pass') || classes.includes('js-form-item-pass')) && 
+                !formItem.querySelector('#edit-pass') && 
+                !formItem.querySelector('input[name="pass"]')) {
+              injectInputInFormItem(formItem, 'pass', 'password', 'current-password');
+            }
+            
+            if ((classes.includes('form-item-mail') || classes.includes('js-form-item-mail')) && 
+                !formItem.querySelector('#edit-mail') && 
+                !formItem.querySelector('input[name="mail"]')) {
+              injectInputInFormItem(formItem, 'mail', 'email', 'email');
+            }
+            
+            // Chercher aussi par texte si pas trouvé par classe (pour les champs de base uniquement)
+            // Ne traiter que si aucun input n'existe déjà dans le form-item
+            // ET que ce n'est pas une description ou un form-item pour contact/user_picture
+            const hasAnyInput = formItem.querySelector('input[type="text"], input[type="password"], input[type="email"]');
+            const isDescription = formItem.classList.contains('description') || formItem.closest('.description');
+            const isContactOrPicture = classes.includes('form-item-contact') || classes.includes('form-item-user-picture') || 
+                                       classes.includes('js-form-item-contact') || classes.includes('js-form-item-user-picture');
+            
+            if (!hasAnyInput && !isDescription && !isContactOrPicture) {
+              if ((text.includes('nom') || text.includes('username') || text.includes('utilisateur')) && 
+                  !formItem.querySelector('#edit-name') && 
+                  !formItem.querySelector('input[name="name"]') &&
+                  !formItem.querySelector('input[type="file"]') &&
+                  !formItem.querySelector('input[type="checkbox"]')) {
+                injectInputInFormItem(formItem, 'name', 'text', 'username');
+              } else if ((text.includes('mot de passe') || text.includes('password')) && 
+                         !formItem.querySelector('#edit-pass') && 
+                         !formItem.querySelector('input[name="pass"]') &&
+                         !formItem.querySelector('input[type="file"]') &&
+                         !formItem.querySelector('input[type="checkbox"]')) {
+                injectInputInFormItem(formItem, 'pass', 'password', 'current-password');
+              } else if ((text.includes('email') || text.includes('e-mail') || text.includes('courriel')) && 
+                         !formItem.querySelector('#edit-mail') && 
+                         !formItem.querySelector('input[name="mail"]') &&
+                         !formItem.querySelector('input[type="file"]') &&
+                         !formItem.querySelector('input[type="checkbox"]')) {
+                injectInputInFormItem(formItem, 'mail', 'email', 'email');
+              }
+            }
+          });
+          
+          // Traiter les champs spéciaux (user_picture, contact) séparément
+          allFormItems.forEach(function(formItem) {
+            const classes = formItem.className || '';
+            if ((classes.includes('form-item-user-picture') || classes.includes('js-form-item-user-picture') || classes.includes('user-picture') || classes.includes('user_picture')) &&
+                !formItem.querySelector('input[type="file"]')) {
+              injectFileUploadInFormItem(formItem, 'user_picture');
+            }
+            if ((classes.includes('form-item-contact') || classes.includes('js-form-item-contact')) &&
+                !formItem.querySelector('input[type="checkbox"][name="contact"]')) {
+              injectCheckboxInFormItem(formItem, 'contact');
+            }
+          });
+          
+          // Parcourir les éléments user_picture trouvés
+          userPictureItems.forEach(function(item) {
+            // Vérifier si c'est un form-item ou un conteneur
+            if (item.classList.contains('form-item') || item.classList.contains('js-form-item') || item.querySelector('.form-item')) {
+              const formItem = item.classList.contains('form-item') ? item : item.querySelector('.form-item') || item;
+              if (!formItem.querySelector('input[type="file"]')) {
+                injectFileUploadInFormItem(formItem, 'user_picture');
+              }
+            }
+          });
+          
+          // Chercher aussi les form-items qui contiennent "image" ou "visage" ou "picture" dans leur texte mais n'ont pas de file input
+          // MAIS seulement sur la page d'inscription pour éviter de casser les autres formulaires
+          if (window.location.pathname.includes('/user/register')) {
+            const allFormItemsForPicture = document.querySelectorAll('.form-item, .js-form-item');
+            allFormItemsForPicture.forEach(function(formItem) {
+              const text = formItem.textContent.toLowerCase();
+              const classes = formItem.className || '';
+              // Ne pas traiter les champs de base (name, pass, mail)
+              if (!classes.includes('form-item-name') && !classes.includes('js-form-item-name') &&
+                  !classes.includes('form-item-pass') && !classes.includes('js-form-item-pass') &&
+                  !classes.includes('form-item-mail') && !classes.includes('js-form-item-mail')) {
+                if ((text.includes('image') || text.includes('visage') || text.includes('picture') || text.includes('virtuel')) && 
+                    !formItem.querySelector('input[type="file"]') &&
+                    !formItem.querySelector('input[type="text"]') &&
+                    !formItem.querySelector('input[type="email"]') &&
+                    !formItem.querySelector('input[type="password"]')) {
+                  // C'est probablement le champ user_picture
+                  injectFileUploadInFormItem(formItem, 'user_picture');
+                }
+              }
+            });
+          }
+          
+          // Chercher aussi dans les éléments details pour le champ contact
+          // Chercher tous les details qui pourraient contenir le champ contact
+          const allDetails = document.querySelectorAll('details');
+          allDetails.forEach(function(details) {
+            const summary = details.querySelector('summary');
+            if (summary && (summary.textContent.toLowerCase().includes('contact') || summary.textContent.toLowerCase().includes('formulaire'))) {
+              // Chercher s'il y a déjà une checkbox contact
+              let hasContactCheckbox = details.querySelector('input[type="checkbox"][name="contact"]');
+              
+              // Vérifier si le texte existe déjà pour éviter les doublons
+              const contactText = 'Permettre aux autres utilisateurs de vous contacter à partir d\'un formulaire de contact personnel qui ne divulgue pas votre adresse de courriel. Il est à noter que certains utilisateurs privilégiés tels que les administrateurs du site restent en mesure de vous contacter même si vous décidez de désactiver cette fonctionnalité.';
+              const occurrences = (details.textContent.match(new RegExp(contactText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+              
+              // Vérifier aussi dans tout le document
+              const allLabels = document.querySelectorAll('label');
+              let textExists = false;
+              allLabels.forEach(function(label) {
+                if (label.textContent.trim() === contactText.trim()) {
+                  textExists = true;
+                }
+              });
+              
+              // Si pas de checkbox, chercher un input text avec le nom contact et le remplacer
+              const contactTextInput = details.querySelector('input[type="text"][name="contact"], input[name*="contact"]');
+              if (contactTextInput && contactTextInput.type === 'text' && occurrences === 0 && !textExists) {
+                // Remplacer l'input text par une checkbox
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.name = 'contact';
+                checkbox.id = contactTextInput.id || 'edit-contact';
+                checkbox.className = 'form-checkbox';
+                checkbox.setAttribute('data-drupal-selector', 'edit-contact');
+                checkbox.value = '1';
+                checkbox.style.cssText = 'display: inline-block !important; visibility: visible !important; opacity: 1 !important; margin-right: 0.5rem !important; width: auto !important; height: auto !important; cursor: pointer !important; position: relative !important; z-index: 9999 !important; pointer-events: auto !important;';
+                checkbox.disabled = false;
+                checkbox.readOnly = false;
+                
+                // Ajouter un event listener pour s'assurer que la checkbox fonctionne
+                checkbox.addEventListener('click', function(e) {
+                  e.stopPropagation();
+                }, true);
+                
+                // Créer un wrapper pour la checkbox et le label
+                const checkboxWrapper = document.createElement('div');
+                checkboxWrapper.className = 'js-form-item form-item js-form-type-checkbox form-type-checkbox form-item-contact js-form-item-contact';
+                checkboxWrapper.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; pointer-events: auto !important;';
+                
+                // Créer le label
+                const label = document.createElement('label');
+                label.setAttribute('for', checkbox.id);
+                label.className = 'option';
+                label.textContent = 'Permettre aux autres utilisateurs de vous contacter à partir d\'un formulaire de contact personnel qui ne divulgue pas votre adresse de courriel. Il est à noter que certains utilisateurs privilégiés tels que les administrateurs du site restent en mesure de vous contacter même si vous décidez de désactiver cette fonctionnalité.';
+                label.style.cssText = 'display: inline !important; visibility: visible !important; opacity: 1 !important; font-weight: normal !important; cursor: pointer !important; width: auto !important; pointer-events: auto !important; position: relative !important; z-index: 1 !important;';
+                
+                // Ajouter un event listener sur le label pour cocher/décocher la checkbox
+                label.addEventListener('click', function(e) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  checkbox.checked = !checkbox.checked;
+                  checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+                
+                checkboxWrapper.appendChild(checkbox);
+                checkboxWrapper.appendChild(label);
+                
+                // Remplacer l'input text par le wrapper avec la checkbox
+                contactTextInput.parentNode.replaceChild(checkboxWrapper, contactTextInput);
+                
+                // S'assurer que tous les parents ont pointer-events: auto
+                let currentElement = checkboxWrapper;
+                while (currentElement && currentElement !== document.body) {
+                  currentElement.style.pointerEvents = 'auto';
+                  currentElement = currentElement.parentElement;
+                }
+              } else if (!hasContactCheckbox && occurrences === 0 && !textExists) {
+                // Créer un form-item s'il n'existe pas
+                const formItem = document.createElement('div');
+                formItem.className = 'form-item js-form-item form-type-checkbox js-form-type-checkbox form-item-contact js-form-item-contact';
+                details.appendChild(formItem);
+                injectCheckboxInFormItem(formItem, 'contact');
+              }
+            }
+          });
+          
+          // Chercher aussi les form-items qui contiennent "contact" dans leur texte mais n'ont pas de checkbox
+          const allFormItemsWithContact = document.querySelectorAll('.form-item, .js-form-item');
+          allFormItemsWithContact.forEach(function(formItem) {
+            const text = formItem.textContent.toLowerCase();
+            if (text.includes('formulaire de contact') || text.includes('contact personnel')) {
+              const hasCheckbox = formItem.querySelector('input[type="checkbox"][name="contact"]');
+              const hasTextInput = formItem.querySelector('input[type="text"][name="contact"], input[type="text"][name*="contact"]');
+              
+              // Vérifier si le texte existe déjà pour éviter les doublons
+              const contactText = 'Permettre aux autres utilisateurs de vous contacter à partir d\'un formulaire de contact personnel qui ne divulgue pas votre adresse de courriel. Il est à noter que certains utilisateurs privilégiés tels que les administrateurs du site restent en mesure de vous contacter même si vous décidez de désactiver cette fonctionnalité.';
+              const occurrences = (formItem.textContent.match(new RegExp(contactText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+              
+              // Vérifier aussi dans tout le document
+              const allLabels = document.querySelectorAll('label');
+              let textExists = false;
+              allLabels.forEach(function(label) {
+                if (label.textContent.trim() === contactText.trim()) {
+                  textExists = true;
+                }
+              });
+              
+              if (hasTextInput && !hasCheckbox && occurrences === 0 && !textExists) {
+                // Remplacer l'input text par une checkbox
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.name = 'contact';
+                checkbox.id = hasTextInput.id || 'edit-contact';
+                checkbox.className = 'form-checkbox';
+                checkbox.setAttribute('data-drupal-selector', 'edit-contact');
+                checkbox.value = '1';
+                checkbox.style.cssText = 'display: inline-block !important; visibility: visible !important; opacity: 1 !important; margin-right: 0.5rem !important; width: auto !important; height: auto !important; cursor: pointer !important; position: relative !important; z-index: 9999 !important; pointer-events: auto !important;';
+                checkbox.disabled = false;
+                checkbox.readOnly = false;
+                
+                // Ajouter un event listener pour s'assurer que la checkbox fonctionne
+                checkbox.addEventListener('click', function(e) {
+                  e.stopPropagation();
+                }, true);
+                
+                // Créer un conteneur pour la checkbox et le label
+                const checkboxWrapper = document.createElement('div');
+                checkboxWrapper.className = 'js-form-item form-item js-form-type-checkbox form-type-checkbox form-item-contact js-form-item-contact';
+                checkboxWrapper.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; pointer-events: auto !important;';
+                
+                const label = document.createElement('label');
+                label.setAttribute('for', checkbox.id);
+                label.className = 'option';
+                label.textContent = 'Permettre aux autres utilisateurs de vous contacter à partir d\'un formulaire de contact personnel qui ne divulgue pas votre adresse de courriel. Il est à noter que certains utilisateurs privilégiés tels que les administrateurs du site restent en mesure de vous contacter même si vous décidez de désactiver cette fonctionnalité.';
+                label.style.cssText = 'display: inline !important; visibility: visible !important; opacity: 1 !important; font-weight: normal !important; cursor: pointer !important; width: auto !important; pointer-events: auto !important; position: relative !important; z-index: 1 !important;';
+                
+                // Ajouter un event listener sur le label pour cocher/décocher la checkbox
+                label.addEventListener('click', function(e) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  checkbox.checked = !checkbox.checked;
+                  checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+                
+                checkboxWrapper.appendChild(checkbox);
+                checkboxWrapper.appendChild(label);
+                
+                // S'assurer que tous les parents ont pointer-events: auto
+                let currentElement = checkboxWrapper;
+                while (currentElement && currentElement !== document.body) {
+                  currentElement.style.pointerEvents = 'auto';
+                  currentElement = currentElement.parentElement;
+                }
+                
+                // Remplacer l'input text par le wrapper avec la checkbox
+                hasTextInput.parentNode.replaceChild(checkboxWrapper, hasTextInput);
+              } else if (!hasCheckbox && occurrences === 0 && !textExists) {
+                injectCheckboxInFormItem(formItem, 'contact');
+              }
+            }
+          });
+          
+          // Chercher aussi dans tout le document les inputs text avec name="contact" et les remplacer
+          const allContactTextInputs = document.querySelectorAll('input[type="text"][name="contact"], input[type="text"][name*="contact"]');
+          allContactTextInputs.forEach(function(textInput) {
+            // Vérifier que c'est bien un input text et qu'il n'y a pas déjà une checkbox
+            if (textInput.type === 'text') {
+              const parentFormItem = textInput.closest('.form-item, .js-form-item');
+              const hasCheckbox = parentFormItem ? parentFormItem.querySelector('input[type="checkbox"][name="contact"]') : document.querySelector('input[type="checkbox"][name="contact"]');
+              
+              // Vérifier aussi si le texte existe déjà
+              const contactText = 'Permettre aux autres utilisateurs de vous contacter à partir d\'un formulaire de contact personnel qui ne divulgue pas votre adresse de courriel. Il est à noter que certains utilisateurs privilégiés tels que les administrateurs du site restent en mesure de vous contacter même si vous décidez de désactiver cette fonctionnalité.';
+              const parentElement = parentFormItem || textInput.parentElement;
+              const occurrences = parentElement ? (parentElement.textContent.match(new RegExp(contactText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length : 0;
+              
+              // Vérifier aussi dans tout le document
+              const allLabels = document.querySelectorAll('label');
+              let textExists = false;
+              allLabels.forEach(function(label) {
+                if (label.textContent.trim() === contactText.trim()) {
+                  textExists = true;
+                }
+              });
+              
+              if (!hasCheckbox && occurrences === 0 && !textExists) {
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.name = 'contact';
+                checkbox.id = textInput.id || 'edit-contact';
+                checkbox.className = 'form-checkbox';
+                checkbox.setAttribute('data-drupal-selector', 'edit-contact');
+                checkbox.value = '1';
+                checkbox.style.cssText = 'display: inline-block !important; visibility: visible !important; opacity: 1 !important; margin-right: 0.5rem !important; width: auto !important; height: auto !important; cursor: pointer !important; position: relative !important; z-index: 9999 !important; pointer-events: auto !important;';
+                checkbox.disabled = false;
+                checkbox.readOnly = false;
+                
+                // Ajouter un event listener pour s'assurer que la checkbox fonctionne
+                checkbox.addEventListener('click', function(e) {
+                  e.stopPropagation();
+                }, true);
+                
+                const checkboxWrapper = document.createElement('div');
+                checkboxWrapper.className = 'js-form-item form-item js-form-type-checkbox form-type-checkbox form-item-contact js-form-item-contact';
+                checkboxWrapper.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; pointer-events: auto !important;';
+                
+                const label = document.createElement('label');
+                label.setAttribute('for', checkbox.id);
+                label.className = 'option';
+                label.textContent = 'Permettre aux autres utilisateurs de vous contacter à partir d\'un formulaire de contact personnel qui ne divulgue pas votre adresse de courriel. Il est à noter que certains utilisateurs privilégiés tels que les administrateurs du site restent en mesure de vous contacter même si vous décidez de désactiver cette fonctionnalité.';
+                label.style.cssText = 'display: inline !important; visibility: visible !important; opacity: 1 !important; font-weight: normal !important; cursor: pointer !important; width: auto !important; pointer-events: auto !important; position: relative !important; z-index: 1 !important;';
+                
+                // Ajouter un event listener sur le label pour cocher/décocher la checkbox
+                label.addEventListener('click', function(e) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  checkbox.checked = !checkbox.checked;
+                  checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+                
+                checkboxWrapper.appendChild(checkbox);
+                checkboxWrapper.appendChild(label);
+                
+                // Remplacer l'input text par le wrapper avec la checkbox
+                textInput.parentNode.replaceChild(checkboxWrapper, textInput);
+                
+                // S'assurer que tous les parents ont pointer-events: auto
+                let currentElement = checkboxWrapper;
+                while (currentElement && currentElement !== document.body) {
+                  currentElement.style.pointerEvents = 'auto';
+                  currentElement = currentElement.parentElement;
+                }
+              }
+            }
+          });
+          
+          // S'assurer que les checkboxes contact existantes ont les bons styles et sont cliquables
+          const existingContactCheckboxes = document.querySelectorAll('input[type="checkbox"][name="contact"]');
+          existingContactCheckboxes.forEach(function(checkbox) {
+            // Forcer les styles pour que la checkbox soit cliquable
+            checkbox.style.setProperty('display', 'inline-block', 'important');
+            checkbox.style.setProperty('visibility', 'visible', 'important');
+            checkbox.style.setProperty('opacity', '1', 'important');
+            checkbox.style.setProperty('margin-right', '0.5rem', 'important');
+            checkbox.style.setProperty('width', 'auto', 'important');
+            checkbox.style.setProperty('height', 'auto', 'important');
+            checkbox.style.setProperty('cursor', 'pointer', 'important');
+            checkbox.style.setProperty('position', 'relative', 'important');
+            checkbox.style.setProperty('z-index', '99999', 'important');
+            checkbox.style.setProperty('pointer-events', 'auto', 'important');
+            checkbox.disabled = false;
+            checkbox.readOnly = false;
+            checkbox.removeAttribute('disabled');
+            checkbox.removeAttribute('readonly');
+            
+            // S'assurer qu'aucun élément n'est par-dessus la checkbox en vérifiant tous les parents
+            let currentElement = checkbox;
+            while (currentElement && currentElement !== document.body) {
+              currentElement.style.setProperty('pointer-events', 'auto', 'important');
+              if (currentElement === checkbox) {
+                currentElement.style.setProperty('z-index', '99999', 'important');
+              }
+              // Vérifier les enfants pour s'assurer qu'aucun n'est par-dessus
+              const children = currentElement.children;
+              for (let i = 0; i < children.length; i++) {
+                if (children[i] !== checkbox) {
+                  const childStyle = window.getComputedStyle(children[i]);
+                  if (childStyle.position === 'absolute' || childStyle.position === 'fixed') {
+                    const zIndex = parseInt(childStyle.zIndex) || 0;
+                    if (zIndex > 99998) {
+                      children[i].style.setProperty('z-index', '1', 'important');
+                    }
+                  }
+                }
+              }
+              currentElement = currentElement.parentElement;
+            }
+            
+            // S'assurer que le label associé a aussi les bons styles
+            const label = document.querySelector('label[for="' + checkbox.id + '"]');
+            if (label) {
+              label.style.setProperty('display', 'inline', 'important');
+              label.style.setProperty('visibility', 'visible', 'important');
+              label.style.setProperty('opacity', '1', 'important');
+              label.style.setProperty('font-weight', 'normal', 'important');
+              label.style.setProperty('cursor', 'pointer', 'important');
+              label.style.setProperty('width', 'auto', 'important');
+              label.style.setProperty('pointer-events', 'auto', 'important');
+              label.style.setProperty('position', 'relative', 'important');
+              label.style.setProperty('z-index', '1', 'important');
+              
+              // Ajouter un event listener sur le label pour cocher/décocher la checkbox
+              label.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                checkbox.checked = !checkbox.checked;
+                const changeEvent = new Event('change', { bubbles: true, cancelable: true });
+                checkbox.dispatchEvent(changeEvent);
+                return false;
+              };
+            }
+            
+            // Ajouter un event listener direct sur la checkbox pour s'assurer qu'elle fonctionne
+            checkbox.onclick = function(e) {
+              e.stopPropagation();
+              return true;
+            };
+            
+            checkbox.onchange = function(e) {
+              e.stopPropagation();
+              return true;
+            };
+          });
+          
+          // Supprimer les doublons de texte pour le champ contact
+          const contactText = 'Permettre aux autres utilisateurs de vous contacter à partir d\'un formulaire de contact personnel qui ne divulgue pas votre adresse de courriel. Il est à noter que certains utilisateurs privilégiés tels que les administrateurs du site restent en mesure de vous contacter même si vous décidez de désactiver cette fonctionnalité.';
+          const contactTextNormalized = contactText.trim().replace(/\s+/g, ' ');
+          const contactTextStart = contactTextNormalized.substring(0, 50);
+          
+          // Supprimer TOUTES les descriptions qui contiennent ce texte (on garde seulement le label)
+          const allDescriptions = document.querySelectorAll('.description');
+          allDescriptions.forEach(function(description) {
+            const descText = description.textContent.trim().replace(/\s+/g, ' ');
+            // Vérifier si la description contient le texte de contact
+            if (descText.includes(contactTextStart) || descText === contactTextNormalized) {
+              // Vérifier aussi si c'est dans un form-item-contact
+              const parentFormItem = description.closest('.form-item-contact, .js-form-item-contact');
+              if (parentFormItem) {
+                // C'est une description avec le texte de contact dans le form-item-contact, la supprimer
+                description.remove();
+              }
+            }
+          });
+          
+          // Chercher tous les labels qui contiennent ce texte
+          const allLabels = document.querySelectorAll('label');
+          const labelsWithContactText = [];
+          allLabels.forEach(function(label) {
+            const labelText = label.textContent.trim().replace(/\s+/g, ' ');
+            if (labelText === contactTextNormalized || labelText.includes(contactTextStart)) {
+              labelsWithContactText.push(label);
+            }
+          });
+          
+          // Garder seulement le premier label, supprimer les autres
+          if (labelsWithContactText.length > 1) {
+            for (let i = 1; i < labelsWithContactText.length; i++) {
+              labelsWithContactText[i].remove();
+            }
+          }
+          
+          // Supprimer aussi les inputs text qui ont été injectés par erreur dans les descriptions
+          const allDescriptionsWithInputs = document.querySelectorAll('.description input[type="text"], .description input[type="email"], .description input[type="password"]');
+          allDescriptionsWithInputs.forEach(function(input) {
+            input.remove();
+          });
+          
+          // Supprimer aussi les descriptions en double dans les form-items contact
+          const contactFormItems = document.querySelectorAll('.form-item-contact, .js-form-item-contact');
+          contactFormItems.forEach(function(formItem) {
+            const descriptions = formItem.querySelectorAll('.description');
+            let foundFirst = false;
+            descriptions.forEach(function(desc) {
+              const descText = desc.textContent.trim().replace(/\s+/g, ' ');
+              if (descText.includes(contactTextStart) || descText === contactTextNormalized) {
+                if (foundFirst) {
+                  desc.remove();
+                } else {
+                  foundFirst = true;
+                }
+              }
+            });
+          });
+          
+          // S'assurer que le bouton submit existe et qu'il est dans un formulaire
+          const actionsDiv = document.querySelector('#edit-actions, .form-actions');
+          if (actionsDiv && !actionsDiv.querySelector('input[type="submit"], button[type="submit"]')) {
+            // Trouver le formulaire parent (peut être celui qu'on vient de créer)
+            const parentForm = actionsDiv.closest('form') || form;
+            if (parentForm) {
+              // Déterminer le texte du bouton selon la page
+              let buttonText = 'Se connecter';
+              const currentPath = window.location.pathname;
+              if (currentPath.includes('/user/register')) {
+                buttonText = 'Créer un nouveau compte';
+              } else if (currentPath.includes('/user/password')) {
+                buttonText = 'Envoyer';
+              }
+              
+              // Créer le bouton submit
+              const submitButton = document.createElement('input');
+              submitButton.type = 'submit';
+              submitButton.value = buttonText;
+              submitButton.className = 'form-submit button button--primary';
+              submitButton.id = 'edit-submit';
+              submitButton.name = 'op';
+              submitButton.setAttribute('data-drupal-selector', 'edit-submit');
+              submitButton.style.cssText = 'display: inline-block !important; visibility: visible !important; opacity: 1 !important; padding: 0.75rem 2rem !important; background-color: #b80000 !important; color: white !important; border: none !important; border-radius: 4px !important; font-weight: 600 !important; font-size: 1rem !important; cursor: pointer !important; margin-top: 1rem !important;';
+              actionsDiv.appendChild(submitButton);
+            }
+          }
+          
+          // S'assurer que le formulaire d'inscription a l'enctype pour l'upload
+          const finalForm = document.querySelector('form#user-login-form, form#user-register-form, form#user-pass') || form;
+          if (finalForm && currentPath.includes('/user/register') && !finalForm.getAttribute('enctype')) {
+            finalForm.setAttribute('enctype', 'multipart/form-data');
+          }
+          
+          // S'assurer que tous les champs cachés nécessaires sont présents dans le formulaire
+          if (finalForm) {
+            // Vérifier si les champs cachés existent déjà dans le formulaire
+            const formIdInForm = finalForm.querySelector('input[name="form_id"]');
+            const formBuildIdInForm = finalForm.querySelector('input[name="form_build_id"]');
+            const formTokenInForm = finalForm.querySelector('input[name="form_token"]');
+            
+            // Si form_build_id n'existe pas, essayer de le récupérer depuis le document
+            if (!formBuildIdInForm) {
+              // Chercher dans tout le document (peut être en dehors du formulaire)
+              const buildIdAnywhere = document.querySelector('input[name="form_build_id"]');
+              if (buildIdAnywhere) {
+                // Copier le champ dans le formulaire
+                const buildIdInput = document.createElement('input');
+                buildIdInput.type = 'hidden';
+                buildIdInput.name = 'form_build_id';
+                buildIdInput.value = buildIdAnywhere.value;
+                buildIdInput.id = buildIdAnywhere.id;
+                buildIdInput.setAttribute('autocomplete', 'off');
+                finalForm.insertBefore(buildIdInput, finalForm.firstChild);
+              } else {
+                // Si toujours pas trouvé, créer un nouveau (peut ne pas fonctionner avec Drupal)
+                const buildIdInput = document.createElement('input');
+                buildIdInput.type = 'hidden';
+                buildIdInput.name = 'form_build_id';
+                buildIdInput.value = 'form-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+                buildIdInput.id = 'edit-form-build-id';
+                buildIdInput.setAttribute('autocomplete', 'off');
+                finalForm.insertBefore(buildIdInput, finalForm.firstChild);
+              }
+            }
+            
+            // Si form_id n'existe pas, l'ajouter
+            if (!formIdInForm) {
+              let formIdValue = 'user_login_form';
+              const currentPath = window.location.pathname;
+              if (currentPath.includes('/user/register')) {
+                formIdValue = 'user_register_form';
+              } else if (currentPath.includes('/user/password')) {
+                formIdValue = 'user_pass';
+              }
+              
+              const formIdAnywhere = document.querySelector('input[name="form_id"]');
+              const formIdInput = document.createElement('input');
+              formIdInput.type = 'hidden';
+              formIdInput.name = 'form_id';
+              formIdInput.value = formIdAnywhere ? formIdAnywhere.value : formIdValue;
+              formIdInput.id = formIdAnywhere ? formIdAnywhere.id : 'edit-' + formIdValue;
+              finalForm.insertBefore(formIdInput, finalForm.firstChild);
+            }
+            
+            // Si form_token n'existe pas mais est présent ailleurs, l'ajouter
+            if (!formTokenInForm) {
+              const tokenAnywhere = document.querySelector('input[name="form_token"]');
+              if (tokenAnywhere) {
+                const tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = 'form_token';
+                tokenInput.value = tokenAnywhere.value;
+                tokenInput.id = tokenAnywhere.id;
+                finalForm.insertBefore(tokenInput, finalForm.firstChild);
+              }
+            }
+          }
         },
 
         /**
@@ -375,6 +1337,104 @@
           });
         }
       }
+    },
+
+    /**
+     * Gère le scroll pour la navigation sticky.
+     * Ajoute un padding-top au main-content quand le header est collé.
+     */
+    handleStickyNav: function (context) {
+      const siteHeader = context.querySelector('.site-header');
+      const mainContent = context.querySelector('.main-content');
+      
+      if (!siteHeader || !mainContent) {
+        return;
+      }
+
+      // Calculer la hauteur de la toolbar
+      const getToolbarHeight = () => {
+        const toolbar = document.querySelector('#toolbar-bar');
+        if (toolbar && toolbar.offsetHeight > 0) {
+          return toolbar.offsetHeight;
+        }
+        return 0;
+      };
+
+      // Calculer la hauteur totale (header + toolbar si présente)
+      const getTotalHeight = () => {
+        const toolbarHeight = getToolbarHeight();
+        return siteHeader.offsetHeight + toolbarHeight;
+      };
+
+      // Ajuster le top du header sticky pour qu'il soit sous la toolbar
+      const adjustHeaderTop = () => {
+        const toolbarHeight = getToolbarHeight();
+        if (toolbarHeight > 0) {
+          siteHeader.style.top = toolbarHeight + 'px';
+        } else {
+          siteHeader.style.top = '0';
+        }
+      };
+
+      // Fonction pour vérifier si on a scrollé
+      const checkScroll = () => {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        
+        // Si on a scrollé au-delà de la position initiale du header
+        if (scrollTop > 0) {
+          document.body.classList.add('header-sticky-active');
+        } else {
+          document.body.classList.remove('header-sticky-active');
+        }
+      };
+
+      // Ajuster le top du header au chargement
+      adjustHeaderTop();
+
+      // Vérifier au chargement
+      checkScroll();
+
+      // Écouter le scroll avec throttling pour performance
+      let ticking = false;
+      window.addEventListener('scroll', () => {
+        if (!ticking) {
+          window.requestAnimationFrame(() => {
+            checkScroll();
+            ticking = false;
+          });
+          ticking = true;
+        }
+      });
+
+      // Écouter aussi le resize pour recalculer la hauteur
+      window.addEventListener('resize', () => {
+        adjustHeaderTop();
+      });
+
+      // Observer les changements de la toolbar (ouverture/fermeture)
+      const toolbarObserver = new MutationObserver(() => {
+        adjustHeaderTop();
+      });
+
+      const toolbar = document.querySelector('#toolbar-bar');
+      if (toolbar) {
+        toolbarObserver.observe(toolbar, {
+          attributes: true,
+          attributeFilter: ['class', 'style'],
+          childList: true,
+          subtree: true
+        });
+      }
+
+      // Observer aussi le body pour les changements de classe toolbar
+      const bodyObserver = new MutationObserver(() => {
+        adjustHeaderTop();
+      });
+
+      bodyObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class']
+      });
     },
 
     /**

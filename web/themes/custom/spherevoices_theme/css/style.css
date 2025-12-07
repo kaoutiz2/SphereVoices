@@ -50,7 +50,7 @@ body.toolbar-vertical {
   margin: 2rem 0 1.5rem 0 !important;
   padding: 0 !important;
   padding-bottom: 1rem;
-  border-bottom: 3px solid var(--color-primary);
+  border-bottom: 3px solid var(--color-secondary);
   text-align: left !important;
   width: 100%;
   display: block !important;
@@ -98,14 +98,14 @@ a {
 
 a:hover,
 a:focus {
-  color: var(--color-primary-dark);
+  color: var(--color-secondary);
   text-decoration: underline;
 }
 
 /* Header - Style CNN */
 .site-header {
   background-color: var(--color-bg);
-  border-bottom: 4px solid var(--color-primary);
+  border-bottom: 4px solid var(--color-secondary);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
@@ -173,7 +173,7 @@ body:has(#toolbar-administration) .header-main {
   flex-direction: row;
   padding: 0;
   margin: 0;
-  width: 80px; /* Largeur fixe pour le logo */
+  width: 100px; /* Largeur fixe pour le logo */
   position: relative;
 }
 
@@ -318,10 +318,10 @@ body:has(#toolbar-administration) .header-main {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  max-width: 80px;
-  max-height: 80px;
-  width: 80px;
-  height: 80px;
+  max-width: 100px;
+  max-height: 100px;
+  width: 100px;
+  height: 100px;
   object-fit: contain;
   padding: 0 !important;
   align-self: center !important; /* Centrer verticalement */
@@ -430,7 +430,7 @@ body:has(#toolbar-administration) .header-main {
 .main-navigation a.is-active {
   color: var(--color-primary);
   text-decoration: none;
-  border-bottom-color: var(--color-primary);
+  border-bottom-color: var(--color-secondary);
   background-color: transparent;
 }
 
@@ -829,6 +829,9 @@ body:has(#toolbar-administration) .header-main {
   font-size: 1.125rem;
   line-height: 1.8;
   margin-bottom: 2rem;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .article-body p {
@@ -923,4 +926,316 @@ h1.welcome-title {
 .mt-2 { margin-top: calc(var(--spacing-unit) * 2); }
 .mb-1 { margin-bottom: var(--spacing-unit); }
 .mb-2 { margin-bottom: calc(var(--spacing-unit) * 2); }
+
+/* Styles pour les formulaires utilisateur (connexion, inscription, réinitialisation) */
+/* S'assurer que tous les champs de formulaire sont visibles et fonctionnels */
+form input[type="text"],
+form input[type="email"],
+form input[type="password"],
+form input[type="search"],
+form input[type="tel"],
+form input[type="url"],
+form textarea,
+.form-text,
+.form-email,
+.form-password,
+.form-textfield,
+.js-form-item input[type="text"],
+.js-form-item input[type="email"],
+.js-form-item input[type="password"],
+.form-item input[type="text"],
+.form-item input[type="email"],
+.form-item input[type="password"] {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 100%;
+  max-width: 100%;
+  min-height: 2.5rem;
+  padding: 0.5rem 1rem;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background-color: var(--color-bg-light);
+  font-family: inherit;
+  font-size: 1rem;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+form input[type="text"]:focus,
+form input[type="email"]:focus,
+form input[type="password"]:focus,
+form input[type="search"]:focus,
+form textarea:focus,
+.form-text:focus,
+.form-email:focus,
+.form-password:focus,
+.form-textfield:focus,
+.js-form-item input[type="text"]:focus,
+.js-form-item input[type="email"]:focus,
+.js-form-item input[type="password"]:focus,
+.form-item input[type="text"]:focus,
+.form-item input[type="email"]:focus,
+.form-item input[type="password"]:focus {
+  border: 2px solid var(--color-primary);
+  outline: 2px solid var(--color-primary);
+  outline-offset: -1px;
+}
+
+form input[type="text"]:disabled,
+form input[type="email"]:disabled,
+form input[type="password"]:disabled,
+.form-text:disabled,
+.form-email:disabled,
+.form-password:disabled {
+  color: var(--color-text-light);
+  background-color: var(--color-bg);
+  cursor: not-allowed;
+}
+
+/* S'assurer que les labels sont visibles */
+.form-item label,
+.js-form-item label,
+.form-item .form-item__label,
+.js-form-item .form-item__label {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* S'assurer que les boutons de formulaire sont visibles */
+form input[type="submit"],
+form button[type="submit"],
+.form-actions input[type="submit"],
+.form-actions button[type="submit"],
+.form-submit {
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  padding: 0.75rem 2rem;
+  background-color: var(--color-primary);
+  color: var(--color-bg-light);
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+form input[type="submit"]:hover,
+form button[type="submit"]:hover,
+.form-actions input[type="submit"]:hover,
+.form-actions button[type="submit"]:hover,
+.form-submit:hover {
+  background-color: var(--color-primary-dark);
+}
+
+/* S'assurer que les conteneurs de formulaire sont visibles */
+.user-login-form,
+.user-register-form,
+.user-pass-reset,
+.user-pass,
+.form-item,
+.js-form-item {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* S'assurer que les descriptions de formulaire sont visibles */
+.form-item .description,
+.js-form-item .description,
+.form-item__description {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-text-light);
+}
+
+/* Règles CSS très spécifiques pour forcer l'affichage des champs de formulaire utilisateur */
+.user-login-form input[type="text"],
+.user-login-form input[type="password"],
+.user-register-form input[type="text"],
+.user-register-form input[type="email"],
+.user-register-form input[type="password"],
+.user-pass input[type="text"],
+.user-pass input[type="email"],
+.user-pass-reset input[type="text"],
+.user-pass-reset input[type="email"],
+.user-pass-reset input[type="password"],
+form#user-login-form input[type="text"],
+form#user-login-form input[type="password"],
+form#user-register-form input[type="text"],
+form#user-register-form input[type="email"],
+form#user-register-form input[type="password"],
+form#user-pass input[type="text"],
+form#user-pass input[type="email"],
+form.user-login-form input[type="text"],
+form.user-login-form input[type="password"],
+form.user-register-form input[type="text"],
+form.user-register-form input[type="email"],
+form.user-register-form input[type="password"],
+form.user-pass input[type="text"],
+form.user-pass input[type="email"],
+.user-login-form .form-item input,
+.user-register-form .form-item input,
+.user-pass .form-item input,
+.user-pass-reset .form-item input,
+.user-login-form .js-form-item input,
+.user-register-form .js-form-item input,
+.user-pass .js-form-item input,
+.user-pass-reset .js-form-item input {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 2.5rem !important;
+  padding: 0.5rem 1rem !important;
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 4px !important;
+  background-color: var(--color-bg-light) !important;
+  font-family: inherit !important;
+  font-size: 1rem !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  position: relative !important;
+  z-index: 1 !important;
+  height: auto !important;
+  line-height: normal !important;
+}
+
+/* S'assurer que les conteneurs de formulaire utilisateur sont visibles */
+.user-login-form .form-item,
+.user-login-form .js-form-item,
+.user-register-form .form-item,
+.user-register-form .js-form-item,
+.user-pass .form-item,
+.user-pass .js-form-item,
+.user-pass-reset .form-item,
+.user-pass-reset .js-form-item {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin-bottom: 1rem !important;
+}
+
+/* S'assurer que les labels des formulaires utilisateur sont visibles */
+.user-login-form label,
+.user-login-form .form-item__label,
+.user-register-form label,
+.user-register-form .form-item__label,
+.user-pass label,
+.user-pass .form-item__label,
+.user-pass-reset label,
+.user-pass-reset .form-item__label {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin-bottom: 0.5rem !important;
+  font-weight: 600 !important;
+  color: var(--color-text) !important;
+}
+
+/* Règle globale pour forcer l'affichage de TOUS les inputs dans les formulaires (SAUF les checkboxes et file) */
+form input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+form textarea,
+form select {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 2.5rem !important;
+  padding: 0.5rem 1rem !important;
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 4px !important;
+  background-color: var(--color-bg-light) !important;
+  font-family: inherit !important;
+  font-size: 1rem !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  position: relative !important;
+  z-index: 1 !important;
+  height: auto !important;
+  line-height: normal !important;
+  margin: 0 !important;
+}
+
+/* Styles spécifiques pour les checkboxes - Style simple avec le rouge du site */
+form input[type="checkbox"],
+.form-checkbox,
+input.form-checkbox,
+.form-item input[type="checkbox"],
+.js-form-item input[type="checkbox"],
+.form-item-contact input[type="checkbox"],
+.js-form-item-contact input[type="checkbox"] {
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  min-width: 1.25rem !important;
+  min-height: 1.25rem !important;
+  max-width: 1.25rem !important;
+  max-height: 1.25rem !important;
+  padding: 0 !important;
+  margin: 0 0.5rem 0 0 !important;
+  cursor: pointer !important;
+  position: relative !important;
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+  appearance: checkbox !important;
+  -webkit-appearance: checkbox !important;
+  -moz-appearance: checkbox !important;
+  border: 2px solid var(--color-primary) !important;
+  border-radius: 3px !important;
+  background-color: var(--color-bg-light) !important;
+  flex-shrink: 0 !important;
+  vertical-align: middle !important;
+}
+
+/* Style pour la checkbox cochée */
+form input[type="checkbox"]:checked,
+.form-checkbox:checked,
+input.form-checkbox:checked,
+.form-item input[type="checkbox"]:checked,
+.js-form-item input[type="checkbox"]:checked {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M10 3L4.5 8.5L2 6l1.5-1.5L4.5 6l4-4z'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: 80% !important;
+}
+
+/* Style pour le label des checkboxes */
+form label[for*="contact"],
+.form-item-contact label,
+.js-form-item-contact label,
+label.option {
+  display: inline !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  cursor: pointer !important;
+  font-weight: normal !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
 

@@ -160,3 +160,4 @@ class GenerateSampleArticlesCommand extends DrushCommands {
 
 }
 
+

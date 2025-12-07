@@ -451,14 +451,16 @@ function spherevoices_theme_preprocess_page(&$variables) {
       $excluded_nids = array_merge($excluded_nids, $featured_nids);
     }
     
-    // Récupérer tous les articles restants (9 articles pour 3 colonnes x 3 articles)
+    // Récupérer tous les articles restants pour les 3 colonnes
+    // Limiter à 14 articles pour les colonnes
+    $max_articles_for_columns = 14;
     $all_articles_query = \Drupal::entityQuery('node')
       ->condition('type', 'article')
       ->condition('status', 1)
       ->condition('promote', 1)
       ->condition('sticky', 0) // Exclure les sticky (déjà affichés comme breaking news)
       ->sort('created', 'DESC')
-      ->range(0, 9) // Récupérer 9 articles pour les 3 colonnes
+      ->range(0, 20) // Récupérer assez d'articles pour avoir 13 après exclusion
       ->accessCheck(TRUE);
     
     // Exclure tous les articles déjà affichés (breaking news + featured)
@@ -487,7 +489,7 @@ function spherevoices_theme_preprocess_page(&$variables) {
       // Charger les nodes dans l'ordre des IDs
       $all_articles_nodes = $node_storage->loadMultiple($all_articles_nids);
       
-      // Créer un tableau ordonné selon l'ordre des IDs (pour préserver l'ordre de création)
+      // Créer un tableau ordonné selon l'ordre des IDs (pour préserver l'ordre de création DESC)
       $ordered_nodes = [];
       foreach ($all_articles_nids as $nid) {
         if (isset($all_articles_nodes[$nid])) {
@@ -509,26 +511,117 @@ function spherevoices_theme_preprocess_page(&$variables) {
         }
       }
       
+      // Trier les nodes par date de création DESC (du plus récent au plus ancien)
+      // pour s'assurer que l'ordre est correct même après loadMultiple
+      usort($ordered_nodes, function($a, $b) {
+        $time_a = $a->getCreatedTime();
+        $time_b = $b->getCreatedTime();
+        return $time_b - $time_a; // DESC : plus récent en premier
+      });
+      
       // Répartir équitablement sur les 3 colonnes
+      // Réindexer le tableau pour avoir des indices séquentiels (0, 1, 2, 3...)
+      $ordered_nodes = array_values($ordered_nodes);
+      
+      // Limiter à 14 articles maximum pour les colonnes
+      $max_articles_for_columns = 14;
+      $ordered_nodes = array_slice($ordered_nodes, 0, $max_articles_for_columns);
+      
+      // Ordre strict : gauche (index 0, 3, 6...), centre (index 1, 4, 7...), droite (index 2, 5, 8...)
+      // Exclure le dernier article qui irait à droite pour avoir un article de moins dans cette colonne
+      $total_articles = count($ordered_nodes);
+      $last_right_index = null;
+      
+      // Trouver l'index du dernier article qui irait à droite
+      for ($i = $total_articles - 1; $i >= 0; $i--) {
+        if ($i % 3 === 2) {
+          $last_right_index = $i;
+          break;
+        }
+      }
+      
       foreach ($ordered_nodes as $index => $node) {
+        // Exclure le dernier article qui irait à droite
+        if ($index === $last_right_index) {
+          continue;
+        }
+        
         $article_view = $view_builder->view($node, 'teaser');
         
-        // Répartir de manière alternée stricte : gauche (0, 3, 6...), centre (1, 4, 7...), droite (2, 5, 8...)
-        $column = $index % 3;
-        if ($column === 0) {
+        // Répartir de manière alternée stricte
+        $column_index = $index % 3;
+        if ($column_index === 0) {
+          // Gauche
           $variables['left_articles'][] = $article_view;
         }
-        elseif ($column === 1) {
+        elseif ($column_index === 1) {
+          // Centre
           $variables['center_articles'][] = $article_view;
         }
         else {
+          // Droite (column_index === 2)
           $variables['right_articles'][] = $article_view;
         }
       }
     }
+    
+    // Charger les brèves directement
+    try {
+      $node_storage = \Drupal::entityTypeManager()->getStorage('node');
+      $view_builder = \Drupal::entityTypeManager()->getViewBuilder('node');
+      
+      // Récupérer les brèves publiées
+      $breves_query = \Drupal::entityQuery('node')
+        ->condition('type', 'breve')
+        ->condition('status', 1)
+        ->sort('created', 'DESC')
+        ->range(0, 5)
+        ->accessCheck(TRUE);
+      
+      $breves_nids = $breves_query->execute();
+      
+      if (!empty($breves_nids)) {
+        $breves_nodes = $node_storage->loadMultiple($breves_nids);
+        $breves_rendered = [];
+        
+        foreach ($breves_nodes as $breve_node) {
+          $breve_view = $view_builder->view($breve_node, 'teaser');
+          $breves_rendered[] = $breve_view;
+        }
+        
+        // Construire le render array du bloc
+        $variables['breves_block'] = [
+          '#type' => 'container',
+          '#attributes' => ['class' => ['breves-block']],
+          'title' => [
+            '#type' => 'html_tag',
+            '#tag' => 'h2',
+            '#value' => 'Brèves',
+            '#attributes' => ['class' => ['breves-title']],
+          ],
+          'content' => [
+            '#type' => 'container',
+            '#attributes' => ['class' => ['breves-content']],
+            'items' => $breves_rendered,
+          ],
+        ];
+      }
+    }
+    catch (\Exception $e) {
+      // En cas d'erreur, ne pas bloquer l'affichage de la page
+      \Drupal::logger('spherevoices_theme')->error('Erreur lors du chargement des brèves: @message', ['@message' => $e->getMessage()]);
+    }
   }
   
   // Ajouter le titre de la page si disponible
+  // Déterminer le type de node pour masquer le titre sur les pages d'articles
+  $route_match = \Drupal::routeMatch();
+  $node = $route_match->getParameter('node');
+  $variables['node_type'] = NULL;
+  if ($node) {
+    $variables['node_type'] = $node->bundle();
+  }
+  
   if (isset($variables['page']['#title'])) {
     $variables['page_title'] = $variables['page']['#title'];
   }
@@ -548,10 +641,12 @@ function spherevoices_theme_preprocess_page(&$variables) {
   }
   
   // Retirer "Bienvenue" des blocs
-  foreach ($variables['content'] as $key => &$block) {
-    if (is_array($block) && isset($block['#markup'])) {
-      $block['#markup'] = preg_replace('/<h1[^>]*>.*?Bienvenue.*?<\/h1>/i', '', $block['#markup']);
-      $block['#markup'] = preg_replace('/<h1[^>]*>.*?Welcome.*?<\/h1>/i', '', $block['#markup']);
+  if (isset($variables['content']) && is_array($variables['content'])) {
+    foreach ($variables['content'] as $key => &$block) {
+      if (is_array($block) && isset($block['#markup'])) {
+        $block['#markup'] = preg_replace('/<h1[^>]*>.*?Bienvenue.*?<\/h1>/i', '', $block['#markup']);
+        $block['#markup'] = preg_replace('/<h1[^>]*>.*?Welcome.*?<\/h1>/i', '', $block['#markup']);
+      }
     }
   }
   
@@ -633,6 +728,57 @@ function spherevoices_theme_field_widget_form_alter(&$element, \Drupal\Core\Form
  * Implements hook_form_alter().
  */
 function spherevoices_theme_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  // Pour les formulaires utilisateur, s'assurer que les champs sont bien présents et accessibles
+  if (in_array($form_id, ['user_login_form', 'user_register_form', 'user_pass'])) {
+    // Ajouter un after_build pour forcer le rendu des champs
+    if (!isset($form['#after_build'])) {
+      $form['#after_build'] = [];
+    }
+    if (!in_array('spherevoices_theme_user_form_after_build', $form['#after_build'])) {
+      $form['#after_build'][] = 'spherevoices_theme_user_form_after_build';
+    }
+    
+    // Parcourir tous les éléments du formulaire et s'assurer qu'ils sont accessibles
+    foreach (['name', 'pass', 'mail'] as $field_name) {
+      if (isset($form[$field_name])) {
+        // S'assurer que le champ est accessible
+        $form[$field_name]['#access'] = TRUE;
+        // S'assurer que le champ n'est pas marqué comme imprimé
+        unset($form[$field_name]['#printed']);
+        // S'assurer que le type est correct et que ce n'est pas un type 'hidden'
+        if (isset($form[$field_name]['#type']) && $form[$field_name]['#type'] === 'hidden') {
+          // Forcer le type correct selon le nom du champ
+          if ($field_name === 'pass') {
+            $form[$field_name]['#type'] = 'password';
+          } elseif ($field_name === 'mail') {
+            $form[$field_name]['#type'] = 'email';
+          } else {
+            $form[$field_name]['#type'] = 'textfield';
+          }
+        }
+      }
+      // Pour le formulaire d'inscription, vérifier aussi account.name, account.mail, account.pass
+      if (isset($form['account'][$field_name])) {
+        $form['account'][$field_name]['#access'] = TRUE;
+        unset($form['account'][$field_name]['#printed']);
+        if (isset($form['account'][$field_name]['#type']) && $form['account'][$field_name]['#type'] === 'hidden') {
+          if ($field_name === 'pass') {
+            $form['account'][$field_name]['#type'] = 'password';
+          } elseif ($field_name === 'mail') {
+            $form['account'][$field_name]['#type'] = 'email';
+          } else {
+            $form['account'][$field_name]['#type'] = 'textfield';
+          }
+        }
+      }
+    }
+    // S'assurer que le bouton submit est accessible
+    if (isset($form['actions']['submit'])) {
+      $form['actions']['submit']['#access'] = TRUE;
+      unset($form['actions']['submit']['#printed']);
+    }
+  }
+  
   // Modifier le label du champ sticky pour les articles (fallback)
   if (($form_id === 'node_article_form' || $form_id === 'node_article_edit_form') && isset($form['sticky'])) {
     $new_label = t('Épinglé en haut des listes (Breaking News)');
@@ -721,6 +867,92 @@ function spherevoices_theme_sticky_field_after_build($element, \Drupal\Core\Form
   return $element;
 }
 
+/**
+ * After build callback pour les formulaires utilisateur.
+ */
+function spherevoices_theme_user_form_after_build($element, \Drupal\Core\Form\FormStateInterface $form_state) {
+  // S'assurer que tous les champs sont accessibles et rendus
+  foreach (['name', 'pass', 'mail'] as $field_name) {
+    if (isset($element[$field_name])) {
+      $element[$field_name]['#access'] = TRUE;
+      unset($element[$field_name]['#printed']);
+      // S'assurer que le type est correct
+      if (!isset($element[$field_name]['#type']) || $element[$field_name]['#type'] === 'hidden') {
+        if ($field_name === 'pass') {
+          $element[$field_name]['#type'] = 'password';
+        } elseif ($field_name === 'mail') {
+          $element[$field_name]['#type'] = 'email';
+        } else {
+          $element[$field_name]['#type'] = 'textfield';
+        }
+      }
+    }
+  }
+  if (isset($element['account'])) {
+    foreach (['name', 'mail', 'pass'] as $field_name) {
+      if (isset($element['account'][$field_name])) {
+        $element['account'][$field_name]['#access'] = TRUE;
+        unset($element['account'][$field_name]['#printed']);
+        if (!isset($element['account'][$field_name]['#type']) || $element['account'][$field_name]['#type'] === 'hidden') {
+          if ($field_name === 'pass') {
+            $element['account'][$field_name]['#type'] = 'password';
+          } elseif ($field_name === 'mail') {
+            $element['account'][$field_name]['#type'] = 'email';
+          } else {
+            $element['account'][$field_name]['#type'] = 'textfield';
+          }
+        }
+      }
+    }
+  }
+  // S'assurer que les actions sont accessibles
+  if (isset($element['actions'])) {
+    $element['actions']['#access'] = TRUE;
+    if (isset($element['actions']['submit'])) {
+      $element['actions']['submit']['#access'] = TRUE;
+      unset($element['actions']['submit']['#printed']);
+    }
+  }
+  return $element;
+}
+
+/**
+ * Implements hook_preprocess_form().
+ * 
+ * DÉSACTIVÉ pour les formulaires utilisateur - Laisser Drupal gérer normalement
+ */
+function spherevoices_theme_preprocess_form(&$variables) {
+  // Ne pas modifier les formulaires utilisateur - laisser Drupal gérer normalement
+}
+
+/**
+ * Implements hook_preprocess_form_element().
+ * 
+ * S'assure que les champs de formulaire sont bien rendus.
+ */
+function spherevoices_theme_preprocess_form_element(&$variables) {
+  $element = &$variables['element'];
+  
+  // Si children est vide, essayer de le remplir depuis #children
+  if (empty($variables['children']) && isset($element['#children'])) {
+    $variables['children'] = $element['#children'];
+  }
+  
+  // Si children est toujours vide et que c'est un élément de formulaire input (textfield, password, email)
+  // qui devrait avoir un input, forcer le rendu
+  if (empty($variables['children']) && isset($element['#type'])) {
+    $type = $element['#type'];
+    $name = $element['#name'] ?? '';
+    
+    // Pour les types input qui utilisent #theme_wrappers => ['form_element']
+    // l'input devrait être dans #children, mais s'il est vide, c'est qu'il n'a pas été rendu
+    if (in_array($type, ['textfield', 'password', 'email']) && !empty($name)) {
+      // L'input n'a pas été rendu - cela ne devrait pas arriver normalement
+      // Mais si c'est le cas, on ne peut pas le forcer ici car le rendu a déjà eu lieu
+      // Le problème doit être résolu dans form_alter
+    }
+  }
+}
 
 /**
  * Implements hook_preprocess_image_widget().
@@ -744,63 +976,14 @@ function spherevoices_theme_preprocess_image_widget(&$variables) {
  * Implements hook_preprocess_node().
  */
 function spherevoices_theme_preprocess_node(&$variables) {
-  $node = $variables['node'];
-  
-  // Marquer les articles sticky comme breaking news pour afficher le badge
-  if ($node->isSticky() && !isset($node->breaking_news_context)) {
-    $node->breaking_news_context = TRUE;
-  }
-  
-  // Ajouter des suggestions de templates pour le breaking news
-  if (isset($node->breaking_news_context) && $node->breaking_news_context) {
-    $variables['theme_hook_suggestions'][] = 'node__article__breaking_news';
-  }
-  
-  // Ajouter des suggestions de templates pour le featured
-  if (isset($node->featured_context) && $node->featured_context) {
-    $variables['theme_hook_suggestions'][] = 'node__article__featured';
-  }
-  
-  // S'assurer que le champ field_image est bien rendu
-  if ($node->hasField('field_image') && !$node->get('field_image')->isEmpty()) {
-    $view_mode = $variables['view_mode'] ?? 'full';
-    
-    // Vérifier si le champ est déjà dans content et s'il est vraiment rendu
-    $image_rendered = FALSE;
-    if (isset($variables['content']['field_image'])) {
-      // Vérifier si c'est un render array avec du contenu
-      if (is_array($variables['content']['field_image'])) {
-        $rendered = \Drupal::service('renderer')->renderPlain($variables['content']['field_image']);
-        $image_rendered = !empty(trim(strip_tags($rendered)));
-      }
+  // Corriger les attributes pour les brèves dans les vues
+  if ($variables['node']->bundle() === 'breve' && isset($variables['attributes']) && is_object($variables['attributes'])) {
+    // Convertir l'objet Attribute en tableau
+    $attributes_array = [];
+    foreach ($variables['attributes'] as $key => $value) {
+      $attributes_array[$key] = $value;
     }
-    
-    // Si l'image n'est pas rendue, forcer son rendu
-    if (!$image_rendered) {
-      // Récupérer la configuration du mode d'affichage
-      $entity_display = \Drupal::entityTypeManager()
-        ->getStorage('entity_view_display')
-        ->load('node.article.' . $view_mode);
-      
-      if ($entity_display && $entity_display->getComponent('field_image')) {
-        // Le champ est configuré dans le mode d'affichage, utiliser le view builder
-        $view_builder = \Drupal::entityTypeManager()->getViewBuilder('node');
-        $build = $view_builder->viewField($node->get('field_image'), $view_mode);
-        if ($build) {
-          $variables['content']['field_image'] = $build;
-        }
-      }
-      else {
-        // Le champ n'est pas configuré dans le mode d'affichage, le rendre directement
-        $field_items = $node->get('field_image');
-        if (!$field_items->isEmpty()) {
-          $field_view = $field_items->view(['label' => 'hidden', 'type' => 'image']);
-          if ($field_view) {
-            $variables['content']['field_image'] = $field_view;
-          }
-        }
-      }
-    }
+    $variables['attributes'] = $attributes_array;
   }
 }
 
@@ -853,4 +1036,35 @@ function spherevoices_theme_preprocess_menu_local_task(&$variables) {
   }
 }
 
-
+/**
+ * Nettoie un render array en convertissant les objets attributes en tableaux.
+ */
+function _spherevoices_theme_clean_render_array($render_array) {
+  if (!is_array($render_array)) {
+    return $render_array;
+  }
+  
+  foreach ($render_array as $key => &$value) {
+    // Convertir les objets attributes en tableaux
+    if (($key === '#attributes' || $key === 'attributes') && is_object($value)) {
+      // Utiliser toArray() si disponible (pour les objets Attribute de Drupal)
+      if (method_exists($value, 'toArray')) {
+        $value = $value->toArray();
+      }
+      else {
+        // Sinon, convertir manuellement
+        $attributes_array = [];
+        foreach ($value as $attr_key => $attr_value) {
+          $attributes_array[$attr_key] = $attr_value;
+        }
+        $value = $attributes_array;
+      }
+    }
+    // Récursion pour les tableaux imbriqués
+    elseif (is_array($value)) {
+      $value = _spherevoices_theme_clean_render_array($value);
+    }
+  }
+  
+  return $render_array;
+}

@@ -99,6 +99,15 @@
               <div class="article-card article-card-side">
                 {{ article }}
               </div>
+              {# Encart publicitaire après le 5ème article dans la colonne gauche #}
+              {% if loop.index == 5 %}
+                <div class="ad-banner ad-banner-left-column">
+                  <div class="ad-placeholder">
+                    <span class="ad-label">Publicité</span>
+                    <div class="ad-content">270x530</div>
+                  </div>
+                </div>
+              {% endif %}
             {% endfor %}
           {% endif %}
         </div>
@@ -134,12 +143,18 @@
               <div class="article-card article-card-side">
                 {{ article }}
               </div>
+              {# Bloc Brèves après le 2ème article dans la colonne droite #}
+              {% if loop.index == 2 %}
+                {% if breves_block %}
+                  {{ breves_block }}
+                {% endif %}
+              {% endif %}
               {# Encart publicitaire après le 3ème article dans la colonne droite #}
               {% if loop.index == 3 %}
                 <div class="ad-banner ad-banner-right-column">
                   <div class="ad-placeholder">
                     <span class="ad-label">Publicité</span>
-                    <div class="ad-content">500x300</div>
+                    <div class="ad-content">270x530</div>
                   </div>
                 </div>
               {% endif %}
