@@ -87,3 +87,5 @@ echo "   - Les informations de publication (Statut, Auteur, Date)\n";
 echo "   - Le changement de propriétaire du contenu\n";
 echo "   - L'accès aux révisions\n";
 
+
+

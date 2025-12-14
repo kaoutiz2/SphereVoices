@@ -50,3 +50,5 @@ echo "📝 N'oubliez pas de vider le cache Drupal pour que les changements prenn
 echo "   Via Drush : drush cr\n";
 echo "   Via l'interface : Configuration > Développement > Performance > Vider tous les caches\n";
 
+
+

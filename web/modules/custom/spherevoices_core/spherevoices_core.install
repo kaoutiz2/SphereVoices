@@ -94,3 +94,5 @@ function spherevoices_core_update_8002() {
   return t('Permissions for comment settings and publication options added to editor roles.');
 }
 
+
+

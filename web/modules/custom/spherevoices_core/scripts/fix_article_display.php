@@ -82,3 +82,5 @@ if ($article_default) {
 
 echo "\n✓ Vérification terminée. Videz le cache avec: drush cr\n";
 
+
+

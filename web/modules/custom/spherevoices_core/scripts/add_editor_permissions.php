@@ -110,3 +110,5 @@ echo "   - Épingler du contenu en haut des listes\n";
 echo "   - Modifier les informations de publication\n";
 echo "   - Voir les informations de statut\n";
 
+
+
