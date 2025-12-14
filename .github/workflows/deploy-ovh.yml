@@ -1,0 +1,55 @@
+name: Deploy to OVH FTP
+
+on:
+  push:
+    branches:
+      - production
+
+jobs:
+  deploy:
+    name: Deploy to OVH Production
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mbstring, xml, curl, zip, gd, mysql
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+      - name: Deploy to OVH FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.OVH_FTP_HOST }}
+          username: ${{ secrets.OVH_FTP_USER }}
+          password: ${{ secrets.OVH_FTP_PASSWORD }}
+          server-dir: /
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/.env*
+            **/.env.production
+            **/.idea/**
+            **/.vscode/**
+            **/*.swp
+            **/*.swo
+            **/.DS_Store
+            **/Thumbs.db
+            **/www/sites/default/files/**
+            **/www/sites/default/settings.php
+            **/www/sites/*/files/**
+            **/www/sites/*/private/**
+            **/*.log
+            **/*.cache
+            **/*.tmp
+            **/*.temp
+          dangerous-clean-slate: false
