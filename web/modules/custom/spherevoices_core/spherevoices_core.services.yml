@@ -1,7 +1,0 @@
-services:
-  user.toolbar_link_builder:
-    class: Drupal\spherevoices_core\ToolbarLinkBuilder
-    arguments: ['@current_user']
-    tags:
-      - { name: trusted_callback }
-
