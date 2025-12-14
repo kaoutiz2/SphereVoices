@@ -30,12 +30,12 @@ CREATE DATABASE spherevoices CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 ```bash
 # Créer les fichiers de configuration
-cp web/sites/default/default.settings.php web/sites/default/settings.php
-cp web/sites/default/default.services.yml web/sites/default/services.yml
+cp www/sites/default/default.settings.php www/sites/default/settings.php
+cp www/sites/default/default.services.yml www/sites/default/services.yml
 
 # Créer le répertoire des fichiers
-mkdir -p web/sites/default/files
-chmod 777 web/sites/default/files
+mkdir -p www/sites/default/files
+chmod 777 www/sites/default/files
 ```
 
 ### 4. Installation de Drupal
@@ -54,7 +54,7 @@ drush site:install standard \
 
 #### Option B : Via l'interface web
 
-1. Accédez à `http://localhost/site/web/`
+1. Accédez à `http://localhost/www/`
 2. Suivez l'assistant d'installation
 3. Configurez la base de données et le compte administrateur
 
@@ -183,7 +183,7 @@ drush config:set system.performance js.preprocess 0 -y
 
 Vérifiez que tout fonctionne :
 
-1. Accédez à la page d'accueil : `http://localhost/site/web/`
+1. Accédez à la page d'accueil : `http://localhost/www/`
 2. Connectez-vous en tant qu'administrateur
 3. Créez un article de test
 4. Vérifiez l'affichage sur le front-office
@@ -193,7 +193,7 @@ Vérifiez que tout fonctionne :
 ### Erreur de permissions
 
 ```bash
-chmod -R 777 web/sites/default/files
+chmod -R 777 www/sites/default/files
 ```
 
 ### Erreur de base de données

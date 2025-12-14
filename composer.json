@@ -57,17 +57,17 @@
     "extra": {
         "drupal-scaffold": {
             "locations": {
-                "web-root": "web/"
+                "web-root": "www/"
             }
         },
         "installer-paths": {
-            "web/core": ["type:drupal-core"],
-            "web/libraries/{$name}": ["type:drupal-library"],
-            "web/modules/contrib/{$name}": ["type:drupal-module"],
-            "web/themes/contrib/{$name}": ["type:drupal-theme"],
-            "web/profiles/contrib/{$name}": ["type:drupal-profile"],
-            "web/themes/custom/{$name}": ["type:drupal-custom-theme"],
-            "web/modules/custom/{$name}": ["type:drupal-custom-module"]
+            "www/core": ["type:drupal-core"],
+            "www/libraries/{$name}": ["type:drupal-library"],
+            "www/modules/contrib/{$name}": ["type:drupal-module"],
+            "www/themes/contrib/{$name}": ["type:drupal-theme"],
+            "www/profiles/contrib/{$name}": ["type:drupal-profile"],
+            "www/themes/custom/{$name}": ["type:drupal-custom-theme"],
+            "www/modules/custom/{$name}": ["type:drupal-custom-module"]
         }
     },
     "scripts": {

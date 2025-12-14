@@ -1,8 +1,8 @@
 # Drupal
-web/sites/default/settings.php
-web/sites/default/files/
-web/sites/*/files/
-web/sites/*/private/
+www/sites/default/settings.php
+www/sites/default/files/
+www/sites/*/files/
+www/sites/*/private/
 
 # Composer
 /vendor/
@@ -31,8 +31,10 @@ yarn-error.log
 # Environment
 .env
 .env.local
+.env.production
 
 # Temporary files
 *.tmp
 *.temp
+
 

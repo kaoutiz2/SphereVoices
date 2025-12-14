@@ -7,11 +7,32 @@
 
 use Drupal\Core\Url;
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Template\Attribute;
+
+/**
+ * Implements hook_preprocess_html().
+ * 
+ * S'assure que html_attributes est défini avant que d'autres hooks ne l'utilisent.
+ */
+function spherevoices_theme_preprocess_html(&$variables) {
+  // S'assurer que html_attributes est défini (au cas où template_preprocess_html ne l'a pas fait)
+  if (!isset($variables['html_attributes']) || !($variables['html_attributes'] instanceof Attribute)) {
+    $variables['html_attributes'] = new Attribute();
+    
+    // Ajouter les attributs de base si nécessaire
+    if (!isset($variables['html_attributes']['lang'])) {
+      $language_interface = \Drupal::languageManager()->getCurrentLanguage();
+      $variables['html_attributes']['lang'] = $language_interface->getId();
+      $variables['html_attributes']['dir'] = $language_interface->getDirection();
+    }
+  }
+}
 
 /**
  * Implements hook_module_implements_alter().
  * 
  * S'assurer que notre hook_toolbar_alter s'exécute après celui du module announcements_feed.
+ * Et que notre preprocess_html s'exécute avant olivero_preprocess_html.
  */
 function spherevoices_theme_module_implements_alter(&$implementations, $hook) {
   if ($hook === 'toolbar_alter') {
@@ -19,6 +40,15 @@ function spherevoices_theme_module_implements_alter(&$implementations, $hook) {
     $group = $implementations['spherevoices_theme'];
     unset($implementations['spherevoices_theme']);
     $implementations['spherevoices_theme'] = $group;
+  }
+  elseif ($hook === 'preprocess_html') {
+    // Déplacer notre hook au début pour qu'il s'exécute avant olivero
+    if (isset($implementations['spherevoices_theme'])) {
+      $group = $implementations['spherevoices_theme'];
+      unset($implementations['spherevoices_theme']);
+      // Insérer au début
+      $implementations = ['spherevoices_theme' => $group] + $implementations;
+    }
   }
 }
 

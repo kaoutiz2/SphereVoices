@@ -26,6 +26,17 @@ function olivero_preprocess_html(&$variables) {
   $brand_color_hex = theme_get_setting('base_primary_color') ?? '#1b9ae4';
   [$h, $s, $l] = _olivero_hex_to_hsl($brand_color_hex);
 
+  // S'assurer que html_attributes existe avant de l'utiliser
+  if (!isset($variables['html_attributes']) || !($variables['html_attributes'] instanceof Attribute)) {
+    $variables['html_attributes'] = new Attribute();
+    // Ajouter les attributs de base si nécessaire
+    if (!isset($variables['html_attributes']['lang'])) {
+      $language_interface = \Drupal::languageManager()->getCurrentLanguage();
+      $variables['html_attributes']['lang'] = $language_interface->getId();
+      $variables['html_attributes']['dir'] = $language_interface->getDirection();
+    }
+  }
+  
   $variables['html_attributes']->setAttribute('style', "--color--primary-hue:$h;--color--primary-saturation:$s%;--color--primary-lightness:$l");
 
   // So fonts can be preloaded from base theme in the event Olivero is used as a subtheme.
