@@ -1,0 +1,10 @@
+{#
+/**
+ * @file
+ * Template personnalisé pour les local tasks (liens Voir, Modifier, Supprimer, Versions) avec icônes.
+ */
+#}
+<li{{ attributes.addClass('task-link-item', is_active ? 'is-active') }}>
+  {{ link }}
+</li>
+

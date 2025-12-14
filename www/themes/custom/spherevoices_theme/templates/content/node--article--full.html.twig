@@ -1,0 +1,35 @@
+{#
+/**
+ * @file
+ * Template pour les articles en mode full.
+ * Identique au template par défaut mais affiche explicitement tous les champs.
+ */
+#}
+<article{{ attributes }}>
+
+  {{ title_prefix }}
+  {% if label %}
+    <h1{{ title_attributes }}>
+      {{ label }}
+    </h1>
+  {% endif %}
+  {{ title_suffix }}
+
+  {% if display_submitted %}
+    <footer>
+      {{ author_picture }}
+      <div{{ author_attributes }}>
+        {% trans %}Submitted by {{ author_name }} on {{ date }}{% endtrans %}
+        {{ metadata }}
+      </div>
+    </footer>
+  {% endif %}
+
+  <div{{ content_attributes }}>
+    {{ content }}
+  </div>
+
+</article>
+
+
+
