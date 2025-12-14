@@ -6,7 +6,7 @@
 
 ```
 site/
-├── web/                          # Racine web (DocumentRoot)
+├── www/                          # Racine web (DocumentRoot) - Prêt pour OVH
 │   ├── core/                     # Core Drupal 10
 │   ├── modules/
 │   │   ├── contrib/              # Modules tiers installés via Composer
@@ -18,6 +18,8 @@ site/
 │   │       └── spherevoices_theme/ # Thème principal
 │   └── sites/
 │       └── default/              # Configuration du site
+├── vendor/                       # Dépendances Composer (au même niveau que www/)
+├── config/                       # Configuration Drupal (au même niveau que www/)
 ├── composer.json                 # Dépendances Composer
 ├── README.md                     # Documentation générale
 ├── INSTALLATION.md              # Guide d'installation

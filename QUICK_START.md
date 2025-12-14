@@ -18,9 +18,9 @@ composer install
 
 ```bash
 # Créer les fichiers de configuration
-cp web/sites/default/default.settings.php web/sites/default/settings.php
-mkdir -p web/sites/default/files
-chmod 777 web/sites/default/files
+cp www/sites/default/default.settings.php www/sites/default/settings.php
+mkdir -p www/sites/default/files
+chmod 777 www/sites/default/files
 ```
 
 ### 3. Installation Drupal

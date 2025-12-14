@@ -24,14 +24,14 @@ composer install
 
 2. **Créer le fichier de configuration :**
 ```bash
-cp web/sites/default/default.settings.php web/sites/default/settings.php
-cp web/sites/default/default.services.yml web/sites/default/services.yml
+cp www/sites/default/default.settings.php www/sites/default/settings.php
+cp www/sites/default/default.services.yml www/sites/default/services.yml
 ```
 
 3. **Créer le répertoire des fichiers :**
 ```bash
-mkdir -p web/sites/default/files
-chmod 777 web/sites/default/files
+mkdir -p www/sites/default/files
+chmod 777 www/sites/default/files
 ```
 
 4. **Installer Drupal via Drush :**
@@ -39,7 +39,7 @@ chmod 777 web/sites/default/files
 drush site:install --db-url=mysql://user:password@localhost/database_name
 ```
 
-Ou via l'interface web : `http://localhost/site/web/`
+Ou via l'interface web : `http://localhost/www/`
 
 5. **Activer les modules recommandés :**
 ```bash
@@ -50,7 +50,7 @@ drush en -y admin_toolbar pathauto token metatag paragraphs media image file fie
 
 ```
 site/
-├── web/                    # Racine web (DocumentRoot)
+├── www/                    # Racine web (DocumentRoot) - Prêt pour OVH
 │   ├── core/              # Core Drupal
 │   ├── modules/           # Modules
 │   │   ├── contrib/       # Modules tiers
@@ -59,6 +59,8 @@ site/
 │   │   ├── contrib/       # Thèmes tiers
 │   │   └── custom/        # Thème personnalisé SphereVoices
 │   └── sites/             # Configuration par site
+├── vendor/                 # Dépendances Composer (au même niveau que www/)
+├── config/                 # Configuration Drupal (au même niveau que www/)
 ├── composer.json          # Dépendances Composer
 └── README.md             # Documentation
 ```
