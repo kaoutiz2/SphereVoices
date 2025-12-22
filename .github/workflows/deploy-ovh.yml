@@ -9,6 +9,7 @@ jobs:
   deploy:
     name: Deploy to OVH Production
     runs-on: ubuntu-latest
+    timeout-minutes: 360
     
     steps:
       - name: Checkout code
@@ -25,143 +26,8 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-      - name: Deploy www/core (Step 1/4)
-        timeout-minutes: 240
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.OVH_FTP_HOST }}
-          username: ${{ secrets.OVH_FTP_USER }}
-          password: ${{ secrets.OVH_FTP_PASSWORD }}
-          local-dir: ./www/core/
-          server-dir: /www/core/
-          exclude: |
-            **/tests/**
-            **/test/**
-            **/simpletest/**
-            **/*.test.php
-            **/*.spec.php
-            **/fixtures/**
-            **/misc/cspell/**
-            **/assets/scaffold/**
-            **/recipes/**
-            **/scripts/**
-            **/COPYRIGHT.txt
-            **/INSTALL.txt
-            **/LICENSE.txt
-            **/MAINTAINERS.txt
-            **/README.md
-            **/UPDATE.txt
-            **/.eslintrc.json
-            **/.gitattributes
-            **/misc/drupal.js
-            **/misc/ajax.js
-            **/misc/tableheader.js
-            **/misc/tabledrag.js
-            **/misc/collapse.js
-            **/misc/drupal.init.js
-            **/misc/jquery.once.js
-            **/misc/jquery-extend-3.4.1.js
-            **/misc/domready.js
-            **/misc/jquery.js
-            **/misc/jquery.min.js
-            **/misc/logo/**
-            **/misc/icons/**
-            **/misc/loading.gif
-            **/misc/throbber.gif
-            **/misc/progress.gif
-            **/misc/arrow-*
-            **/misc/watchdog-*
-            **/misc/help-*
-            **/misc/menu-*
-            **/misc/close-*
-            **/misc/configure-*
-            **/misc/status-*
-            **/misc/warning-*
-            **/misc/error-*
-            **/misc/info-*
-            **/misc/ok-*
-            **/misc/not-found*
-            **/misc/forum-*
-            **/misc/powered-*
-            **/misc/feed-*
-            **/misc/rss-*
-            **/misc/search-*
-            **/misc/tree-*
-            **/misc/tree-*
-            **/misc/watermark-*
-            **/misc/*.png
-            **/misc/*.gif
-            **/misc/*.jpg
-            **/misc/*.svg
-            **/misc/*.ico
-            **/*.json
-            **/*.yml
-            **/*.yaml
-            **/package.json
-            **/yarn.lock
-            **/composer.json
-            **/phpcs.xml*
-            **/phpstan*
-            **/.prettier*
-            **/.stylelint*
-            **/.deprecation*
-            **/.cspell*
-            **/.gitignore
-            **/.eslintignore
-            **/.eslintrc*
-            **/.phpstan*
-          dangerous-clean-slate: false
-
-      - name: Deploy www root files (Step 2/4)
-        timeout-minutes: 10
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.OVH_FTP_HOST }}
-          username: ${{ secrets.OVH_FTP_USER }}
-          password: ${{ secrets.OVH_FTP_PASSWORD }}
-          local-dir: ./www/
-          server-dir: /www/
-          exclude: |
-            **/core/**
-            **/modules/**
-            **/themes/**
-            **/sites/default/files/**
-            **/sites/default/settings.php
-            **/sites/*/files/**
-            **/sites/*/private/**
-          dangerous-clean-slate: false
-
-      - name: Deploy www/modules and themes (Step 3/4)
-        timeout-minutes: 120
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.OVH_FTP_HOST }}
-          username: ${{ secrets.OVH_FTP_USER }}
-          password: ${{ secrets.OVH_FTP_PASSWORD }}
-          local-dir: ./www/
-          server-dir: /www/
-          exclude: |
-            **/core/**
-            **/sites/**
-            **/*.txt
-            **/*.md
-            **/tests/**
-            **/test/**
-            **/*.test.php
-            **/*.spec.php
-            **/fixtures/**
-            **/*.map
-            **/CHANGELOG*
-            **/README*
-            **/LICENSE*
-            **/COPYRIGHT*
-            **/UPDATE*
-            **/INSTALL*
-            **/MAINTAINERS*
-          dangerous-clean-slate: false
-
-      - name: Deploy vendor and config (Step 4/4)
-        timeout-minutes: 60
+      - name: Deploy to OVH FTP
+        timeout-minutes: 300
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.OVH_FTP_HOST }}
@@ -181,12 +47,23 @@ jobs:
             **/*.swo
             **/.DS_Store
             **/Thumbs.db
-            **/www/**
+            **/www/sites/default/files/**
+            **/www/sites/default/settings.php
+            **/www/sites/*/files/**
+            **/www/sites/*/private/**
             **/*.log
             **/*.cache
             **/*.tmp
             **/*.temp
+            **/tests/**
+            **/test/**
+            **/simpletest/**
+            **/*.test.php
+            **/*.spec.php
             **/*.md
+            **/example.*
+            **/*.example.*
+            **/*.map
             **/CHANGELOG*
             **/README*
             **/LICENSE*
@@ -196,4 +73,22 @@ jobs:
             **/MAINTAINERS*
             **/docs/**
             **/documentation/**
+            **/fixtures/**
+            **/*.po
+            **/www/core/tests/**
+            **/www/core/profiles/*/tests/**
+            **/www/modules/*/tests/**
+            **/www/themes/*/tests/**
+            **/www/core/misc/cspell/**
+            **/www/core/assets/scaffold/**
+            **/www/core/recipes/**
+            **/www/core/scripts/**
+            **/www/core/COPYRIGHT.txt
+            **/www/core/INSTALL.txt
+            **/www/core/LICENSE.txt
+            **/www/core/MAINTAINERS.txt
+            **/www/core/README.md
+            **/www/core/UPDATE.txt
+            **/www/core/.eslintrc.json
+            **/www/core/.gitattributes
           dangerous-clean-slate: false
