@@ -73,7 +73,7 @@ jobs:
           username: ${{ secrets.OVH_FTP_USER }}
           password: ${{ secrets.OVH_FTP_PASSWORD }}
           local-dir: ./www/
-          server-dir: ./www/
+          server-dir: www/
           exclude: |
             **/core/**
             **/modules/**
@@ -93,7 +93,7 @@ jobs:
           username: ${{ secrets.OVH_FTP_USER }}
           password: ${{ secrets.OVH_FTP_PASSWORD }}
           local-dir: ./www/
-          server-dir: ./www/
+          server-dir: www/
           exclude: |
             **/sites/default/files/**
             **/sites/default/settings.php
