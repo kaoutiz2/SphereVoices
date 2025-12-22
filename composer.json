@@ -76,6 +76,15 @@
         ],
         "post-update-cmd": [
             "Drupal\\Core\\Composer\\Composer::ensureHtaccess"
-        ]
+        ],
+        "start": "bash start.sh",
+        "server": "@start",
+        "serve": "@start",
+        "cache-clear": "drush cr",
+        "cache-rebuild": "drush cr",
+        "drush": "drush",
+        "update-db": "drush updb",
+        "config-export": "drush config:export",
+        "config-import": "drush config:import"
     }
 }

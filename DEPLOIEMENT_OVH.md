@@ -198,3 +198,4 @@ ls -la www/sites/default/files/
 - [ ] Permissions correctes sur `www/sites/default/files/`
 - [ ] Cache vidé
 - [ ] Site testé et fonctionnel
+
