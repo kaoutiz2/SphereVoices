@@ -35,6 +35,7 @@ jobs:
           exclude: |
             **/.git*
             **/.git*/**
+            **/.github/**
             **/node_modules/**
             **/.env*
             **/.env.production
@@ -52,5 +53,23 @@ jobs:
             **/*.cache
             **/*.tmp
             **/*.temp
+            **/tests/**
+            **/test/**
+            **/simpletest/**
+            **/*.test.php
+            **/*.spec.php
+            **/*.md
+            **/example.*
+            **/*.example.*
+            **/*.map
+            **/CHANGELOG*
+            **/README*
+            **/LICENSE*
+            **/COPYRIGHT*
+            **/UPDATE*
+            **/INSTALL*
+            **/MAINTAINERS*
+            **/docs/**
+            **/documentation/**
           dangerous-clean-slate: false
 
