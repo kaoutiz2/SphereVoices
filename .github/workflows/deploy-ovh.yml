@@ -34,6 +34,7 @@ jobs:
           username: ${{ secrets.OVH_FTP_USER }}
           password: ${{ secrets.OVH_FTP_PASSWORD }}
           server-dir: /
+          local-dir: ./
           exclude: |
             **/.git*
             **/.git*/**
