@@ -26,7 +26,7 @@ jobs:
         run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
       - name: Deploy www/core (Step 1/4)
-        timeout-minutes: 90
+        timeout-minutes: 240
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.OVH_FTP_HOST }}
@@ -53,6 +53,63 @@ jobs:
             **/UPDATE.txt
             **/.eslintrc.json
             **/.gitattributes
+            **/misc/drupal.js
+            **/misc/ajax.js
+            **/misc/tableheader.js
+            **/misc/tabledrag.js
+            **/misc/collapse.js
+            **/misc/drupal.init.js
+            **/misc/jquery.once.js
+            **/misc/jquery-extend-3.4.1.js
+            **/misc/domready.js
+            **/misc/jquery.js
+            **/misc/jquery.min.js
+            **/misc/logo/**
+            **/misc/icons/**
+            **/misc/loading.gif
+            **/misc/throbber.gif
+            **/misc/progress.gif
+            **/misc/arrow-*
+            **/misc/watchdog-*
+            **/misc/help-*
+            **/misc/menu-*
+            **/misc/close-*
+            **/misc/configure-*
+            **/misc/status-*
+            **/misc/warning-*
+            **/misc/error-*
+            **/misc/info-*
+            **/misc/ok-*
+            **/misc/not-found*
+            **/misc/forum-*
+            **/misc/powered-*
+            **/misc/feed-*
+            **/misc/rss-*
+            **/misc/search-*
+            **/misc/tree-*
+            **/misc/tree-*
+            **/misc/watermark-*
+            **/misc/*.png
+            **/misc/*.gif
+            **/misc/*.jpg
+            **/misc/*.svg
+            **/misc/*.ico
+            **/*.json
+            **/*.yml
+            **/*.yaml
+            **/package.json
+            **/yarn.lock
+            **/composer.json
+            **/phpcs.xml*
+            **/phpstan*
+            **/.prettier*
+            **/.stylelint*
+            **/.deprecation*
+            **/.cspell*
+            **/.gitignore
+            **/.eslintignore
+            **/.eslintrc*
+            **/.phpstan*
           dangerous-clean-slate: false
 
       - name: Deploy www root files (Step 2/4)
