@@ -26,15 +26,15 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-      - name: Deploy to OVH FTP
-        timeout-minutes: 300
+      - name: Deploy vendor and config (Step 1/3)
+        timeout-minutes: 30
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.OVH_FTP_HOST }}
           username: ${{ secrets.OVH_FTP_USER }}
           password: ${{ secrets.OVH_FTP_PASSWORD }}
-          server-dir: /
           local-dir: ./
+          server-dir: ./
           exclude: |
             **/.git*
             **/.git*/**
@@ -48,23 +48,12 @@ jobs:
             **/*.swo
             **/.DS_Store
             **/Thumbs.db
-            **/www/sites/default/files/**
-            **/www/sites/default/settings.php
-            **/www/sites/*/files/**
-            **/www/sites/*/private/**
+            **/www/**
             **/*.log
             **/*.cache
             **/*.tmp
             **/*.temp
-            **/tests/**
-            **/test/**
-            **/simpletest/**
-            **/*.test.php
-            **/*.spec.php
             **/*.md
-            **/example.*
-            **/*.example.*
-            **/*.map
             **/CHANGELOG*
             **/README*
             **/LICENSE*
@@ -74,8 +63,62 @@ jobs:
             **/MAINTAINERS*
             **/docs/**
             **/documentation/**
+          dangerous-clean-slate: false
+
+      - name: Deploy www root files (Step 2/3)
+        timeout-minutes: 10
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.OVH_FTP_HOST }}
+          username: ${{ secrets.OVH_FTP_USER }}
+          password: ${{ secrets.OVH_FTP_PASSWORD }}
+          local-dir: ./www/
+          server-dir: ./www/
+          exclude: |
+            **/core/**
+            **/modules/**
+            **/themes/**
+            **/sites/default/files/**
+            **/sites/default/settings.php
+            **/sites/*/files/**
+            **/sites/*/private/**
+            **/profiles/**
+          dangerous-clean-slate: false
+
+      - name: Deploy www/core, modules and themes (Step 3/3)
+        timeout-minutes: 180
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.OVH_FTP_HOST }}
+          username: ${{ secrets.OVH_FTP_USER }}
+          password: ${{ secrets.OVH_FTP_PASSWORD }}
+          local-dir: ./www/
+          server-dir: ./www/
+          exclude: |
+            **/sites/default/files/**
+            **/sites/default/settings.php
+            **/sites/*/files/**
+            **/sites/*/private/**
+            **/tests/**
+            **/test/**
+            **/simpletest/**
+            **/*.test.php
+            **/*.spec.php
             **/fixtures/**
             **/*.po
+            **/*.map
+            **/example.*
+            **/*.example.*
+            **/*.md
+            **/CHANGELOG*
+            **/README*
+            **/LICENSE*
+            **/COPYRIGHT*
+            **/UPDATE*
+            **/INSTALL*
+            **/MAINTAINERS*
+            **/docs/**
+            **/documentation/**
             **/www/core/tests/**
             **/www/core/profiles/*/tests/**
             **/www/modules/*/tests/**
@@ -92,4 +135,20 @@ jobs:
             **/www/core/UPDATE.txt
             **/www/core/.eslintrc.json
             **/www/core/.gitattributes
+            **/*.json
+            **/*.yml
+            **/*.yaml
+            **/package.json
+            **/yarn.lock
+            **/composer.json
+            **/phpcs.xml*
+            **/phpstan*
+            **/.prettier*
+            **/.stylelint*
+            **/.deprecation*
+            **/.cspell*
+            **/.gitignore
+            **/.eslintignore
+            **/.eslintrc*
+            **/.phpstan*
           dangerous-clean-slate: false
