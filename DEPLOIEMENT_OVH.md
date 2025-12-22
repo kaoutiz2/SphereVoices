@@ -19,7 +19,50 @@ Projet (racine)/
 └── .env.production   # Configuration de production (à créer)
 ```
 
-## 🚀 Déploiement via Git (Recommandé)
+## 🚀 Déploiement Automatique via GitHub Actions (Recommandé)
+
+### Configuration GitHub Actions
+
+Le projet utilise GitHub Actions pour déployer automatiquement sur le FTP OVH à chaque push sur la branche `production`.
+
+#### 1. Configuration des secrets GitHub
+
+1. **Allez sur votre repository GitHub :** `https://github.com/kaoutiz2/SphereVoices`
+2. **Cliquez sur Settings** → **Secrets and variables** → **Actions**
+3. **Ajoutez les secrets suivants :**
+   - `OVH_FTP_HOST` : L'adresse du serveur FTP OVH (ex: `ftp.cluster0XX.ovh.net` ou `ftp.yourdomain.com`)
+   - `OVH_FTP_USER` : Votre nom d'utilisateur FTP OVH
+   - `OVH_FTP_PASSWORD` : Votre mot de passe FTP OVH
+
+   **Où trouver ces informations :**
+   - Espace client OVH → Hébergement → FTP - SSH
+   - Ou dans les emails de création de votre hébergement
+
+#### 2. Fonctionnement
+
+- **Déclenchement automatique :** À chaque push sur la branche `production`, le workflow se déclenche
+- **Installation des dépendances :** Les dépendances Composer sont installées automatiquement
+- **Déploiement FTP :** Tous les fichiers nécessaires sont déployés sur le serveur OVH
+- **Fichiers exclus :** Les fichiers sensibles (`.env`, `settings.php`, fichiers uploadés) ne sont pas déployés
+
+#### 3. Structure sur OVH après déploiement
+
+```
+FTP OVH (racine)/
+├── www/              ← Contenu du dossier www/ du repo
+├── vendor/           ← Dépendances Composer installées
+├── config/           ← Configuration Drupal
+├── composer.json     ← Fichier de dépendances
+└── .env.production   ← À créer manuellement (non versionné)
+```
+
+#### 4. Vérification du déploiement
+
+- Allez sur l'onglet **Actions** de votre repository GitHub
+- Vous pouvez voir l'historique des déploiements et leur statut
+- En cas d'erreur, les logs détaillés sont disponibles
+
+## 🚀 Déploiement via Git OVH (Alternative)
 
 ### Configuration OVH pour Git
 
@@ -85,6 +128,24 @@ Le fichier `settings.php` charge automatiquement les variables depuis `.env.prod
 
 ## ⚙️ Mises à jour
 
+### Avec GitHub Actions (Recommandé)
+
+Pour mettre à jour le site :
+
+1. **Poussez vos changements sur la branche `production` :**
+   ```bash
+   git checkout production
+   git merge main  # ou votre branche de développement
+   git push origin production
+   ```
+
+2. **Le déploiement se fait automatiquement** via GitHub Actions
+3. **Videz le cache** si nécessaire :
+   - Via Drush (si disponible) : `drush cr`
+   - Ou supprimez manuellement : `www/sites/default/files/php/twig/`
+
+### Avec Git OVH (Alternative)
+
 Pour mettre à jour le site après un push Git :
 
 1. **OVH déploie automatiquement** depuis votre repo Git
@@ -119,9 +180,22 @@ ls -la www/sites/default/files/
 
 ## 📋 Checklist de déploiement
 
+### Avec GitHub Actions
+
+- [ ] Secrets GitHub configurés (`OVH_FTP_HOST`, `OVH_FTP_USER`, `OVH_FTP_PASSWORD`)
+- [ ] Workflow GitHub Actions configuré (fichier `.github/workflows/deploy-ovh.yml`)
+- [ ] Premier déploiement effectué via push sur `production`
+- [ ] Fichier `.env.production` créé sur OVH avec les bonnes valeurs
+- [ ] Permissions correctes sur `www/sites/default/files/`
+- [ ] Cache vidé
+- [ ] Site testé et fonctionnel
+
+### Avec Git OVH (Alternative)
+
 - [ ] Repo Git configuré sur OVH
 - [ ] Premier déploiement effectué
 - [ ] Fichier `.env.production` créé avec les bonnes valeurs
 - [ ] Permissions correctes sur `www/sites/default/files/`
 - [ ] Cache vidé
 - [ ] Site testé et fonctionnel
+

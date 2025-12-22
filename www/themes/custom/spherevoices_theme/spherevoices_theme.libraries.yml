@@ -29,3 +29,10 @@ admin:
   dependencies:
     - spherevoices_theme/global-styling
 
+maintenance:
+  css:
+    theme:
+      css/maintenance.css: {}
+  dependencies:
+    - core/drupal
+
