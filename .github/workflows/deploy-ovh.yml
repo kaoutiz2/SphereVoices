@@ -26,6 +26,7 @@ jobs:
         run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
       - name: Deploy to OVH FTP
+        timeout-minutes: 300
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.OVH_FTP_HOST }}
@@ -71,5 +72,23 @@ jobs:
             **/MAINTAINERS*
             **/docs/**
             **/documentation/**
+            **/fixtures/**
+            **/*.po
+            **/www/core/tests/**
+            **/www/core/profiles/*/tests/**
+            **/www/modules/*/tests/**
+            **/www/themes/*/tests/**
+            **/www/core/misc/cspell/**
+            **/www/core/assets/scaffold/**
+            **/www/core/recipes/**
+            **/www/core/scripts/**
+            **/www/core/COPYRIGHT.txt
+            **/www/core/INSTALL.txt
+            **/www/core/LICENSE.txt
+            **/www/core/MAINTAINERS.txt
+            **/www/core/README.md
+            **/www/core/UPDATE.txt
+            **/www/core/.eslintrc.json
+            **/www/core/.gitattributes
           dangerous-clean-slate: false
 
