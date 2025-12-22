@@ -85,20 +85,17 @@ jobs:
             **/profiles/**
           dangerous-clean-slate: false
 
-      - name: Deploy www/core, modules and themes (Step 3/3)
-        timeout-minutes: 180
+      - name: Deploy www/core (Step 3a/5)
+        timeout-minutes: 120
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.OVH_FTP_HOST }}
           username: ${{ secrets.OVH_FTP_USER }}
           password: ${{ secrets.OVH_FTP_PASSWORD }}
-          local-dir: ./www/
-          server-dir: www/
+          local-dir: ./www/core/
+          server-dir: www/core/
+          timeout: 300000
           exclude: |
-            **/sites/default/files/**
-            **/sites/default/settings.php
-            **/sites/*/files/**
-            **/sites/*/private/**
             **/tests/**
             **/test/**
             **/simpletest/**
@@ -107,8 +104,6 @@ jobs:
             **/fixtures/**
             **/*.po
             **/*.map
-            **/example.*
-            **/*.example.*
             **/*.md
             **/CHANGELOG*
             **/README*
@@ -119,22 +114,19 @@ jobs:
             **/MAINTAINERS*
             **/docs/**
             **/documentation/**
-            **/www/core/tests/**
-            **/www/core/profiles/*/tests/**
-            **/www/modules/*/tests/**
-            **/www/themes/*/tests/**
-            **/www/core/misc/cspell/**
-            **/www/core/assets/scaffold/**
-            **/www/core/recipes/**
-            **/www/core/scripts/**
-            **/www/core/COPYRIGHT.txt
-            **/www/core/INSTALL.txt
-            **/www/core/LICENSE.txt
-            **/www/core/MAINTAINERS.txt
-            **/www/core/README.md
-            **/www/core/UPDATE.txt
-            **/www/core/.eslintrc.json
-            **/www/core/.gitattributes
+            **/profiles/*/tests/**
+            **/misc/cspell/**
+            **/assets/scaffold/**
+            **/recipes/**
+            **/scripts/**
+            **/COPYRIGHT.txt
+            **/INSTALL.txt
+            **/LICENSE.txt
+            **/MAINTAINERS.txt
+            **/README.md
+            **/UPDATE.txt
+            **/.eslintrc.json
+            **/.gitattributes
             **/*.json
             **/*.yml
             **/*.yaml
@@ -151,4 +143,74 @@ jobs:
             **/.eslintignore
             **/.eslintrc*
             **/.phpstan*
+          dangerous-clean-slate: false
+
+      - name: Deploy www/modules (Step 3b/5)
+        timeout-minutes: 90
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.OVH_FTP_HOST }}
+          username: ${{ secrets.OVH_FTP_USER }}
+          password: ${{ secrets.OVH_FTP_PASSWORD }}
+          local-dir: ./www/modules/
+          server-dir: www/modules/
+          timeout: 300000
+          exclude: |
+            **/tests/**
+            **/test/**
+            **/*.test.php
+            **/*.spec.php
+            **/fixtures/**
+            **/*.po
+            **/*.map
+            **/*.md
+            **/CHANGELOG*
+            **/README*
+            **/LICENSE*
+            **/COPYRIGHT*
+            **/UPDATE*
+            **/INSTALL*
+            **/MAINTAINERS*
+            **/docs/**
+            **/documentation/**
+            **/example.*
+            **/*.example.*
+            **/*.json
+            **/*.yml
+            **/*.yaml
+          dangerous-clean-slate: false
+
+      - name: Deploy www/themes (Step 3c/5)
+        timeout-minutes: 10
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.OVH_FTP_HOST }}
+          username: ${{ secrets.OVH_FTP_USER }}
+          password: ${{ secrets.OVH_FTP_PASSWORD }}
+          local-dir: ./www/themes/
+          server-dir: www/themes/
+          timeout: 300000
+          exclude: |
+            **/tests/**
+            **/test/**
+            **/*.test.php
+            **/*.spec.php
+            **/fixtures/**
+            **/*.po
+            **/*.map
+            **/*.md
+            **/CHANGELOG*
+            **/README*
+            **/LICENSE*
+            **/COPYRIGHT*
+            **/UPDATE*
+            **/INSTALL*
+            **/MAINTAINERS*
+            **/docs/**
+            **/documentation/**
+            **/example.*
+            **/*.example.*
+            **/*.json
+            **/*.yml
+            **/*.yaml
           dangerous-clean-slate: false
