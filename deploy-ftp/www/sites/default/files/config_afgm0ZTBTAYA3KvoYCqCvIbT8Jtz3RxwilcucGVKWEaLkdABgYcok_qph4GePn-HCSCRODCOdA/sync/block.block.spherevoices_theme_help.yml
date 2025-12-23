@@ -1,0 +1,22 @@
+uuid: 47587cb5-b1d4-48a2-ba30-b913f0202541
+langcode: fr
+status: true
+dependencies:
+  module:
+    - help
+  theme:
+    - spherevoices_theme
+_core:
+  default_config_hash: VfPFqqxfkomud5CO8DUijw85QIl9GIxh_nIxLOYESxg
+id: spherevoices_theme_help
+theme: spherevoices_theme
+region: header
+weight: 0
+provider: null
+plugin: help_block
+settings:
+  id: help_block
+  label: Aide
+  label_display: '0'
+  provider: help
+visibility: {  }
