@@ -1,6 +1,0 @@
-name: SphereVoices Core
-type: module
-description: 'Module principal pour les fonctionnalités spécifiques à SphereVoices (Breaking News, Trending, etc.)'
-core_version_requirement: ^10 || ^11
-package: Custom
-
