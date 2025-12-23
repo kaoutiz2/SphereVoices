@@ -37,4 +37,7 @@ yarn-error.log
 *.tmp
 *.temp
 
+# Deploy FTP directory (temporary)
+deploy-ftp/
+
 
