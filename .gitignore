@@ -6,7 +6,7 @@ www/sites/*/private/
 
 # Composer
 /vendor/
-composer.lock
+# composer.lock should be committed for reproducible builds
 
 # IDE
 .idea/
