@@ -105,7 +105,7 @@ jobs:
             **/profiles/**
           dangerous-clean-slate: false
 
-      - name: Deploy www/core (Step 3a/5)
+      - name: Deploy www/core (Step 4a/6)
         timeout-minutes: 240
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -168,7 +168,7 @@ jobs:
             **/profiles/**
           dangerous-clean-slate: false
 
-      - name: Deploy www/modules (Step 3b/5)
+      - name: Deploy www/modules (Step 4b/6)
         timeout-minutes: 90
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -203,7 +203,7 @@ jobs:
             **/*.yaml
           dangerous-clean-slate: false
 
-      - name: Deploy www/themes (Step 3c/5)
+      - name: Deploy www/themes (Step 4c/6)
         timeout-minutes: 10
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
