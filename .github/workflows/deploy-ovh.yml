@@ -46,7 +46,7 @@ jobs:
           dangerous-clean-slate: false
 
       - name: Deploy vendor and config (Step 2/4)
-        timeout-minutes: 30
+        timeout-minutes: 90
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.OVH_FTP_HOST }}
@@ -54,6 +54,7 @@ jobs:
           password: ${{ secrets.OVH_FTP_PASSWORD }}
           local-dir: ./
           server-dir: ./
+          timeout: 600000
           exclude: |
             **/.git*
             **/.git*/**
@@ -83,6 +84,31 @@ jobs:
             **/MAINTAINERS*
             **/docs/**
             **/documentation/**
+            **/vendor/**/tests/**
+            **/vendor/**/test/**
+            **/vendor/**/*.test.php
+            **/vendor/**/*.spec.php
+            **/vendor/**/fixtures/**
+            **/vendor/**/*.po
+            **/vendor/**/*.map
+            **/vendor/**/.git/**
+            **/vendor/**/.github/**
+            **/vendor/**/phpunit.xml*
+            **/vendor/**/phpunit.dist.xml
+            **/vendor/**/.phpunit.cache/**
+            **/vendor/**/behat.yml*
+            **/vendor/**/.travis.yml
+            **/vendor/**/.scrutinizer.yml
+            **/vendor/**/.coveralls.yml
+            **/vendor/**/phpcs.xml*
+            **/vendor/**/phpstan.neon*
+            **/vendor/**/.phpstan/**
+            **/vendor/**/.idea/**
+            **/vendor/**/.vscode/**
+            **/vendor/**/examples/**
+            **/vendor/**/example/**
+            **/vendor/**/samples/**
+            **/vendor/**/sample/**
           dangerous-clean-slate: false
 
       - name: Deploy www root files (Step 3/4)
