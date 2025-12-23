@@ -1,0 +1,22 @@
+uuid: 4ae76f9c-7371-4f97-92c3-c967abe0edc8
+langcode: fr
+status: true
+dependencies:
+  module:
+    - system
+  theme:
+    - spherevoices_theme
+_core:
+  default_config_hash: eYL19CLDyinGTWYQfBD1DswWzglEotE_kHnHx3AxTXM
+id: spherevoices_theme_powered
+theme: spherevoices_theme
+region: header
+weight: 0
+provider: null
+plugin: system_powered_by_block
+settings:
+  id: system_powered_by_block
+  label: 'Propulsé par Drupal'
+  label_display: '0'
+  provider: system
+visibility: {  }

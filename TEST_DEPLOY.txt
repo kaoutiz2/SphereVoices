@@ -1,0 +1,3 @@
+Ce fichier est un test de déploiement Git OVH.
+Si vous voyez ce fichier sur votre FTP, le déploiement fonctionne.
+Date: 2025-12-22

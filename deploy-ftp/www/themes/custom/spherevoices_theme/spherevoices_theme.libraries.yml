@@ -1,0 +1,38 @@
+global-styling:
+  css:
+    base:
+      css/style.css: {}
+    layout:
+      css/layout.css: {}
+    component:
+      css/components.css: {}
+  js:
+    js/main.js: {}
+  dependencies:
+    - core/drupal
+    - core/jquery
+    - core/jquery.once
+    - core/drupal.ajax
+    - core/drupal.toolbar
+    - core/drupal.bigPipe
+    - core/drupal.contextual
+
+responsive:
+  css:
+    theme:
+      css/responsive.css: {}
+
+admin:
+  css:
+    theme:
+      css/admin.css: {}
+  dependencies:
+    - spherevoices_theme/global-styling
+
+maintenance:
+  css:
+    theme:
+      css/maintenance.css: {}
+  dependencies:
+    - core/drupal
+

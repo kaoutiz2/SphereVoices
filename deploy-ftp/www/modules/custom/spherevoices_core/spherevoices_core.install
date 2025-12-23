@@ -1,0 +1,98 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the spherevoices_core module.
+ */
+
+use Drupal\user\Entity\Role;
+
+/**
+ * Implements hook_install().
+ */
+function spherevoices_core_install() {
+  // Ajouter la permission de créer des brèves au rôle content_editor s'il existe
+  $role_names = ['content_editor', 'editor'];
+  
+  foreach ($role_names as $role_name) {
+    $role = Role::load($role_name);
+    if ($role) {
+      $permissions = [
+        'create breve content',
+        'edit own breve content',
+        'delete own breve content',
+        'view breve revisions',
+      ];
+      
+      foreach ($permissions as $permission) {
+        if (!$role->hasPermission($permission)) {
+          $role->grantPermission($permission);
+        }
+      }
+      
+      $role->save();
+      \Drupal::logger('spherevoices_core')->notice('Permissions for breve content type added to role @role', [
+        '@role' => $role->label(),
+      ]);
+    }
+  }
+}
+
+/**
+ * Implements hook_update_N().
+ * 
+ * Ajoute les permissions pour les brèves aux rôles éditeurs.
+ */
+function spherevoices_core_update_8001() {
+  $role_names = ['content_editor', 'editor'];
+  $permissions = [
+    'create breve content',
+    'edit own breve content',
+    'delete own breve content',
+    'view breve revisions',
+  ];
+  
+  foreach ($role_names as $role_name) {
+    $role = Role::load($role_name);
+    if ($role) {
+      foreach ($permissions as $permission) {
+        if (!$role->hasPermission($permission)) {
+          $role->grantPermission($permission);
+        }
+      }
+      $role->save();
+    }
+  }
+  
+  return t('Permissions for breve content type added to editor roles.');
+}
+
+/**
+ * Implements hook_update_N().
+ * 
+ * Ajoute les permissions pour les paramètres de commentaires et publication aux rôles éditeurs.
+ */
+function spherevoices_core_update_8002() {
+  $role_names = ['content_editor', 'editor'];
+  $permissions = [
+    'administer comments',
+    'administer nodes',
+  ];
+  
+  foreach ($role_names as $role_name) {
+    $role = Role::load($role_name);
+    if ($role) {
+      foreach ($permissions as $permission) {
+        if (!$role->hasPermission($permission)) {
+          $role->grantPermission($permission);
+        }
+      }
+      $role->save();
+    }
+  }
+  
+  return t('Permissions for comment settings and publication options added to editor roles.');
+}
+
+
+

@@ -1,0 +1,124 @@
+{#
+/**
+ * @file
+ * Template principal de page pour SphereVoices.
+ *
+ * Variables disponibles:
+ * - page.header: Contenu de la région header
+ * - page.header_top: Contenu de la région header top (breaking news)
+ * - page.navigation: Menu de navigation
+ * - page.content: Contenu principal
+ * - page.footer: Footer
+ */
+#}
+<div class="page-wrapper">
+  <header class="site-header" role="banner">
+    {% if page.header_top %}
+      <div class="header-top">
+        {{ page.header_top }}
+      </div>
+    {% endif %}
+    <div class="header-main">
+      <div class="header-left-section">
+        {% if page.header %}
+          <div class="site-branding">
+            {{ page.header }}
+          </div>
+        {% endif %}
+        <button class="menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+          <span class="menu-toggle-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+        </button>
+        {% if page.navigation %}
+          <nav class="main-navigation mobile-menu-hidden" role="navigation" aria-label="Main navigation">
+            {{ page.navigation }}
+          </nav>
+        {% endif %}
+      </div>
+      <div class="header-right-section">
+        <div class="header-search">
+          <form action="/search" method="get" class="search-form-inline">
+            <input type="search" name="keys" placeholder="Rechercher..." class="search-input-inline" />
+            <button type="submit" class="search-button-inline">Rechercher</button>
+          </form>
+        </div>
+        <div class="header-user-section">
+          <div class="header-user-links">
+            {% if page.header_user %}
+              {{ page.header_user }}
+            {% endif %}
+          </div>
+          <div class="header-rss">
+            {% if page.header_rss %}
+              {{ page.header_rss }}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  {% if page.breadcrumb %}
+    <div class="breadcrumb-wrapper">
+      {{ page.breadcrumb }}
+    </div>
+  {% endif %}
+
+  {% if page.highlighted %}
+    <div class="highlighted">
+      {{ page.highlighted }}
+    </div>
+  {% endif %}
+
+  <main class="main-content" role="main">
+    {% if page.sidebar_first %}
+      <aside class="sidebar sidebar-first" role="complementary">
+        {{ page.sidebar_first }}
+      </aside>
+    {% endif %}
+
+    <div class="content-wrapper">
+      {% if not is_front and page_title and node_type != 'article' %}
+        <h1 class="page-title">{{ page_title }}</h1>
+      {% endif %}
+      {{ page.content }}
+    </div>
+
+    {% if page.sidebar_second %}
+      <aside class="sidebar sidebar-second" role="complementary">
+        {{ page.sidebar_second }}
+      </aside>
+    {% endif %}
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    {% if page.footer_first or page.footer_second or page.footer_third %}
+      <div class="footer-content">
+        {% if page.footer_first %}
+          <div class="footer-column footer-first">
+            {{ page.footer_first }}
+          </div>
+        {% endif %}
+        {% if page.footer_second %}
+          <div class="footer-column footer-second">
+            {{ page.footer_second }}
+          </div>
+        {% endif %}
+        {% if page.footer_third %}
+          <div class="footer-column footer-third">
+            {{ page.footer_third }}
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+    {% if page.footer %}
+      <div class="footer-bottom">
+        {{ page.footer }}
+      </div>
+    {% endif %}
+  </footer>
+</div>
+

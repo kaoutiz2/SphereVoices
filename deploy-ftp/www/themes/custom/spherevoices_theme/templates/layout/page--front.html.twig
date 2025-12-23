@@ -1,0 +1,202 @@
+{#
+/**
+ * @file
+ * Template pour la page d'accueil style CNN.
+ *
+ * Variables disponibles:
+ * - breaking_news: Article breaking news (avec label)
+ * - featured_article: Article principal au centre
+ * - left_articles: Articles à gauche
+ * - right_articles: Articles à droite
+ */
+#}
+<div class="page-wrapper">
+  <header class="site-header" role="banner">
+    {% if page.header_top %}
+      <div class="header-top">
+        {{ page.header_top }}
+      </div>
+    {% endif %}
+    <div class="header-main">
+      <div class="header-left-section">
+        {% if page.header %}
+          <div class="site-branding">
+            {{ page.header }}
+          </div>
+        {% endif %}
+        <button class="menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+          <span class="menu-toggle-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+        </button>
+        {% if page.navigation %}
+          <nav class="main-navigation mobile-menu-hidden" role="navigation" aria-label="Main navigation">
+            {{ page.navigation }}
+          </nav>
+        {% endif %}
+      </div>
+      <div class="header-right-section">
+        <div class="header-search">
+          <form action="/search" method="get" class="search-form-inline">
+            <input type="search" name="keys" placeholder="Rechercher..." class="search-input-inline" />
+            <button type="submit" class="search-button-inline">Rechercher</button>
+          </form>
+        </div>
+        <div class="header-user-section">
+          <div class="header-user-links">
+            {% if page.header_user %}
+              {{ page.header_user }}
+            {% endif %}
+          </div>
+          <div class="header-rss">
+            {% if page.header_rss %}
+              {{ page.header_rss }}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  {% if page.breadcrumb %}
+    <div class="breadcrumb-wrapper">
+      {{ page.breadcrumb }}
+    </div>
+  {% endif %}
+
+  {% if page.highlighted %}
+    <div class="highlighted">
+      {{ page.highlighted }}
+    </div>
+  {% endif %}
+
+  <main class="main-content homepage-main" role="main">
+    <div class="homepage-container">
+      {# Breaking News en haut à gauche avec pub à droite #}
+      <div class="breaking-news-wrapper">
+        {% if breaking_news %}
+          <div class="breaking-news-section">
+            {{ breaking_news }}
+          </div>
+        {% endif %}
+        {# Encart publicitaire à droite du breaking news #}
+        <div class="ad-banner ad-banner-breaking-news">
+          <div class="ad-placeholder">
+            <span class="ad-label">Publicité</span>
+            <div class="ad-content">500x300</div>
+          </div>
+        </div>
+      </div>
+
+      {# Layout principal style CNN #}
+      <div class="homepage-cnn-layout">
+        {# Colonne gauche - Articles secondaires #}
+        <div class="homepage-left-column">
+          {% if left_articles %}
+            {% for article in left_articles %}
+              <div class="article-card article-card-side">
+                {{ article }}
+              </div>
+              {# Encart publicitaire après le 5ème article dans la colonne gauche #}
+              {% if loop.index == 5 %}
+                <div class="ad-banner ad-banner-left-column">
+                  <div class="ad-placeholder">
+                    <span class="ad-label">Publicité</span>
+                    <div class="ad-content">270x530</div>
+                  </div>
+                </div>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        </div>
+
+        {# Colonne centrale - Article principal #}
+        <div class="homepage-center-column">
+          {% if featured_article %}
+            <div class="article-card article-card-featured">
+              {{ featured_article }}
+            </div>
+          {% endif %}
+          {# Encart publicitaire sous l'article du milieu #}
+          <div class="ad-banner ad-banner-between-articles">
+            <div class="ad-placeholder">
+              <span class="ad-label">Publicité</span>
+              <div class="ad-content">500x300</div>
+            </div>
+          </div>
+          {# Articles sous la pub dans la colonne centrale #}
+          {% if center_articles %}
+            {% for article in center_articles %}
+              <div class="article-card article-card-side">
+                {{ article }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        </div>
+
+        {# Colonne droite - Articles secondaires #}
+        <div class="homepage-right-column">
+          {% if right_articles %}
+            {% for article in right_articles %}
+              <div class="article-card article-card-side">
+                {{ article }}
+              </div>
+              {# Bloc Brèves après le 2ème article dans la colonne droite #}
+              {% if loop.index == 2 %}
+                {% if breves_block %}
+                  {{ breves_block }}
+                {% endif %}
+              {% endif %}
+              {# Encart publicitaire après le 3ème article dans la colonne droite #}
+              {% if loop.index == 3 %}
+                <div class="ad-banner ad-banner-right-column">
+                  <div class="ad-placeholder">
+                    <span class="ad-label">Publicité</span>
+                    <div class="ad-content">270x530</div>
+                  </div>
+                </div>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+
+      {# Contenu additionnel #}
+      {% if page.content %}
+        <div class="homepage-additional-content">
+          {{ page.content }}
+        </div>
+      {% endif %}
+    </div>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    {% if page.footer_first or page.footer_second or page.footer_third %}
+      <div class="footer-content">
+        {% if page.footer_first %}
+          <div class="footer-column footer-first">
+            {{ page.footer_first }}
+          </div>
+        {% endif %}
+        {% if page.footer_second %}
+          <div class="footer-column footer-second">
+            {{ page.footer_second }}
+          </div>
+        {% endif %}
+        {% if page.footer_third %}
+          <div class="footer-column footer-third">
+            {{ page.footer_third }}
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+    {% if page.footer %}
+      <div class="footer-bottom">
+        {{ page.footer }}
+      </div>
+    {% endif %}
+  </footer>
+</div>
+

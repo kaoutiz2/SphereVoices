@@ -1,12 +1,13 @@
 # Drupal
 www/sites/default/settings.php
+www/sites/default/settings.local.php
 www/sites/default/files/
 www/sites/*/files/
 www/sites/*/private/
 
 # Composer
 /vendor/
-composer.lock
+# composer.lock should be committed for reproducible builds
 
 # IDE
 .idea/
@@ -36,5 +37,8 @@ yarn-error.log
 # Temporary files
 *.tmp
 *.temp
+
+# Deploy FTP directory (temporary)
+deploy-ftp/
 
 
