@@ -53,6 +53,7 @@ jobs:
             **/.DS_Store
             **/Thumbs.db
             **/www/**
+            **/deploy-ftp/**
             **/*.log
             **/*.cache
             **/*.tmp
