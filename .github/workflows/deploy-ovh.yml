@@ -32,18 +32,14 @@ jobs:
 
       - name: Deploy root .htaccess (Step 1/4)
         timeout-minutes: 2
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.OVH_FTP_HOST }}
-          username: ${{ secrets.OVH_FTP_USER }}
-          password: ${{ secrets.OVH_FTP_PASSWORD }}
-          local-dir: ./
-          server-dir: ./
-          include: |
-            .htaccess
-          exclude: |
-            **/*
-          dangerous-clean-slate: false
+        run: |
+          apt-get update && apt-get install -y lftp
+          lftp -c "
+            set ftp:ssl-allow no
+            open -u ${{ secrets.OVH_FTP_USER }},${{ secrets.OVH_FTP_PASSWORD }} ${{ secrets.OVH_FTP_HOST }}
+            put .htaccess -o .htaccess
+            bye
+          "
 
       - name: Deploy vendor and config (Step 2/4)
         timeout-minutes: 90
