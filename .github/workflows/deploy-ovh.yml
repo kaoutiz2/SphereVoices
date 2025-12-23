@@ -86,7 +86,7 @@ jobs:
           dangerous-clean-slate: false
 
       - name: Deploy www/core (Step 3a/5)
-        timeout-minutes: 120
+        timeout-minutes: 240
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.OVH_FTP_HOST }}
