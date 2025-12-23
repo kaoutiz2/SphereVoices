@@ -1,5 +1,6 @@
 # Drupal
 www/sites/default/settings.php
+www/sites/default/settings.local.php
 www/sites/default/files/
 www/sites/*/files/
 www/sites/*/private/
