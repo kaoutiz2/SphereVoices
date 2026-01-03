@@ -1,8 +1,8 @@
 <?php
 /**
- * BYPASS COMPLET du mode maintenance
- * Ce script n'utilise PAS Drupal, il accède directement à la base de données
- * URL: https://www.spherevoices.com/www/bypass-maintenance.php?token=spherevoices2026
+ * BYPASS COMPLET du mode maintenance - VERSION RACINE
+ * Ce script est à la RACINE du projet (pas dans www/)
+ * URL: https://www.spherevoices.com/bypass-maintenance.php?token=spherevoices2026
  */
 
 $security_token = 'spherevoices2026';
@@ -28,17 +28,22 @@ header('Content-Type: text/html; charset=utf-8');
 </head>
 <body>
     <div class="container">
-        <h1>🚨 Bypass Mode Maintenance</h1>
+        <h1>🚨 Bypass Mode Maintenance (Racine)</h1>
         
         <?php
         if ($provided_token === $security_token) {
             echo '<div class="info">🚀 Connexion directe à la base de données...</div>';
             
-            // Charger les identifiants depuis settings.php
-            $settings_file = __DIR__ . '/sites/default/settings.php';
+            // Charger les identifiants depuis settings.php (dans www/)
+            $settings_file = __DIR__ . '/www/sites/default/settings.php';
+            
+            echo '<div class="info">Chemin settings.php : ' . htmlspecialchars($settings_file) . '</div>';
             
             if (!file_exists($settings_file)) {
-                echo '<div class="error">❌ settings.php introuvable</div>';
+                echo '<div class="error">❌ settings.php introuvable à : ' . htmlspecialchars($settings_file) . '</div>';
+                echo '<div class="info">Fichiers dans la racine :</div><pre>';
+                print_r(scandir(__DIR__));
+                echo '</pre>';
                 exit;
             }
             
@@ -46,13 +51,13 @@ header('Content-Type: text/html; charset=utf-8');
             include $settings_file;
             
             if (!isset($databases['default']['default'])) {
-                echo '<div class="error">❌ Configuration base de données introuvable</div>';
+                echo '<div class="error">❌ Configuration base de données introuvable dans settings.php</div>';
                 exit;
             }
             
             $db_config = $databases['default']['default'];
             
-            echo '<div class="info">📊 Configuration DB trouvée</div>';
+            echo '<div class="success">✅ Configuration DB trouvée</div>';
             echo '<pre>';
             echo 'Host: ' . htmlspecialchars($db_config['host']) . "\n";
             echo 'Database: ' . htmlspecialchars($db_config['database']) . "\n";
@@ -67,22 +72,26 @@ header('Content-Type: text/html; charset=utf-8');
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 ]);
                 
-                echo '<div class="success">✅ Connexion base de données réussie</div>';
+                echo '<div class="success">✅ Connexion base de données réussie !</div>';
                 
                 // 1. DÉSACTIVER LE MODE MAINTENANCE
-                echo '<div class="info">🔧 Désactivation du mode maintenance dans key_value...</div>';
+                echo '<div class="info">🔧 Désactivation du mode maintenance...</div>';
                 
-                // Drupal stocke le mode maintenance dans la table key_value
                 $stmt = $pdo->prepare("
                     DELETE FROM key_value 
                     WHERE collection = 'state' 
                     AND name = 'system.maintenance_mode'
                 ");
-                $stmt->execute();
+                $result = $stmt->execute();
+                $deleted = $stmt->rowCount();
                 
-                echo '<div class="success">✅ Mode maintenance DÉSACTIVÉ dans la base de données</div>';
+                if ($deleted > 0) {
+                    echo '<div class="success">✅ Mode maintenance DÉSACTIVÉ ! (' . $deleted . ' entrée supprimée)</div>';
+                } else {
+                    echo '<div class="warning">⚠️ Aucune entrée maintenance trouvée (déjà désactivé ?)</div>';
+                }
                 
-                // 2. VIDER LA TABLE CACHE
+                // 2. VIDER LES TABLES DE CACHE
                 echo '<div class="info">🔄 Vidage des tables de cache...</div>';
                 
                 $cache_tables = [
@@ -97,7 +106,6 @@ header('Content-Type: text/html; charset=utf-8');
                     'cache_menu',
                     'cache_page',
                     'cache_render',
-                    'cache_toolbar',
                 ];
                 
                 $cleared = 0;
@@ -106,44 +114,61 @@ header('Content-Type: text/html; charset=utf-8');
                         $stmt = $pdo->prepare("TRUNCATE TABLE `$table`");
                         $stmt->execute();
                         $cleared++;
-                        echo '<div class="success">✅ Table ' . htmlspecialchars($table) . ' vidée</div>';
                     } catch (PDOException $e) {
-                        echo '<div class="warning">⚠️ Table ' . htmlspecialchars($table) . ' : ' . htmlspecialchars($e->getMessage()) . '</div>';
+                        // Table n'existe peut-être pas
                     }
                 }
                 
                 echo '<div class="success">✅ ' . $cleared . ' tables de cache vidées</div>';
                 
+                // 3. VIDER LES FICHIERS DE CACHE COMPILÉS
+                echo '<div class="info">🗑️ Suppression des fichiers de cache compilés...</div>';
+                
+                $cache_dirs = [
+                    __DIR__ . '/www/sites/default/files/php',
+                    __DIR__ . '/www/sites/default/files/css',
+                    __DIR__ . '/www/sites/default/files/js',
+                ];
+                
+                $deleted_files = 0;
+                foreach ($cache_dirs as $dir) {
+                    if (is_dir($dir)) {
+                        $files = glob($dir . '/*');
+                        foreach ($files as $file) {
+                            if (is_file($file)) {
+                                @unlink($file);
+                                $deleted_files++;
+                            }
+                        }
+                    }
+                }
+                
+                if ($deleted_files > 0) {
+                    echo '<div class="success">✅ ' . $deleted_files . ' fichiers de cache supprimés</div>';
+                } else {
+                    echo '<div class="warning">⚠️ Aucun fichier de cache à supprimer</div>';
+                }
+                
                 echo '<h2 class="success">🎉 RÉPARATION TERMINÉE !</h2>';
                 echo '<div class="info">';
-                echo '<p><strong>Actions effectuées :</strong></p>';
+                echo '<p><strong>✅ Le site devrait maintenant être accessible !</strong></p>';
                 echo '<ul>';
-                echo '<li>✅ Mode maintenance DÉSACTIVÉ (accès direct DB)</li>';
-                echo '<li>✅ ' . $cleared . ' tables de cache vidées</li>';
-                echo '<li>✅ Le site devrait maintenant être accessible</li>';
+                echo '<li>✅ Mode maintenance désactivé</li>';
+                echo '<li>✅ Cache vidé</li>';
                 echo '</ul>';
                 echo '</div>';
                 
-                echo '<div class="warning">';
-                echo '<p><strong>⚠️ Prochaines étapes :</strong></p>';
-                echo '<ol>';
-                echo '<li>Visitez la page d\'accueil : <a href="/">https://www.spherevoices.com</a></li>';
-                echo '<li>Connectez-vous en admin</li>';
-                echo '<li>Allez sur Configuration > Development > Performance</li>';
-                echo '<li>Cliquez sur "Clear all caches" pour un vidage complet</li>';
-                echo '</ol>';
-                echo '</div>';
-                
-                echo '<p><a href="/" class="btn">← Aller sur le site</a></p>';
+                echo '<p><a href="/www/" class="btn">← Aller sur le site</a></p>';
+                echo '<p><a href="/" class="btn">← Tester racine</a></p>';
                 
             } catch (PDOException $e) {
-                echo '<div class="error">❌ Erreur de connexion : ' . htmlspecialchars($e->getMessage()) . '</div>';
+                echo '<div class="error">❌ Erreur de connexion MySQL : ' . htmlspecialchars($e->getMessage()) . '</div>';
+                echo '<div class="warning">Vérifiez que MySQL est accessible depuis le serveur web.</div>';
             }
             
         } else {
             ?>
-            <div class="warning">⚠️ Ce script bypass le mode maintenance en accédant directement à la base de données.</div>
-            <p><strong>⚠️ N'utilisez ce script qu'en cas d'urgence !</strong></p>
+            <div class="warning">⚠️ Ce script bypass le mode maintenance en accédant directement à MySQL.</div>
             
             <form method="get">
                 <label for="token">Token de sécurité:</label><br>
@@ -152,22 +177,13 @@ header('Content-Type: text/html; charset=utf-8');
                 <button type="submit" class="btn">Désactiver maintenance</button>
             </form>
             
-            <hr>
+            <h3>🔗 URL directe :</h3>
+            <pre>https://www.spherevoices.com/bypass-maintenance.php?token=spherevoices2026</pre>
             
-            <h3>📝 Ce script va :</h3>
-            <ol>
-                <li>✅ Se connecter DIRECTEMENT à la base de données (bypass Drupal)</li>
-                <li>✅ Supprimer le flag de maintenance dans key_value</li>
-                <li>✅ Vider toutes les tables de cache</li>
-                <li>✅ Permettre l'accès au site</li>
-            </ol>
-            
-            <h3>🔗 URL avec token :</h3>
-            <pre>https://www.spherevoices.com/www/bypass-maintenance.php?token=spherevoices2026</pre>
+            <p><small>Ce fichier est à la RACINE du projet pour éviter la redirection Drupal.</small></p>
             <?php
         }
         ?>
     </div>
 </body>
 </html>
-

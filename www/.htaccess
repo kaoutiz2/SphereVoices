@@ -34,6 +34,7 @@ AddDefaultCharset utf-8
   RewriteCond %{REQUEST_URI} !^/exec-drush\.php$
   RewriteCond %{REQUEST_URI} !^/test-simple\.php$
   RewriteCond %{REQUEST_URI} !^/php-info\.php$
+  RewriteCond %{REQUEST_URI} !^/clear-cache-web\.php$
   
   # Rediriger tout vers index.php (Clean URLs)
   RewriteCond %{REQUEST_FILENAME} !-f
