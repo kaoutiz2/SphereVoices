@@ -69,6 +69,7 @@ header('Content-Type: text/html; charset=utf-8');
             // 1. CONNEXION À MYSQL
             echo '<div class="info">📊 Connexion à MySQL...</div>';
             
+            // Charger les infos depuis settings.php
             $settings_file = __DIR__ . '/sites/default/settings.php';
             
             if (!file_exists($settings_file)) {
@@ -76,28 +77,33 @@ header('Content-Type: text/html; charset=utf-8');
                 exit;
             }
             
-            $settings_content = file_get_contents($settings_file);
+            // Inclure settings.php pour charger la config
+            $databases = [];
+            include $settings_file;
             
-            // Extraire les infos de connexion
-            preg_match("/\['database'\]\s*=>\s*'([^']+)'/", $settings_content, $db_name);
-            preg_match("/\['username'\]\s*=>\s*'([^']+)'/", $settings_content, $db_user);
-            preg_match("/\['password'\]\s*=>\s*'([^']+)'/", $settings_content, $db_pass);
-            preg_match("/\['host'\]\s*=>\s*'([^']+)'/", $settings_content, $db_host);
-            
-            if (empty($db_name[1]) || empty($db_user[1]) || empty($db_pass[1]) || empty($db_host[1])) {
-                echo '<div class="error">❌ Impossible d\'extraire les infos de connexion</div>';
+            // Vérifier que la config existe
+            if (empty($databases['default']['default'])) {
+                echo '<div class="error">❌ Configuration base de données introuvable</div>';
                 exit;
             }
             
+            $db_config = $databases['default']['default'];
+            $db_host = $db_config['host'];
+            $db_name = $db_config['database'];
+            $db_user = $db_config['username'];
+            $db_pass = $db_config['password'];
+            
+            echo '<div class="success">✅ Configuration trouvée : ' . htmlspecialchars($db_name) . '@' . htmlspecialchars($db_host) . '</div>';
+            
             try {
                 $pdo = new PDO(
-                    "mysql:host={$db_host[1]};dbname={$db_name[1]};charset=utf8mb4",
-                    $db_user[1],
-                    $db_pass[1],
+                    "mysql:host={$db_host};dbname={$db_name};charset=utf8mb4",
+                    $db_user,
+                    $db_pass,
                     [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
                 );
                 
-                echo '<div class="success">✅ Connecté à MySQL : ' . htmlspecialchars($db_name[1]) . '</div>';
+                echo '<div class="success">✅ Connecté à MySQL : ' . htmlspecialchars($db_name) . '</div>';
                 
                 // 2. DÉSACTIVER LE MODE MAINTENANCE
                 echo '<div class="info">🔧 Désactivation mode maintenance...</div>';
