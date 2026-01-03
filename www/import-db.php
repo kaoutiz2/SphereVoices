@@ -100,24 +100,56 @@ gzip /tmp/drupal-local.sql</pre>
             
             echo '<p class="success">✅ Fichier décompressé</p>';
             
-            echo '<p class="info">2. Import dans MySQL...</p>';
-            $cmd = sprintf(
-                "mysql -h%s -u%s -p%s %s < %s 2>&1",
-                escapeshellarg($db['host']),
-                escapeshellarg($db['username']),
-                escapeshellarg($db['password']),
-                escapeshellarg($db['database']),
-                escapeshellarg(__DIR__ . '/drupal-local.sql')
-            );
+            echo '<p class="info">2. Import dans MySQL (via PHP PDO)...</p>';
             
-            exec($cmd, $output, $return);
-            
-            if ($return !== 0) {
-                echo '<p class="error">❌ Erreur d\'import : ' . implode("\n", $output) . '</p>';
+            try {
+                $pdo = new PDO(
+                    "mysql:host={$db['host']};dbname={$db['database']};charset=utf8mb4",
+                    $db['username'],
+                    $db['password'],
+                    [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+                );
+                
+                // Lire le fichier SQL et l'exécuter
+                $sql = file_get_contents(__DIR__ . '/drupal-local.sql');
+                
+                // Supprimer les commentaires et diviser en requêtes
+                $statements = array_filter(
+                    array_map('trim', explode(';', $sql)),
+                    function($stmt) {
+                        return !empty($stmt) && 
+                               strpos($stmt, '--') !== 0 && 
+                               strpos($stmt, '/*') !== 0;
+                    }
+                );
+                
+                echo '<p class="info">Nombre de requêtes: ' . count($statements) . '</p>';
+                echo '<p class="info">Exécution en cours...</p>';
+                flush();
+                
+                $count = 0;
+                foreach ($statements as $statement) {
+                    try {
+                        $pdo->exec($statement);
+                        $count++;
+                        if ($count % 100 === 0) {
+                            echo '<p class="info">  ' . $count . ' requêtes exécutées...</p>';
+                            flush();
+                        }
+                    } catch (PDOException $e) {
+                        // Ignorer les erreurs non critiques (tables déjà existantes, etc.)
+                        if ($e->getCode() !== '42S01' && $e->getCode() !== '23000') {
+                            echo '<p class="error">Erreur à la requête ' . $count . ': ' . $e->getMessage() . '</p>';
+                        }
+                    }
+                }
+                
+                echo '<p class="success">✅ Base de données importée ! (' . $count . ' requêtes)</p>';
+                
+            } catch (PDOException $e) {
+                echo '<p class="error">❌ Erreur de connexion : ' . $e->getMessage() . '</p>';
                 exit;
             }
-            
-            echo '<p class="success">✅ Base de données importée !</p>';
             
             // Nettoyer
             @unlink(__DIR__ . '/drupal-local.sql');
