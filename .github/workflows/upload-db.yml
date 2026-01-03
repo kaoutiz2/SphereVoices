@@ -1,0 +1,50 @@
+name: Upload DB Backup to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Tapez UPLOAD pour confirmer'
+        required: true
+        default: ''
+
+jobs:
+  upload-db:
+    name: Upload Database Backup
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Vérifier la confirmation
+        if: ${{ github.event.inputs.confirm != 'UPLOAD' }}
+        run: |
+          echo "❌ Confirmation non reçue. Tapez exactement 'UPLOAD' pour confirmer."
+          exit 1
+      
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Upload DB file via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.OVH_FTP_HOST }}
+          username: ${{ secrets.OVH_FTP_USER }}
+          password: ${{ secrets.OVH_FTP_PASSWORD }}
+          local-dir: ./
+          server-dir: www/
+          include: |
+            drupal-local.sql.gz
+          exclude: |
+            *
+            !drupal-local.sql.gz
+          dangerous-clean-slate: false
+      
+      - name: Afficher les instructions
+        run: |
+          echo "✅ Fichier uploadé !"
+          echo ""
+          echo "Prochaines étapes :"
+          echo "1. Allez sur : https://www.spherevoices.com/import-db.php?token=spherevoices2026"
+          echo "2. Cliquez sur le bouton d'import"
+          echo "3. Attendez la fin de l'import"
+          echo "4. Testez le site"
+
