@@ -131,20 +131,42 @@ header('Content-Type: text/html; charset=utf-8');
                 ];
                 
                 $deleted_files = 0;
+                
+                // Fonction récursive pour supprimer un répertoire
+                function deleteRecursive($path, &$count) {
+                    if (!file_exists($path)) {
+                        return;
+                    }
+                    
+                    if (is_dir($path)) {
+                        $items = glob($path . '/{,.}*', GLOB_BRACE);
+                        foreach ($items as $item) {
+                            if (basename($item) === '.' || basename($item) === '..') {
+                                continue;
+                            }
+                            deleteRecursive($item, $count);
+                        }
+                        @rmdir($path);
+                    } else {
+                        @unlink($path);
+                        $count++;
+                    }
+                }
+                
                 foreach ($cache_dirs as $dir) {
                     if (is_dir($dir)) {
-                        $files = glob($dir . '/*');
-                        foreach ($files as $file) {
-                            if (is_file($file)) {
-                                @unlink($file);
-                                $deleted_files++;
+                        $items = glob($dir . '/{,.}*', GLOB_BRACE);
+                        foreach ($items as $item) {
+                            if (basename($item) === '.' || basename($item) === '..') {
+                                continue;
                             }
+                            deleteRecursive($item, $deleted_files);
                         }
                     }
                 }
                 
                 if ($deleted_files > 0) {
-                    echo '<div class="success">✅ ' . $deleted_files . ' fichiers de cache supprimés</div>';
+                    echo '<div class="success">✅ ' . $deleted_files . ' fichiers de cache supprimés (incluant Twig)</div>';
                 } else {
                     echo '<div class="warning">⚠️ Aucun fichier de cache à supprimer</div>';
                 }
