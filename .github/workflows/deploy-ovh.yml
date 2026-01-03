@@ -33,7 +33,7 @@ jobs:
       - name: Deploy root .htaccess (Step 1/4)
         timeout-minutes: 2
         run: |
-          apt-get update && apt-get install -y lftp
+          sudo apt-get update && sudo apt-get install -y lftp
           lftp -c "
             set ftp:ssl-allow no
             open -u ${{ secrets.OVH_FTP_USER }},${{ secrets.OVH_FTP_PASSWORD }} ${{ secrets.OVH_FTP_HOST }}
