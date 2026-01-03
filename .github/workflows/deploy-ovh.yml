@@ -30,7 +30,18 @@ jobs:
            composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --ignore-platform-reqs || \
            (echo "Still failing, trying update instead" && composer update --no-dev --optimize-autoloader --no-interaction --prefer-dist --ignore-platform-reqs))
 
-      - name: Deploy vendor and config (Step 1/4)
+      - name: Deploy root .htaccess (Step 1/4)
+        timeout-minutes: 2
+        run: |
+          apt-get update && apt-get install -y lftp
+          lftp -c "
+            set ftp:ssl-allow no
+            open -u ${{ secrets.OVH_FTP_USER }},${{ secrets.OVH_FTP_PASSWORD }} ${{ secrets.OVH_FTP_HOST }}
+            put .htaccess -o .htaccess
+            bye
+          "
+
+      - name: Deploy vendor and config (Step 2/4)
         timeout-minutes: 90
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -96,7 +107,7 @@ jobs:
             **/vendor/**/sample/**
           dangerous-clean-slate: false
 
-      - name: Deploy www root files (Step 2/4)
+      - name: Deploy www root files (Step 3/4)
         timeout-minutes: 10
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -116,7 +127,7 @@ jobs:
             **/profiles/**
           dangerous-clean-slate: false
 
-      - name: Deploy www/core (Step 3/4)
+      - name: Deploy www/core (Step 4a/6)
         timeout-minutes: 240
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -179,7 +190,7 @@ jobs:
             **/profiles/**
           dangerous-clean-slate: false
 
-      - name: Deploy www/modules (Step 4a/5)
+      - name: Deploy www/modules (Step 4b/6)
         timeout-minutes: 90
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -214,7 +225,7 @@ jobs:
             **/*.yaml
           dangerous-clean-slate: false
 
-      - name: Deploy www/themes (Step 4b/5)
+      - name: Deploy www/themes (Step 4c/6)
         timeout-minutes: 10
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
