@@ -274,46 +274,33 @@ jobs:
             !post-deploy.php
           dangerous-clean-slate: false
 
-      - name: Clear Drupal cache via SSH (Step 6/6)
-        timeout-minutes: 5
+      - name: Trigger cache clear via FTP (Step 6/6)
+        timeout-minutes: 2
+        continue-on-error: true
         run: |
-          echo "🔄 Vidage du cache Drupal en production..."
+          echo "🔄 Création d'un déclencheur de vidage de cache..."
           
-          # Installer sshpass pour l'authentification SSH
-          sudo apt-get update && sudo apt-get install -y sshpass
+          # Créer un fichier de déclenchement avec timestamp
+          echo "<?php
+          // Auto-généré par GitHub Actions - $(date)
+          // Ce fichier déclenche le vidage du cache
+          if (file_exists(__DIR__ . '/post-deploy.php')) {
+            echo 'Exécution du vidage de cache...\n';
+            include __DIR__ . '/post-deploy.php';
+          } else {
+            echo 'Script post-deploy.php non trouvé\n';
+          }
+          " > clear-cache-trigger.php
           
-          # Exécuter le script de post-déploiement via SSH
-          sshpass -p "${{ secrets.OVH_SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.OVH_SSH_USER }}@${{ secrets.OVH_SSH_HOST }} << 'ENDSSH'
-            cd ~/
-            
-            # Essayer d'abord avec le script post-deploy.php
-            echo "🚀 Tentative 1: Exécution du script post-deploy.php..."
-            if php post-deploy.php 2>&1; then
-              echo "✅ Cache vidé avec post-deploy.php"
-              exit 0
-            fi
-            
-            # Sinon essayer avec drush
-            echo "🚀 Tentative 2: Exécution de drush cr..."
-            if vendor/bin/drush cr 2>&1; then
-              echo "✅ Cache vidé avec drush cr"
-              exit 0
-            fi
-            
-            # Dernière tentative : vider manuellement les tables de cache
-            echo "🚀 Tentative 3: Vidage manuel des tables de cache..."
-            php -r "
-              require 'www/autoload.php';
-              \$autoloader = require 'www/autoload.php';
-              \$request = Symfony\Component\HttpFoundation\Request::createFromGlobals();
-              \$kernel = Drupal\Core\DrupalKernel::createFromRequest(\$request, \$autoloader, 'prod');
-              \$kernel->boot();
-              \$kernel->prepareLegacyRequest(\$request);
-              drupal_flush_all_caches();
-              echo '✅ Cache vidé manuellement';
-            " 2>&1
-            
-            echo "✅ Déploiement et vidage de cache terminés!"
-          ENDSSH
+          # Uploader le fichier de déclenchement via FTP
+          apt-get update && apt-get install -y lftp
+          lftp -c "
+            set ftp:ssl-allow no
+            open -u ${{ secrets.OVH_FTP_USER }},${{ secrets.OVH_FTP_PASSWORD }} ${{ secrets.OVH_FTP_HOST }}
+            put clear-cache-trigger.php -o clear-cache-trigger.php
+            bye
+          "
           
-          echo "🎉 Déploiement en production terminé avec succès!"
+          echo "✅ Fichier de déclenchement uploadé"
+          echo "⚠️  IMPORTANT: Visitez https://www.spherevoices.com/clear-cache-trigger.php pour vider le cache"
+          echo "🎉 Déploiement en production terminé!"
