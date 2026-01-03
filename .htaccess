@@ -1,27 +1,15 @@
-# Block access to sensitive files and directories at root level
-<FilesMatch "^(\.env|\.git|composer\.(json|lock)|\.gitignore|README\.md|.*\.md|\.htaccess)$">
-    <IfModule mod_authz_core.c>
-        Require all denied
-    </IfModule>
-    <IfModule !mod_authz_core.c>
-        Order deny,allow
-        Deny from all
-    </IfModule>
-</FilesMatch>
+# .htaccess racine - Redirection vers www/
+# Pour hébergement OVH
 
-# Block directory listing
+<IfModule mod_rewrite.c>
+  RewriteEngine on
+  
+  # Si on n'est pas déjà dans www/, rediriger
+  RewriteCond %{REQUEST_URI} !^/www/
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(.*)$ www/$1 [L]
+</IfModule>
+
+# Désactiver les listings
 Options -Indexes
-
-# Allow access to www directory
-<Directory "www">
-    Options -Indexes +FollowSymLinks
-    AllowOverride All
-    <IfModule mod_authz_core.c>
-        Require all granted
-    </IfModule>
-    <IfModule !mod_authz_core.c>
-        Order allow,deny
-        Allow from all
-    </IfModule>
-</Directory>
-
