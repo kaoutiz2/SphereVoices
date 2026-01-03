@@ -73,36 +73,56 @@ header('Content-Type: text/html; charset=utf-8');
             echo "<div class='info'>📁 Répertoire de travail : $working_dir</div>";
             echo '<hr>';
             
-            // Trouver l'exécutable PHP
-            $php_paths = [
-                '/usr/bin/php',
-                '/usr/local/bin/php',
-                '/opt/alt/php81/usr/bin/php',
-                '/opt/alt/php80/usr/bin/php',
-                '/usr/bin/php8.1',
-                '/usr/bin/php8.0',
-                PHP_BINARY, // Le PHP qui exécute ce script
-            ];
+            // Trouver l'exécutable PHP via which
+            echo '<div class="info">🔍 Recherche de PHP...</div>';
             
+            // Méthode 1: Tester avec which php
             $php_path = null;
-            foreach ($php_paths as $path) {
-                if (file_exists($path) && is_executable($path)) {
-                    $php_path = $path;
-                    echo "<div class='success'>✅ PHP trouvé : $path</div>";
-                    break;
+            $which_output = [];
+            exec('which php 2>&1', $which_output, $which_return);
+            if ($which_return === 0 && !empty($which_output[0])) {
+                $php_path = trim($which_output[0]);
+                echo "<div class='success'>✅ PHP trouvé via 'which' : $php_path</div>";
+            }
+            
+            // Méthode 2: Tester des chemins communs
+            if (!$php_path) {
+                $php_paths = [
+                    '/usr/bin/php',
+                    '/usr/local/bin/php',
+                    '/opt/alt/php81/usr/bin/php',
+                    '/opt/alt/php82/usr/bin/php',
+                    '/opt/alt/php80/usr/bin/php',
+                    '/usr/bin/php8.2',
+                    '/usr/bin/php8.1',
+                    '/usr/bin/php8.0',
+                ];
+                
+                foreach ($php_paths as $path) {
+                    if (file_exists($path) && is_executable($path)) {
+                        $php_path = $path;
+                        echo "<div class='success'>✅ PHP trouvé : $path</div>";
+                        break;
+                    }
                 }
             }
             
+            // Méthode 3: Dernier recours - appeler directement drush (il a un shebang)
             if (!$php_path) {
-                // Utiliser PHP_BINARY par défaut (le PHP qui exécute ce script)
-                $php_path = PHP_BINARY;
-                echo "<div class='warning'>⚠️ Utilisation de PHP_BINARY : $php_path</div>";
+                echo "<div class='warning'>⚠️ PHP introuvable, tentative d'exécution directe de drush...</div>";
+                // On va essayer sans PHP, drush a peut-être un shebang
+                $php_path = null;
             }
             
             echo '<hr>';
             
-            // Commande drush cr - Appel via PHP avec chemin complet
-            $command = "cd " . escapeshellarg($working_dir) . " && " . escapeshellarg($php_path) . " " . escapeshellarg($drush_path) . " cr 2>&1";
+            // Commande drush cr
+            if ($php_path) {
+                $command = "cd " . escapeshellarg($working_dir) . " && " . escapeshellarg($php_path) . " " . escapeshellarg($drush_path) . " cr 2>&1";
+            } else {
+                // Tenter d'ajouter les permissions d'exécution puis exécuter
+                $command = "cd " . escapeshellarg($working_dir) . " && chmod +x " . escapeshellarg($drush_path) . " && " . escapeshellarg($drush_path) . " cr 2>&1";
+            }
             
             echo '<div class="info">⚡ Commande exécutée :</div>';
             echo '<pre>' . htmlspecialchars($command) . '</pre>';
