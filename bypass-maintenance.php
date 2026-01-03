@@ -121,6 +121,34 @@ header('Content-Type: text/html; charset=utf-8');
                 
                 echo '<div class="success">✅ ' . $cleared . ' tables de cache vidées</div>';
                 
+                // 3. VIDER LES FICHIERS DE CACHE COMPILÉS
+                echo '<div class="info">🗑️ Suppression des fichiers de cache compilés...</div>';
+                
+                $cache_dirs = [
+                    __DIR__ . '/www/sites/default/files/php',
+                    __DIR__ . '/www/sites/default/files/css',
+                    __DIR__ . '/www/sites/default/files/js',
+                ];
+                
+                $deleted_files = 0;
+                foreach ($cache_dirs as $dir) {
+                    if (is_dir($dir)) {
+                        $files = glob($dir . '/*');
+                        foreach ($files as $file) {
+                            if (is_file($file)) {
+                                @unlink($file);
+                                $deleted_files++;
+                            }
+                        }
+                    }
+                }
+                
+                if ($deleted_files > 0) {
+                    echo '<div class="success">✅ ' . $deleted_files . ' fichiers de cache supprimés</div>';
+                } else {
+                    echo '<div class="warning">⚠️ Aucun fichier de cache à supprimer</div>';
+                }
+                
                 echo '<h2 class="success">🎉 RÉPARATION TERMINÉE !</h2>';
                 echo '<div class="info">';
                 echo '<p><strong>✅ Le site devrait maintenant être accessible !</strong></p>';
