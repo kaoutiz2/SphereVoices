@@ -61,3 +61,4 @@ La structure est maintenant directement compatible avec OVH :
 - L'autoloader pointe vers `../vendor/autoload.php` (correct pour la structure OVH)
 - `settings.php` utilise `$app_root` qui sera automatiquement `www/`
 - Tous les chemins sont maintenant cohérents avec la structure OVH
+

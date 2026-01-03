@@ -153,3 +153,4 @@ Pour voir les erreurs détaillées :
 - Vérifiez toujours que `vendor/` est au bon endroit (même niveau que `www/`)
 - Les permissions doivent être sécurisées (644 pour les fichiers, 755 pour les dossiers)
 
+

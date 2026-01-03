@@ -4,6 +4,7 @@ global-styling:
       css/style.css: {}
     layout:
       css/layout.css: {}
+      css/gallery.css: {}
     component:
       css/components.css: {}
   js:

@@ -7,6 +7,9 @@
 <article{{ attributes.addClass('article-breaking-news') }}>
   <a href="{{ url }}" class="article-breaking-news-link">
     <div class="article-breaking-news-image-wrapper">
+      <div class="article-breaking-news-label">
+        <span class="breaking-news-badge">BREAKING NEWS</span>
+      </div>
       {% if content.field_image and content.field_image|render|striptags|trim %}
         <div class="article-breaking-news-image">
           {{ content.field_image }}
@@ -25,9 +28,6 @@
           <div class="placeholder-content">Image</div>
         </div>
       {% endif %}
-      <div class="article-breaking-news-label">
-        <span class="breaking-news-badge">BREAKING NEWS</span>
-      </div>
     </div>
     <div class="article-breaking-news-content">
       <h2 class="article-breaking-news-title">{{ label }}</h2>
@@ -36,6 +36,9 @@
           {{ content.field_summary }}
         </div>
       {% endif %}
+      <div class="article-breaking-news-meta">
+        <span class="article-date">{{ node.created.value|date('d/m/Y H:i') }}</span>
+      </div>
     </div>
   </a>
 </article>

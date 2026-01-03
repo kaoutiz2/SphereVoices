@@ -107,3 +107,4 @@ Si vous préférez modifier directement `settings.php`, trouvez la section vers 
 2. Utilisez `test-deploy.php` pour un nouveau diagnostic
 3. Vérifiez que tous les fichiers ont bien été uploadés (taille des dossiers)
 
+

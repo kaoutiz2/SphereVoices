@@ -4,45 +4,81 @@
  * Template pour l'affichage d'un article en mode teaser (colonnes gauche/droite).
  */
 #}
-<article{{ attributes.addClass('article-teaser') }}>
-  <a href="{{ url }}" class="article-teaser-link">
-    <div class="article-teaser-image-wrapper">
-      {% if content.field_image and content.field_image|render|striptags|trim %}
-        <div class="article-teaser-image">
-          {{ content.field_image }}
-        </div>
-      {% elseif node.field_image.value %}
-        {# Fallback: accéder directement au champ si pas dans content #}
-        <div class="article-teaser-image">
-          {% set image_file = node.field_image.entity %}
-          {% if image_file %}
-            {% set image_uri = image_file.uri.value %}
-            <img src="{{ file_url(image_uri) }}" alt="{{ node.field_image.alt }}" />
-          {% endif %}
-        </div>
-      {% else %}
-        <div class="article-teaser-image article-teaser-image-placeholder">
-          <div class="placeholder-content">Image</div>
-        </div>
-      {% endif %}
-      {# Badge Breaking News si l'article est sticky (épinglé) ou marqué comme breaking news #}
-      {% if node.breaking_news_context or node.sticky.value %}
-        <div class="article-teaser-label">
+{% if node.breaking_news_context or node.sticky.value %}
+  {# Breaking News - Layout horizontal #}
+  <article{{ attributes.addClass('article-breaking-news') }}>
+    <a href="{{ url }}" class="article-breaking-news-link">
+      <div class="article-breaking-news-image-wrapper">
+        <div class="article-breaking-news-label">
           <span class="breaking-news-badge">BREAKING NEWS</span>
         </div>
-      {% endif %}
-    </div>
-    <div class="article-teaser-content">
-      <h3 class="article-teaser-title">{{ label }}</h3>
-      {% if content.field_summary|render %}
-        <div class="article-teaser-summary">
-          {{ content.field_summary }}
-        </div>
-      {% endif %}
-      <div class="article-teaser-meta">
-        <span class="article-date">{{ node.created.value|date('d/m/Y') }}</span>
+        {% if content.field_image and content.field_image|render|striptags|trim %}
+          <div class="article-breaking-news-image">
+            {{ content.field_image }}
+          </div>
+        {% elseif node.field_image.value %}
+          <div class="article-breaking-news-image">
+            {% set image_file = node.field_image.entity %}
+            {% if image_file %}
+              {% set image_uri = image_file.uri.value %}
+              <img src="{{ file_url(image_uri) }}" alt="{{ node.field_image.alt }}" />
+            {% endif %}
+          </div>
+        {% else %}
+          <div class="article-breaking-news-image article-breaking-news-image-placeholder">
+            <div class="placeholder-content">Image</div>
+          </div>
+        {% endif %}
       </div>
-    </div>
-  </a>
-</article>
+      <div class="article-breaking-news-content">
+        <h2 class="article-breaking-news-title">{{ label }}</h2>
+        {% if content.field_summary|render %}
+          <div class="article-breaking-news-summary">
+            {{ content.field_summary }}
+          </div>
+        {% endif %}
+        <div class="article-breaking-news-meta">
+          <span class="article-date">{{ node.created.value|date('d/m/Y H:i') }}</span>
+        </div>
+      </div>
+    </a>
+  </article>
+{% else %}
+  {# Article normal - Layout vertical #}
+  <article{{ attributes.addClass('article-teaser') }}>
+    <a href="{{ url }}" class="article-teaser-link">
+      <div class="article-teaser-image-wrapper">
+        {% if content.field_image and content.field_image|render|striptags|trim %}
+          <div class="article-teaser-image">
+            {{ content.field_image }}
+          </div>
+        {% elseif node.field_image.value %}
+          {# Fallback: accéder directement au champ si pas dans content #}
+          <div class="article-teaser-image">
+            {% set image_file = node.field_image.entity %}
+            {% if image_file %}
+              {% set image_uri = image_file.uri.value %}
+              <img src="{{ file_url(image_uri) }}" alt="{{ node.field_image.alt }}" />
+            {% endif %}
+          </div>
+        {% else %}
+          <div class="article-teaser-image article-teaser-image-placeholder">
+            <div class="placeholder-content">Image</div>
+          </div>
+        {% endif %}
+      </div>
+      <div class="article-teaser-content">
+        <h3 class="article-teaser-title">{{ label }}</h3>
+        {% if content.field_summary|render %}
+          <div class="article-teaser-summary">
+            {{ content.field_summary }}
+          </div>
+        {% endif %}
+        <div class="article-teaser-meta">
+          <span class="article-date">{{ node.created.value|date('d/m/Y') }}</span>
+        </div>
+      </div>
+    </a>
+  </article>
+{% endif %}
 

@@ -924,3 +924,56 @@
   font-style: italic;
 }
 
+/* Gallery specific styles for article cards */
+.article-gallery-item .article-card,
+.article-gallery-item .article-teaser {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border: none;
+  margin: 0;
+}
+
+.article-gallery-item .article-card:hover,
+.article-gallery-item .article-teaser:hover {
+  box-shadow: none;
+  transform: none;
+}
+
+/* Ensure breves widget looks good in gallery */
+.article-gallery-item.breves-widget {
+  background-color: var(--color-bg-light);
+}
+
+.article-gallery-item.breves-widget .breves-block {
+  border: none;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Category badges in gallery */
+.article-gallery-item .article-category,
+.article-gallery-item .article-teaser-label,
+.article-gallery-item .article-featured-label {
+  display: inline-block;
+  background-color: var(--color-primary);
+  color: var(--color-bg-light);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+  border-radius: 3px;
+}
+
+/* Date display in gallery items */
+.article-gallery-item .article-date {
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+

@@ -1,0 +1,302 @@
+/**
+ * @file
+ * Styles pour le layout galerie de la page d'accueil.
+ */
+
+/* Layout principal : Contenu + Sidebar qui descend sur toute la hauteur */
+.homepage-main-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 2rem;
+  width: 100%;
+  align-items: start;
+}
+
+/* Colonne principale : Breaking News + Galerie */
+.homepage-main-column {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 100%;
+}
+
+/* Breaking News dans la colonne principale */
+.homepage-main-column .breaking-news-section {
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 0;
+}
+
+/* Gallery Layout - 3 colonnes fixes */
+.homepage-gallery-layout {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  width: 100%;
+  margin-top: 0;
+}
+
+/* Sidebar à droite - descend sur toute la hauteur */
+.homepage-sidebar {
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+}
+
+.homepage-sidebar .sidebar-breves-widget {
+  width: 100%;
+  position: sticky;
+  top: calc(var(--header-height, 80px) + 1rem);
+  max-height: calc(100vh - var(--header-height, 80px) - 2rem);
+  overflow-y: auto;
+}
+
+/* Article Gallery Item - Base */
+.article-gallery-item {
+  background-color: var(--color-bg-light);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 420px;
+  position: relative;
+}
+
+.article-gallery-item:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+  border-color: var(--color-primary);
+}
+
+/* Breaking News Section */
+.breaking-news-section {
+  margin-bottom: 2rem;
+  max-width: 500px;
+}
+
+/* Responsive - Tablette */
+@media (min-width: 768px) and (max-width: 1199px) {
+  .homepage-main-layout {
+    grid-template-columns: 1fr 280px;
+    gap: 1.5rem;
+  }
+  
+  .homepage-gallery-layout {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 767px) {
+  .homepage-main-layout {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .homepage-gallery-layout {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .article-gallery-item {
+    min-height: 380px;
+  }
+  
+  .homepage-sidebar {
+    position: static;
+    order: -1;
+  }
+}
+
+/* Liens dans la galerie */
+.article-gallery-item .article-featured-link,
+.article-gallery-item .article-teaser-link {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Images dans la galerie - Toutes identiques */
+.article-gallery-item .article-featured-image-wrapper,
+.article-gallery-item .article-teaser-image-wrapper {
+  height: 240px;
+  width: 100%;
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.article-gallery-item .article-featured-image,
+.article-gallery-item .article-teaser-image {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.article-gallery-item .article-featured-image img,
+.article-gallery-item .article-teaser-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.article-gallery-item:hover .article-featured-image img,
+.article-gallery-item:hover .article-teaser-image img {
+  transform: scale(1.05);
+}
+
+/* Contenu texte dans la galerie */
+.article-gallery-item .article-featured-content,
+.article-gallery-item .article-teaser-content {
+  padding: 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Titres dans la galerie - Même taille pour tous */
+.article-gallery-item .article-featured-title,
+.article-gallery-item .article-teaser-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin: 0 0 0.75rem 0;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  transition: color 0.2s ease;
+}
+
+.article-gallery-item:hover .article-featured-title,
+.article-gallery-item:hover .article-teaser-title {
+  color: var(--color-primary);
+}
+
+/* Résumés dans la galerie - Même taille pour tous */
+.article-gallery-item .article-featured-summary,
+.article-gallery-item .article-teaser-summary {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--color-text-light);
+  margin-bottom: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  flex: 1;
+}
+
+/* Meta dans la galerie */
+.article-gallery-item .article-featured-meta,
+.article-gallery-item .article-teaser-meta {
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Labels de catégorie dans la galerie */
+.article-gallery-item .article-featured-label,
+.article-gallery-item .article-teaser-label {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 10;
+}
+
+.article-gallery-item .category-badge,
+.article-gallery-item .article-category {
+  display: inline-block;
+  background-color: var(--color-primary);
+  color: var(--color-bg-light);
+  padding: 0.35rem 0.85rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Breaking news badge dans la galerie */
+.article-gallery-item .breaking-news-badge {
+  background-color: var(--color-primary);
+  color: var(--color-bg-light);
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Date icon dans la galerie */
+.article-gallery-item .article-date::before {
+  content: '📅';
+  margin-right: 0.25rem;
+}
+
+/* Amélioration visuelle - Overlay sur les images */
+.article-gallery-item .article-featured-image-wrapper::after,
+.article-gallery-item .article-teaser-image-wrapper::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.3), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.article-gallery-item:hover .article-featured-image-wrapper::after,
+.article-gallery-item:hover .article-teaser-image-wrapper::after {
+  opacity: 1;
+}
+
+/* S'assurer que les articles natifs s'adaptent */
+.article-gallery-item .article-card,
+.article-gallery-item .article-teaser {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border: none;
+  margin: 0;
+  background: transparent;
+}
+
+.article-gallery-item .article-card:hover,
+.article-gallery-item .article-teaser:hover {
+  box-shadow: none;
+  transform: none;
+}
+
+/* Espacement entre les éléments */
+.homepage-container .homepage-gallery-container {
+  margin-bottom: 3rem;
+}
+

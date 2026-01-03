@@ -74,93 +74,61 @@
 
   <main class="main-content homepage-main" role="main">
     <div class="homepage-container">
-      {# Breaking News en haut à gauche avec pub à droite #}
-      <div class="breaking-news-wrapper">
-        {% if breaking_news %}
-          <div class="breaking-news-section">
-            {{ breaking_news }}
-          </div>
-        {% endif %}
-        {# Encart publicitaire à droite du breaking news #}
-        <div class="ad-banner ad-banner-breaking-news">
-          <div class="ad-placeholder">
-            <span class="ad-label">Publicité</span>
-            <div class="ad-content">500x300</div>
-          </div>
-        </div>
-      </div>
-
-      {# Layout principal style CNN #}
-      <div class="homepage-cnn-layout">
-        {# Colonne gauche - Articles secondaires #}
-        <div class="homepage-left-column">
-          {% if left_articles %}
-            {% for article in left_articles %}
-              <div class="article-card article-card-side">
-                {{ article }}
-              </div>
-              {# Encart publicitaire après le 5ème article dans la colonne gauche #}
-              {% if loop.index == 5 %}
-                <div class="ad-banner ad-banner-left-column">
-                  <div class="ad-placeholder">
-                    <span class="ad-label">Publicité</span>
-                    <div class="ad-content">270x530</div>
-                  </div>
-                </div>
-              {% endif %}
-            {% endfor %}
-          {% endif %}
-        </div>
-
-        {# Colonne centrale - Article principal #}
-        <div class="homepage-center-column">
-          {% if featured_article %}
-            <div class="article-card article-card-featured">
-              {{ featured_article }}
+      {# Layout global : Contenu principal à gauche + Brèves à droite #}
+      <div class="homepage-main-layout">
+        {# Colonne principale : Breaking News + Galerie #}
+        <div class="homepage-main-column">
+          {# Breaking News en haut #}
+          {% if breaking_news %}
+            <div class="breaking-news-section">
+              {{ breaking_news }}
             </div>
           {% endif %}
-          {# Encart publicitaire sous l'article du milieu #}
-          <div class="ad-banner ad-banner-between-articles">
-            <div class="ad-placeholder">
-              <span class="ad-label">Publicité</span>
-              <div class="ad-content">500x300</div>
-            </div>
-          </div>
-          {# Articles sous la pub dans la colonne centrale #}
-          {% if center_articles %}
-            {% for article in center_articles %}
-              <div class="article-card article-card-side">
-                {{ article }}
+
+          {# Galerie d'articles - 3 colonnes #}
+          <div class="homepage-gallery-layout">
+            {# Tous les articles avec la même taille #}
+            {% if featured_article %}
+              <div class="article-gallery-item">
+                {{ featured_article }}
               </div>
-            {% endfor %}
-          {% endif %}
+            {% endif %}
+
+            {# Tous les autres articles en grille #}
+            {% if left_articles %}
+              {% for article in left_articles %}
+                <div class="article-gallery-item">
+                  {{ article }}
+                </div>
+              {% endfor %}
+            {% endif %}
+
+            {% if center_articles %}
+              {% for article in center_articles %}
+                <div class="article-gallery-item">
+                  {{ article }}
+                </div>
+              {% endfor %}
+            {% endif %}
+
+            {% if right_articles %}
+              {% for article in right_articles %}
+                <div class="article-gallery-item">
+                  {{ article }}
+                </div>
+              {% endfor %}
+            {% endif %}
+          </div>
         </div>
 
-        {# Colonne droite - Articles secondaires #}
-        <div class="homepage-right-column">
-          {% if right_articles %}
-            {% for article in right_articles %}
-              <div class="article-card article-card-side">
-                {{ article }}
-              </div>
-              {# Bloc Brèves après le 2ème article dans la colonne droite #}
-              {% if loop.index == 2 %}
-                {% if breves_block %}
-                  {{ breves_block }}
-                {% endif %}
-              {% endif %}
-              {# Encart publicitaire après le 3ème article dans la colonne droite #}
-              {% if loop.index == 3 %}
-                <div class="ad-banner ad-banner-right-column">
-                  <div class="ad-placeholder">
-                    <span class="ad-label">Publicité</span>
-                    <div class="ad-content">270x530</div>
-                  </div>
-                </div>
-              {% endif %}
-            {% endfor %}
+        {# Sidebar droite : Brèves (descend sur toute la hauteur) #}
+        <aside class="homepage-sidebar">
+          {% if breves_block %}
+            <div class="sidebar-breves-widget">
+              {{ breves_block }}
+            </div>
           {% endif %}
-        </div>
+        </aside>
       </div>
 
       {# Contenu additionnel #}

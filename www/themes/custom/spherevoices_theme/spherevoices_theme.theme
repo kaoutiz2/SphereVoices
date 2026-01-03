@@ -1015,6 +1015,14 @@ function spherevoices_theme_preprocess_image_widget(&$variables) {
  * Implements hook_preprocess_node().
  */
 function spherevoices_theme_preprocess_node(&$variables) {
+  $node = $variables['node'];
+  
+  // Pour les articles en mode teaser qui sont sticky (breaking news)
+  if ($node->bundle() === 'article' && $variables['view_mode'] === 'teaser' && $node->isSticky()) {
+    // Ajouter une suggestion de template spécifique
+    $variables['theme_hook_suggestions'][] = 'node__article__breaking_news';
+  }
+  
   // Corriger les attributes pour les brèves dans les vues
   if ($variables['node']->bundle() === 'breve' && isset($variables['attributes']) && is_object($variables['attributes'])) {
     // Convertir l'objet Attribute en tableau
