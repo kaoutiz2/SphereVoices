@@ -1,0 +1,21 @@
+# Désactiver le cache navigateur pour les fichiers CSS et JS du thème
+# Pour forcer le rechargement des assets après un déploiement
+
+<IfModule mod_headers.c>
+  # CSS et JS
+  <FilesMatch "\.(css|js)$">
+    # Empêcher la mise en cache
+    Header set Cache-Control "no-cache, no-store, must-revalidate, max-age=0"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
+</IfModule>
+
+# Alternative pour serveurs sans mod_headers
+<IfModule mod_expires.c>
+  <FilesMatch "\.(css|js)$">
+    ExpiresActive On
+    ExpiresDefault "access plus 0 seconds"
+  </FilesMatch>
+</IfModule>
+
