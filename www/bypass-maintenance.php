@@ -34,8 +34,8 @@ header('Content-Type: text/html; charset=utf-8');
         if ($provided_token === $security_token) {
             echo '<div class="info">🚀 Connexion directe à la base de données...</div>';
             
-            // Charger les identifiants depuis settings.php (dans www/)
-            $settings_file = __DIR__ . '/www/sites/default/settings.php';
+            // Charger les identifiants depuis settings.php (dans sites/default/)
+            $settings_file = __DIR__ . '/sites/default/settings.php';
             
             echo '<div class="info">Chemin settings.php : ' . htmlspecialchars($settings_file) . '</div>';
             
@@ -125,9 +125,9 @@ header('Content-Type: text/html; charset=utf-8');
                 echo '<div class="info">🗑️ Suppression des fichiers de cache compilés...</div>';
                 
                 $cache_dirs = [
-                    __DIR__ . '/www/sites/default/files/php',
-                    __DIR__ . '/www/sites/default/files/css',
-                    __DIR__ . '/www/sites/default/files/js',
+                    __DIR__ . '/sites/default/files/php',
+                    __DIR__ . '/sites/default/files/css',
+                    __DIR__ . '/sites/default/files/js',
                 ];
                 
                 $deleted_files = 0;
