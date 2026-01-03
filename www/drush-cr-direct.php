@@ -33,10 +33,15 @@ header('Content-Type: text/html; charset=utf-8');
         if ($provided_token === $security_token) {
             echo '<div class="info">🚀 Vidage COMPLET du cache (équivalent drush cr)...</div>';
             
-            $drupal_root = __DIR__ . '/www';
+            $drupal_root = __DIR__;  // On est déjà dans www/
+            
+            echo '<div class="info">Chemin Drupal : ' . htmlspecialchars($drupal_root) . '</div>';
             
             if (!file_exists($drupal_root . '/autoload.php')) {
                 echo '<div class="error">❌ Drupal non trouvé dans : ' . htmlspecialchars($drupal_root) . '</div>';
+                echo '<div class="info">Fichiers présents :</div><pre>';
+                print_r(scandir($drupal_root));
+                echo '</pre>';
                 exit;
             }
             
