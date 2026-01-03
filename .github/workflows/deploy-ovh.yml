@@ -274,33 +274,31 @@ jobs:
             !post-deploy.php
           dangerous-clean-slate: false
 
-      - name: Trigger cache clear via FTP (Step 6/6)
-        timeout-minutes: 2
+      - name: Deployment complete - Manual cache clear required (Step 6/6)
+        timeout-minutes: 1
         continue-on-error: true
         run: |
-          echo "🔄 Création d'un déclencheur de vidage de cache..."
-          
-          # Créer un fichier de déclenchement avec timestamp
-          echo "<?php
-          // Auto-généré par GitHub Actions - $(date)
-          // Ce fichier déclenche le vidage du cache
-          if (file_exists(__DIR__ . '/post-deploy.php')) {
-            echo 'Exécution du vidage de cache...\n';
-            include __DIR__ . '/post-deploy.php';
-          } else {
-            echo 'Script post-deploy.php non trouvé\n';
-          }
-          " > clear-cache-trigger.php
-          
-          # Uploader le fichier de déclenchement via FTP
-          apt-get update && apt-get install -y lftp
-          lftp -c "
-            set ftp:ssl-allow no
-            open -u ${{ secrets.OVH_FTP_USER }},${{ secrets.OVH_FTP_PASSWORD }} ${{ secrets.OVH_FTP_HOST }}
-            put clear-cache-trigger.php -o clear-cache-trigger.php
-            bye
-          "
-          
-          echo "✅ Fichier de déclenchement uploadé"
-          echo "⚠️  IMPORTANT: Visitez https://www.spherevoices.com/clear-cache-trigger.php pour vider le cache"
-          echo "🎉 Déploiement en production terminé!"
+          echo "✅ Déploiement des fichiers terminé avec succès!"
+          echo ""
+          echo "⚠️  IMPORTANT: Vidage du cache requis"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "Le cache Drupal doit être vidé pour voir les changements."
+          echo ""
+          echo "🔗 Méthode 1 (RECOMMANDÉE) - Via navigateur:"
+          echo "   https://www.spherevoices.com/www/clear-cache-web.php?token=spherevoices2026"
+          echo ""
+          echo "🔗 Méthode 2 - Via interface Drupal:"
+          echo "   1. Connexion admin"
+          echo "   2. Configuration > Development > Performance"
+          echo "   3. Cliquer sur 'Clear all caches'"
+          echo ""
+          echo "🔗 Méthode 3 - Via SSH (si disponible):"
+          echo "   ssh votre_user@ssh.clusterXXX.hosting.ovh.net"
+          echo "   cd ~/"
+          echo "   php post-deploy.php"
+          echo "   # OU"
+          echo "   vendor/bin/drush cr"
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🎉 Déploiement terminé - Videz le cache manuellement"
