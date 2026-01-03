@@ -925,14 +925,15 @@ if (file_exists($app_root . '/' . $site_path . '/settings.local.php')) {
  */
 $env_file_path = NULL;
 
+// Définir $app_root s'il n'est pas défini (pour les scripts qui chargent settings.php directement)
+if (!isset($app_root)) {
+  $app_root = dirname(dirname(__DIR__));
+}
+
 // Detect environment: check HTTP_HOST for web requests, or use environment variable for CLI
 if (PHP_SAPI === 'cli') {
   // For CLI (Drush, etc.), check environment variable or default to development
   $env_type = getenv('DRUPAL_ENV') ?: 'development';
-  // Définir $app_root si pas défini
-  if (!isset($app_root)) {
-    $app_root = dirname(dirname(__DIR__));
-  }
   $env_file_path = ($env_type === 'production') 
     ? $app_root . '/../.env.production' 
     : $app_root . '/../.env';
