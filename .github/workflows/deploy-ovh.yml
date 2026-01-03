@@ -33,7 +33,7 @@ jobs:
       - name: Deploy root .htaccess (Step 1/4)
         timeout-minutes: 2
         run: |
-          sudo apt-get update && sudo apt-get install -y lftp
+          apt-get update && apt-get install -y lftp
           lftp -c "
             set ftp:ssl-allow no
             open -u ${{ secrets.OVH_FTP_USER }},${{ secrets.OVH_FTP_PASSWORD }} ${{ secrets.OVH_FTP_HOST }}
@@ -259,46 +259,3 @@ jobs:
             **/*.yml
             **/*.yaml
           dangerous-clean-slate: false
-
-      - name: Upload post-deploy script (Step 5/6)
-        timeout-minutes: 2
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.OVH_FTP_HOST }}
-          username: ${{ secrets.OVH_FTP_USER }}
-          password: ${{ secrets.OVH_FTP_PASSWORD }}
-          local-dir: ./
-          server-dir: ./
-          exclude: |
-            **/*
-            !post-deploy.php
-          dangerous-clean-slate: false
-
-      - name: Deployment complete - Manual cache clear required (Step 6/6)
-        timeout-minutes: 1
-        continue-on-error: true
-        run: |
-          echo "✅ Déploiement des fichiers terminé avec succès!"
-          echo ""
-          echo "⚠️  IMPORTANT: Vidage du cache requis"
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo ""
-          echo "Le cache Drupal doit être vidé pour voir les changements."
-          echo ""
-          echo "🔗 Méthode 1 (RECOMMANDÉE) - Via navigateur:"
-          echo "   https://www.spherevoices.com/www/clear-cache-web.php?token=spherevoices2026"
-          echo ""
-          echo "🔗 Méthode 2 - Via interface Drupal:"
-          echo "   1. Connexion admin"
-          echo "   2. Configuration > Development > Performance"
-          echo "   3. Cliquer sur 'Clear all caches'"
-          echo ""
-          echo "🔗 Méthode 3 - Via SSH (si disponible):"
-          echo "   ssh votre_user@ssh.clusterXXX.hosting.ovh.net"
-          echo "   cd ~/"
-          echo "   php post-deploy.php"
-          echo "   # OU"
-          echo "   vendor/bin/drush cr"
-          echo ""
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "🎉 Déploiement terminé - Videz le cache manuellement"

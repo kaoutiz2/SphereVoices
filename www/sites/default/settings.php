@@ -311,14 +311,7 @@ $settings['hash_salt'] = '_TyaaiMn-UTE4nM4j86dVZJNGiLdLG-iR10wLa_7kLbXNxitOGVeOC
  * custom code that changes the container, changing this identifier will also
  * allow the container to be invalidated as soon as code is deployed.
  */
-// Utiliser un identifiant de déploiement dynamique basé sur le timestamp des fichiers
-// Cela force l'invalidation du cache à chaque déploiement
-$theme_file = __DIR__ . '/../../themes/custom/spherevoices_theme/spherevoices_theme.info.yml';
-if (file_exists($theme_file)) {
-  $settings['deployment_identifier'] = 'v1.0.' . filemtime($theme_file);
-} else {
-  $settings['deployment_identifier'] = 'v1.0.' . time();
-}
+# $settings['deployment_identifier'] = \Drupal::VERSION;
 
 /**
  * Access control for update.php script.
