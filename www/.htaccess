@@ -29,6 +29,7 @@ AddDefaultCharset utf-8
   RewriteCond %{REQUEST_URI} !^/bypass-maintenance\.php$
   RewriteCond %{REQUEST_URI} !^/emergency-fix\.php$
   RewriteCond %{REQUEST_URI} !^/diagnostic-simple\.php$
+  RewriteCond %{REQUEST_URI} !^/drush-cr\.php$
   
   # Rediriger tout vers index.php (Clean URLs)
   RewriteCond %{REQUEST_FILENAME} !-f
