@@ -48,14 +48,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $session_id = bin2hex(random_bytes(16));
                         $timestamp = time();
                         
-                        // Insérer une session dans la table sessions
+                        // Créer les données de session (format Drupal)
+                        $session_data = serialize([
+                            'uid' => $user['uid'],
+                        ]);
+                        
+                        // Insérer une session dans la table sessions AVEC les données
                         try {
-                            $stmt = $pdo->prepare("INSERT INTO sessions (uid, sid, hostname, timestamp) VALUES (:uid, :sid, :hostname, :timestamp) ON DUPLICATE KEY UPDATE timestamp = :timestamp");
+                            $stmt = $pdo->prepare("INSERT INTO sessions (uid, sid, hostname, timestamp, session) VALUES (:uid, :sid, :hostname, :timestamp, :session) ON DUPLICATE KEY UPDATE timestamp = :timestamp, session = :session");
                             $stmt->execute([
                                 'uid' => $user['uid'],
                                 'sid' => $session_id,
                                 'hostname' => $_SERVER['REMOTE_ADDR'],
                                 'timestamp' => $timestamp,
+                                'session' => $session_data,
                             ]);
                             
                             // Définir le cookie de session Drupal (nom exact du site)
