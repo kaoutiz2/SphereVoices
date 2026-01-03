@@ -58,8 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 'timestamp' => $timestamp,
                             ]);
                             
-                            // Définir le cookie de session Drupal
-                            $cookie_name = 'SSESS' . substr(hash('sha256', $db['database']), 0, 32);
+                            // Définir le cookie de session Drupal (nom exact du site)
+                            $cookie_name = 'SSESSe45a51b4cca66f958f5e36c7131378e1';
                             setcookie($cookie_name, $session_id, [
                                 'expires' => 0, // Session cookie
                                 'path' => '/',
