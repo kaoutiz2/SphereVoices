@@ -6,10 +6,23 @@
 
 session_start();
 
-// Si déjà connecté, rediriger
-if (isset($_SESSION['drupal_logged_in']) && $_SESSION['drupal_logged_in'] === true) {
-    header('Location: /');
-    exit;
+// Vérifier si déjà connecté via Drupal
+try {
+    require_once __DIR__ . '/autoload.php';
+    $autoloader = require __DIR__ . '/autoload.php';
+    
+    $request = \Symfony\Component\HttpFoundation\Request::createFromGlobals();
+    $kernel = \Drupal\Core\DrupalKernel::createFromRequest($request, $autoloader, 'prod');
+    $kernel->boot();
+    $kernel->prepareLegacyRequest($request);
+    
+    $current_user = \Drupal::currentUser();
+    if ($current_user->isAuthenticated()) {
+        header('Location: /');
+        exit;
+    }
+} catch (\Exception $e) {
+    // Ignorer les erreurs au chargement
 }
 
 $error = '';
@@ -41,20 +54,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $user = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($user) {
-                    // Vérifier le mot de passe avec l'API Drupal
+                    // Charger Drupal complètement pour créer une vraie session
                     require_once __DIR__ . '/autoload.php';
+                    $autoloader = require __DIR__ . '/autoload.php';
                     
-                    $password_hasher = new \Drupal\Core\Password\PhpPassword(CRYPT_BLOWFISH);
+                    $request = \Symfony\Component\HttpFoundation\Request::createFromGlobals();
+                    $kernel = \Drupal\Core\DrupalKernel::createFromRequest($request, $autoloader, 'prod');
+                    $kernel->boot();
+                    $kernel->prepareLegacyRequest($request);
+                    
+                    // Vérifier le mot de passe avec l'API Drupal
+                    $password_hasher = \Drupal::service('password');
                     
                     if ($password_hasher->check($password, $user['pass'])) {
-                        // Connexion réussie !
-                        $_SESSION['drupal_logged_in'] = true;
-                        $_SESSION['drupal_uid'] = $user['uid'];
-                        $_SESSION['drupal_username'] = $user['name'];
+                        // Charger l'utilisateur Drupal
+                        $drupal_user = \Drupal\user\Entity\User::load($user['uid']);
                         
-                        // Rediriger vers la page d'accueil
-                        header('Location: /');
-                        exit;
+                        if ($drupal_user) {
+                            // Connecter l'utilisateur avec l'API Drupal
+                            user_login_finalize($drupal_user);
+                            
+                            // Rediriger vers la page d'accueil
+                            header('Location: /');
+                            exit;
+                        } else {
+                            $error = 'Impossible de charger l\'utilisateur.';
+                        }
                     } else {
                         $error = 'Nom d\'utilisateur ou mot de passe incorrect.';
                     }
