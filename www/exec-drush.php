@@ -73,8 +73,36 @@ header('Content-Type: text/html; charset=utf-8');
             echo "<div class='info'>📁 Répertoire de travail : $working_dir</div>";
             echo '<hr>';
             
-            // Commande drush cr - Appel via PHP
-            $command = "cd " . escapeshellarg($working_dir) . " && php " . escapeshellarg($drush_path) . " cr 2>&1";
+            // Trouver l'exécutable PHP
+            $php_paths = [
+                '/usr/bin/php',
+                '/usr/local/bin/php',
+                '/opt/alt/php81/usr/bin/php',
+                '/opt/alt/php80/usr/bin/php',
+                '/usr/bin/php8.1',
+                '/usr/bin/php8.0',
+                PHP_BINARY, // Le PHP qui exécute ce script
+            ];
+            
+            $php_path = null;
+            foreach ($php_paths as $path) {
+                if (file_exists($path) && is_executable($path)) {
+                    $php_path = $path;
+                    echo "<div class='success'>✅ PHP trouvé : $path</div>";
+                    break;
+                }
+            }
+            
+            if (!$php_path) {
+                // Utiliser PHP_BINARY par défaut (le PHP qui exécute ce script)
+                $php_path = PHP_BINARY;
+                echo "<div class='warning'>⚠️ Utilisation de PHP_BINARY : $php_path</div>";
+            }
+            
+            echo '<hr>';
+            
+            // Commande drush cr - Appel via PHP avec chemin complet
+            $command = "cd " . escapeshellarg($working_dir) . " && " . escapeshellarg($php_path) . " " . escapeshellarg($drush_path) . " cr 2>&1";
             
             echo '<div class="info">⚡ Commande exécutée :</div>';
             echo '<pre>' . htmlspecialchars($command) . '</pre>';
