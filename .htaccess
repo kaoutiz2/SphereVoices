@@ -4,6 +4,12 @@
 <IfModule mod_rewrite.c>
   RewriteEngine on
   
+  # Exclure les scripts de bypass/maintenance
+  RewriteCond %{REQUEST_URI} !^/bypass-maintenance\.php$
+  RewriteCond %{REQUEST_URI} !^/exec-drush\.php$
+  RewriteCond %{REQUEST_URI} !^/drush-cr\.php$
+  RewriteCond %{REQUEST_URI} !^/check-resources\.php$
+  
   # Si on n'est pas déjà dans www/, rediriger
   RewriteCond %{REQUEST_URI} !^/www/
   RewriteCond %{REQUEST_FILENAME} !-f
