@@ -11,6 +11,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     
     if (!empty($username) && !empty($password)) {
+        // Définir $app_root AVANT de charger settings.php
+        $app_root = dirname(__DIR__);
+        
         // Charger la config DB
         $databases = [];
         include __DIR__ . '/sites/default/settings.php';
