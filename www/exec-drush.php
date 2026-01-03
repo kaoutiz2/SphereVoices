@@ -73,8 +73,8 @@ header('Content-Type: text/html; charset=utf-8');
             echo "<div class='info'>📁 Répertoire de travail : $working_dir</div>";
             echo '<hr>';
             
-            // Commande drush cr
-            $command = "cd " . escapeshellarg($working_dir) . " && " . escapeshellarg($drush_path) . " cr 2>&1";
+            // Commande drush cr - Appel via PHP
+            $command = "cd " . escapeshellarg($working_dir) . " && php " . escapeshellarg($drush_path) . " cr 2>&1";
             
             echo '<div class="info">⚡ Commande exécutée :</div>';
             echo '<pre>' . htmlspecialchars($command) . '</pre>';
