@@ -313,15 +313,12 @@ $settings['hash_salt'] = '_TyaaiMn-UTE4nM4j86dVZJNGiLdLG-iR10wLa_7kLbXNxitOGVeOC
  */
 // Utiliser un identifiant de déploiement dynamique basé sur le timestamp des fichiers
 // Cela force l'invalidation du cache à chaque déploiement
-$deployment_identifier = \Drupal::VERSION;
-
-// En production, ajouter le timestamp de modification du fichier de configuration
-// pour forcer l'invalidation du cache à chaque nouveau déploiement
-if (file_exists(__DIR__ . '/../../themes/custom/spherevoices_theme/spherevoices_theme.info.yml')) {
-  $deployment_identifier .= '.' . filemtime(__DIR__ . '/../../themes/custom/spherevoices_theme/spherevoices_theme.info.yml');
+$theme_file = __DIR__ . '/../../themes/custom/spherevoices_theme/spherevoices_theme.info.yml';
+if (file_exists($theme_file)) {
+  $settings['deployment_identifier'] = 'v1.0.' . filemtime($theme_file);
+} else {
+  $settings['deployment_identifier'] = 'v1.0.' . time();
 }
-
-$settings['deployment_identifier'] = $deployment_identifier;
 
 /**
  * Access control for update.php script.
