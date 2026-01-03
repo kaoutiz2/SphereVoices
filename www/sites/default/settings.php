@@ -929,6 +929,10 @@ $env_file_path = NULL;
 if (PHP_SAPI === 'cli') {
   // For CLI (Drush, etc.), check environment variable or default to development
   $env_type = getenv('DRUPAL_ENV') ?: 'development';
+  // Définir $app_root si pas défini
+  if (!isset($app_root)) {
+    $app_root = dirname(dirname(__DIR__));
+  }
   $env_file_path = ($env_type === 'production') 
     ? $app_root . '/../.env.production' 
     : $app_root . '/../.env';
