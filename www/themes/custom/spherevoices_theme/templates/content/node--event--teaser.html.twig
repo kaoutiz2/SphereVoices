@@ -1,0 +1,35 @@
+{#
+/**
+ * @file
+ * Template pour afficher un événement en mode teaser.
+ */
+#}
+<article{{ attributes.addClass('node', 'node--type-' ~ node.bundle|clean_class, 'node--view-mode-teaser') }}>
+  <div class="event-teaser">
+    {% if content.field_event_date|render %}
+      <div class="event-date">
+        <div class="event-date-day">
+          {{ node.field_event_date.value|date('d') }}
+        </div>
+        <div class="event-date-month">
+          {{ node.field_event_date.value|date('M') }}
+        </div>
+      </div>
+    {% endif %}
+    
+    <div class="event-content">
+      {{ title_prefix }}
+      <h3{{ title_attributes.addClass('event-title') }}>
+        <a href="{{ url }}" rel="bookmark">{{ label }}</a>
+      </h3>
+      {{ title_suffix }}
+      
+      {% if content.body|render %}
+        <div class="event-body">
+          {{ content.body }}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</article>
+

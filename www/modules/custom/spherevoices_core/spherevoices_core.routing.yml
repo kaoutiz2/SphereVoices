@@ -6,3 +6,18 @@ spherevoices_core.breaking_news:
   requirements:
     _access: 'TRUE'
 
+spherevoices_core.agenda:
+  path: '/agenda'
+  defaults:
+    _controller: '\Drupal\spherevoices_core\Controller\AgendaController::agendaPage'
+    _title: 'Agenda des événements'
+  requirements:
+    _permission: 'access content'
+
+# spherevoices_core.agenda_mois:
+#   path: '/agenda-mois'
+#   defaults:
+#     _controller: '\Drupal\spherevoices_core\Controller\AgendaController::agendaPageMois'
+#     _title: 'Agenda'
+#   requirements:
+#     _permission: 'access content'

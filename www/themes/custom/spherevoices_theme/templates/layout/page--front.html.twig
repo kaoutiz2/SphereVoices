@@ -121,11 +121,17 @@
           </div>
         </div>
 
-        {# Sidebar droite : Brèves (descend sur toute la hauteur) #}
+        {# Sidebar droite : Brèves + Agenda #}
         <aside class="homepage-sidebar">
           {% if breves_block %}
             <div class="sidebar-breves-widget">
               {{ breves_block }}
+            </div>
+          {% endif %}
+          
+          {% if agenda_block %}
+            <div class="sidebar-agenda-widget">
+              {{ agenda_block }}
             </div>
           {% endif %}
         </aside>

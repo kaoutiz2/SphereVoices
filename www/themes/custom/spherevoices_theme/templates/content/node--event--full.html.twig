@@ -1,0 +1,31 @@
+{#
+/**
+ * @file
+ * Template pour afficher un événement en mode complet.
+ */
+#}
+<article{{ attributes.addClass('node', 'node--type-' ~ node.bundle|clean_class, 'node--view-mode-full') }}>
+  {{ title_prefix }}
+  {% if not page %}
+    <h2{{ title_attributes }}>
+      <a href="{{ url }}" rel="bookmark">{{ label }}</a>
+    </h2>
+  {% endif %}
+  {{ title_suffix }}
+  
+  <div{{ content_attributes.addClass('node__content', 'event-full') }}>
+    {% if content.field_event_date|render %}
+      <div class="event-full-date">
+        <span class="event-date-label">Date :</span>
+        {{ content.field_event_date }}
+      </div>
+    {% endif %}
+    
+    {% if content.body|render %}
+      <div class="event-full-body">
+        {{ content.body }}
+      </div>
+    {% endif %}
+  </div>
+</article>
+

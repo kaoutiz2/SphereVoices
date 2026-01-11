@@ -1,0 +1,25 @@
+{#
+/**
+ * @file
+ * Template pour la page agenda personnalisée avec recherche.
+ */
+#}
+<div class="agenda-custom-page">
+  <h1 class="page-title">Agenda des événements</h1>
+  <p class="page-subtitle">Retrouvez tous les événements à venir</p>
+  
+  <div class="agenda-search-section">
+    {{ search_form }}
+  </div>
+  
+  {% if events %}
+    <div class="agenda-events-grid">
+      {{ events }}
+    </div>
+  {% elseif empty_message %}
+    <div class="agenda-empty-message">
+      <p>{{ empty_message }}</p>
+    </div>
+  {% endif %}
+</div>
+

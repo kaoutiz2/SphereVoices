@@ -398,6 +398,82 @@ function spherevoices_theme_preprocess_page(&$variables) {
   // Ajouter la variable is_front pour vérifier si c'est la page d'accueil
   $variables['is_front'] = \Drupal::service('path.matcher')->isFrontPage();
   
+  // Vérifier si c'est la page agenda
+  $route_name = \Drupal::routeMatch()->getRouteName();
+  
+  if ($route_name == 'spherevoices_core.agenda') {
+    // Désactiver complètement le cache de cette page
+    \Drupal::service('page_cache_kill_switch')->trigger();
+    
+    $request = \Drupal::request();
+    $title_search = $request->query->get('title', '');
+    $month_filter = $request->query->get('month', '');
+    
+    $variables['title_search'] = $title_search;
+    $variables['month_filter'] = $month_filter;
+    
+    // Récupérer les événements
+    $database = \Drupal::database();
+    $query = $database->select('node_field_data', 'n');
+    $query->fields('n', ['nid', 'title']);
+    $query->leftJoin('node__field_event_date', 'nfd', 'n.nid = nfd.entity_id');
+    $query->addField('nfd', 'field_event_date_value', 'event_date');
+    $query->leftJoin('node__body', 'b', 'n.nid = b.entity_id');
+    $query->addField('b', 'body_value', 'body');
+    
+    $query->condition('n.type', 'event');
+    $query->condition('n.status', 1);
+
+    if (!empty($title_search)) {
+      $query->condition('n.title', '%' . $database->escapeLike($title_search) . '%', 'LIKE');
+    }
+
+    if (!empty($month_filter)) {
+      $start_date = $month_filter . '-01';
+      $end_date = date('Y-m-t', strtotime($start_date));
+      $query->condition('nfd.field_event_date_value', $start_date, '>=');
+      $query->condition('nfd.field_event_date_value', $end_date, '<=');
+    }
+
+    $query->orderBy('nfd.field_event_date_value', 'ASC');
+    
+    $events = $query->execute()->fetchAll();
+    
+    // Construire le HTML des événements
+    $events_html = '';
+    if (empty($events)) {
+      $events_html = '<div class="no-events"><p>Aucun événement trouvé.</p></div>';
+    } else {
+      foreach ($events as $event) {
+        $event_date = '';
+        if ($event->event_date) {
+          $event_date = date('d/m/Y', strtotime($event->event_date));
+        }
+        
+        $body = strip_tags($event->body_value ?? '');
+        $body_excerpt = htmlspecialchars(substr($body, 0, 200)) . (strlen($body) > 200 ? '...' : '');
+        
+        $node_url = '/node/' . $event->nid;
+        $events_html .= sprintf(
+          '<a href="%s" class="event-card-link">
+            <div class="event-card">
+              <div class="event-date-badge">%s</div>
+              <h3 class="event-title">%s</h3>
+              <div class="event-body">%s</div>
+            </div>
+          </a>',
+          $node_url,
+          $event_date,
+          htmlspecialchars($event->title),
+          $body_excerpt
+        );
+      }
+    }
+    
+    $variables['events_html'] = \Drupal\Core\Render\Markup::create($events_html);
+    $variables['count'] = count($events);
+  }
+  
   // Récupérer les articles pour la page d'accueil style CNN
   if ($variables['is_front']) {
     $node_storage = \Drupal::entityTypeManager()->getStorage('node');
@@ -562,32 +638,18 @@ function spherevoices_theme_preprocess_page(&$variables) {
       // Réindexer le tableau pour avoir des indices séquentiels (0, 1, 2, 3...)
       $ordered_nodes = array_values($ordered_nodes);
       
-      // Limiter à 14 articles maximum pour les colonnes
-      $max_articles_for_columns = 14;
-      $ordered_nodes = array_slice($ordered_nodes, 0, $max_articles_for_columns);
+      // Limiter à un maximum d'articles
+      $max_total_articles = 20;
+      $ordered_nodes = array_slice($ordered_nodes, 0, $max_total_articles);
       
-      // Ordre strict : gauche (index 0, 3, 6...), centre (index 1, 4, 7...), droite (index 2, 5, 8...)
-      // Exclure le dernier article qui irait à droite pour avoir un article de moins dans cette colonne
+      // Distribuer TOUS les articles dans la grille principale
+      // La grille s'adaptera automatiquement (3 colonnes si sidebar, 4 si pas de sidebar)
       $total_articles = count($ordered_nodes);
-      $last_right_index = null;
-      
-      // Trouver l'index du dernier article qui irait à droite
-      for ($i = $total_articles - 1; $i >= 0; $i--) {
-        if ($i % 3 === 2) {
-          $last_right_index = $i;
-          break;
-        }
-      }
       
       foreach ($ordered_nodes as $index => $node) {
-        // Exclure le dernier article qui irait à droite
-        if ($index === $last_right_index) {
-          continue;
-        }
-        
         $article_view = $view_builder->view($node, 'teaser');
         
-        // Répartir de manière alternée stricte
+        // Répartir de manière alternée stricte sur 3 colonnes
         $column_index = $index % 3;
         if ($column_index === 0) {
           // Gauche
@@ -649,6 +711,62 @@ function spherevoices_theme_preprocess_page(&$variables) {
     catch (\Exception $e) {
       // En cas d'erreur, ne pas bloquer l'affichage de la page
       \Drupal::logger('spherevoices_theme')->error('Erreur lors du chargement des brèves: @message', ['@message' => $e->getMessage()]);
+    }
+    
+    // Charger l'agenda (événements) directement
+    try {
+      $node_storage = \Drupal::entityTypeManager()->getStorage('node');
+      $view_builder = \Drupal::entityTypeManager()->getViewBuilder('node');
+      
+      // Récupérer les événements à venir
+      $events_query = \Drupal::entityQuery('node')
+        ->condition('type', 'event')
+        ->condition('status', 1)
+        ->sort('field_event_date', 'ASC')
+        ->range(0, 5)
+        ->accessCheck(TRUE);
+      
+      // Filtrer uniquement les événements futurs ou d'aujourd'hui
+      $events_query->condition('field_event_date', date('Y-m-d'), '>=');
+      
+      $events_nids = $events_query->execute();
+      
+      if (!empty($events_nids)) {
+        $events_nodes = $node_storage->loadMultiple($events_nids);
+        $events_rendered = [];
+        
+        foreach ($events_nodes as $event_node) {
+          $event_view = $view_builder->view($event_node, 'teaser');
+          $events_rendered[] = $event_view;
+        }
+        
+        // Construire le render array du bloc
+        $variables['agenda_block'] = [
+          '#type' => 'container',
+          '#attributes' => ['class' => ['agenda-block']],
+          'title' => [
+            '#type' => 'html_tag',
+            '#tag' => 'h2',
+            '#value' => 'Agenda',
+            '#attributes' => ['class' => ['agenda-title']],
+          ],
+          'content' => [
+            '#type' => 'container',
+            '#attributes' => ['class' => ['agenda-content']],
+            'items' => $events_rendered,
+          ],
+          'footer' => [
+            '#type' => 'html_tag',
+            '#tag' => 'div',
+            '#attributes' => ['class' => ['agenda-footer']],
+            '#value' => '<a href="/agenda" class="agenda-more-link">Afficher plus</a>',
+          ],
+        ];
+      }
+    }
+    catch (\Exception $e) {
+      // En cas d'erreur, ne pas bloquer l'affichage de la page
+      \Drupal::logger('spherevoices_theme')->error('Erreur lors du chargement de l\'agenda: @message', ['@message' => $e->getMessage()]);
     }
   }
   
@@ -767,6 +885,12 @@ function spherevoices_theme_field_widget_form_alter(&$element, \Drupal\Core\Form
  * Implements hook_form_alter().
  */
 function spherevoices_theme_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  // Pour les formulaires de node, corriger les previews d'images
+  if (preg_match('/^node_.*_(form|edit_form)$/', $form_id)) {
+    // Ajouter un after_build pour modifier les previews d'images
+    $form['#after_build'][] = 'spherevoices_theme_fix_image_preview';
+  }
+  
   // Pour les formulaires utilisateur, s'assurer que les champs sont bien présents et accessibles
   if (in_array($form_id, ['user_login_form', 'user_register_form', 'user_pass'])) {
     // Ajouter un after_build pour forcer le rendu des champs
@@ -998,19 +1122,6 @@ function spherevoices_theme_preprocess_form_element(&$variables) {
  * 
  * S'assure que le preview est bien dans data.preview pour l'affichage dans le wrapper.
  */
-function spherevoices_theme_preprocess_image_widget(&$variables) {
-  // S'assurer que le preview est bien dans data.preview
-  // Le preview est ajouté par ImageWidget::formElement() dans l'élément 'preview'
-  // template_preprocess_image_widget() devrait le mettre dans data['preview']
-  // Mais vérifions et forçons si nécessaire
-  if (isset($variables['element']['preview'])) {
-    // Le preview existe dans l'élément, s'assurer qu'il est dans data
-    if (!isset($variables['data']['preview'])) {
-      $variables['data']['preview'] = $variables['element']['preview'];
-    }
-  }
-}
-
 /**
  * Implements hook_preprocess_node().
  */
@@ -1115,3 +1226,204 @@ function _spherevoices_theme_clean_render_array($render_array) {
   
   return $render_array;
 }
+
+/**
+ * Implements hook_preprocess_views_view().
+ * 
+ * Force l'affichage des filtres exposés pour la vue agenda.
+ */
+function spherevoices_theme_preprocess_views_view(&$variables) {
+  $view = $variables['view'];
+  
+  // Forcer l'affichage des filtres exposés pour la vue agenda
+  if ($view->id() == 'agenda') {
+    // S'assurer que les filtres exposés sont visibles
+    if (isset($variables['exposed'])) {
+      // Ajouter des classes CSS pour forcer l'affichage
+      if (!isset($variables['exposed']['#attributes'])) {
+        $variables['exposed']['#attributes'] = [];
+      }
+      $variables['exposed']['#attributes']['class'][] = 'agenda-filters-forced';
+      $variables['exposed']['#attributes']['style'] = 'display: block !important; visibility: visible !important;';
+    }
+    
+    // Debug: Logger si les filtres sont présents
+    \Drupal::logger('spherevoices_theme')->notice('Vue agenda - Filtres exposés présents: @present', [
+      '@present' => isset($variables['exposed']) ? 'OUI' : 'NON'
+    ]);
+  }
+}
+
+/**
+ * Implements hook_preprocess_views_exposed_form().
+ * 
+ * Ajoute des attributs pour forcer l'affichage du formulaire exposé de l'agenda.
+ */
+function spherevoices_theme_preprocess_views_exposed_form(&$variables) {
+  $view = $variables['view'] ?? NULL;
+  
+  if ($view && $view->id() == 'agenda') {
+    // Forcer l'affichage du formulaire
+    if (!isset($variables['attributes'])) {
+      $variables['attributes'] = new Attribute();
+    }
+    $variables['attributes']['class'][] = 'agenda-exposed-form-forced';
+    $variables['attributes']['style'] = 'display: block !important; visibility: visible !important;';
+    
+    \Drupal::logger('spherevoices_theme')->notice('Formulaire exposé agenda traité');
+  }
+}
+
+/**
+ * Implements hook_preprocess_field().
+ * 
+ * Force l'utilisation de l'image originale au lieu des styles d'image.
+ */
+function spherevoices_theme_preprocess_field(&$variables) {
+  // Seulement pour le champ image des articles
+  if ($variables['field_name'] === 'field_image' && $variables['element']['#bundle'] === 'article') {
+    // Parcourir tous les items du champ
+    foreach ($variables['items'] as $delta => $item) {
+      if (isset($variables['element'][$delta]['#item'])) {
+        $field_item = $variables['element'][$delta]['#item'];
+        
+        // Récupérer l'entité fichier
+        if ($field_item && method_exists($field_item, 'get') && $field_item->get('entity')) {
+          $file = $field_item->get('entity')->getValue();
+          
+          if ($file) {
+            $uri = $file->getFileUri();
+            $url = \Drupal::service('file_url_generator')->generateAbsoluteString($uri);
+            $alt = $field_item->get('alt')->getValue();
+            
+            // Remplacer le rendu par une balise img simple
+            $variables['items'][$delta]['content'] = [
+              '#theme' => 'image',
+              '#uri' => $uri,
+              '#alt' => $alt,
+              '#attributes' => [
+                'loading' => 'lazy',
+              ],
+            ];
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_preprocess_image_widget().
+ * 
+ * Force l'utilisation de l'image originale dans le widget du formulaire (preview).
+ */
+function spherevoices_theme_preprocess_image_widget(&$variables) {
+  // Debug: vérifier si le hook est appelé
+  \Drupal::logger('spherevoices_theme')->notice('hook_preprocess_image_widget appelé');
+  
+  // Modifier la preview pour utiliser l'image originale
+  if (!empty($variables['data']['preview'])) {
+    \Drupal::logger('spherevoices_theme')->notice('Preview trouvée dans data');
+    
+    // Récupérer le fichier depuis l'élément
+    $element = $variables['element'];
+    
+    if (isset($element['#files']) && !empty($element['#files'])) {
+      \Drupal::logger('spherevoices_theme')->notice('Fichiers trouvés: @count', ['@count' => count($element['#files'])]);
+      
+      foreach ($element['#files'] as $file) {
+        if ($file) {
+          $uri = $file->getFileUri();
+          
+          // Créer l'URL absolue de l'image originale
+          $url = \Drupal::service('file_url_generator')->generateAbsoluteString($uri);
+          
+          \Drupal::logger('spherevoices_theme')->notice('URL générée: @url', ['@url' => $url]);
+          
+          $alt = '';
+          
+          // Récupérer l'alt text si disponible
+          if (isset($element['#default_value']['alt'])) {
+            $alt = $element['#default_value']['alt'];
+          }
+          
+          // Remplacer complètement la preview avec l'image originale
+          // Utiliser un render array simple avec l'URL directe
+          $variables['data']['preview'] = [
+            '#type' => 'html_tag',
+            '#tag' => 'img',
+            '#attributes' => [
+              'src' => $url,
+              'alt' => $alt,
+              'class' => ['image-widget-preview'],
+              'data-drupal-selector' => 'edit-field-image-0-preview',
+              'loading' => 'lazy',
+            ],
+          ];
+          
+          \Drupal::logger('spherevoices_theme')->notice('Preview remplacée avec URL: @url', ['@url' => $url]);
+          
+          break; // On ne traite que le premier fichier
+        }
+      }
+    }
+  }
+}
+
+/**
+ * After build callback pour corriger les previews d'images.
+ */
+function spherevoices_theme_fix_image_preview($form, \Drupal\Core\Form\FormStateInterface $form_state) {
+  // Parcourir tous les champs d'image
+  foreach (\Drupal\Core\Render\Element::children($form) as $field_name) {
+    if (isset($form[$field_name]['widget'])) {
+      $widget = &$form[$field_name]['widget'];
+      
+      // Pour chaque élément du widget (en cas de champ multi-valeurs)
+      foreach (\Drupal\Core\Render\Element::children($widget) as $delta) {
+        if (isset($widget[$delta]['preview'])) {
+          $preview = &$widget[$delta]['preview'];
+          
+          // Si c'est une image avec un style 'thumbnail', la remplacer par l'originale
+          if (isset($preview['#theme']) && $preview['#theme'] === 'image_style') {
+            if (isset($preview['#style_name']) && $preview['#style_name'] === 'thumbnail') {
+              // Changer le thème pour utiliser 'image' au lieu de 'image_style'
+              $preview['#theme'] = 'image';
+              
+              // Récupérer l'URI de l'image originale
+              if (isset($preview['#uri'])) {
+                $uri = $preview['#uri'];
+                
+                // Créer l'URL de l'image originale
+                $url = \Drupal::service('file_url_generator')->generateAbsoluteString($uri);
+                
+                // Remplacer l'attribut src
+                $preview['#uri'] = $uri;
+                
+                // S'assurer qu'on n'utilise pas le style
+                unset($preview['#style_name']);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  return $form;
+}
+
+/**
+ * Implements hook_preprocess_image_style().
+ * 
+ * Force l'utilisation de l'image originale au lieu des styles d'image dans tous les contextes.
+ */
+function spherevoices_theme_preprocess_image_style(&$variables) {
+  // Si c'est le style 'thumbnail' utilisé dans le widget, remplacer par l'image originale
+  if (isset($variables['style_name']) && $variables['style_name'] === 'thumbnail') {
+    // Remplacer le thème par 'image' simple
+    $variables['theme_hook_original'] = 'image';
+    // L'URI est déjà disponible dans $variables['uri']
+  }
+}
+

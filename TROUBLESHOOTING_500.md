@@ -154,3 +154,4 @@ Pour voir les erreurs détaillées :
 - Les permissions doivent être sécurisées (644 pour les fichiers, 755 pour les dossiers)
 
 
+

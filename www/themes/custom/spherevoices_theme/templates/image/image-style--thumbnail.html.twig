@@ -1,0 +1,23 @@
+{#
+/**
+ * @file
+ * Override pour le style d'image 'thumbnail'.
+ * Force l'utilisation de l'image originale au lieu du style.
+ *
+ * Available variables:
+ * - image: The rendered image element
+ * - uri: The URI of the original image
+ * - width: Width of the styled image
+ * - height: Height of the styled image
+ * - attributes: Attributes for the img tag
+ * - style_name: The image style being used (thumbnail)
+ *
+ * @see template_preprocess_image_style()
+ */
+#}
+{#
+  Au lieu d'utiliser {{ image }} qui contient l'URL du style,
+  on crée une nouvelle balise img avec l'URI originale
+#}
+<img{{ attributes.setAttribute('src', file_url(uri)).removeAttribute('srcset') }} />
+

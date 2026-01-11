@@ -1,0 +1,68 @@
+{#
+/**
+ * @file
+ * Template pour la page Agenda avec navigation par mois.
+ *
+ * Variables disponibles:
+ * - current_month: Le mois actuel affiché.
+ * - prev_month_link: Lien vers le mois précédent.
+ * - prev_month_label: Libellé du mois précédent.
+ * - next_month_link: Lien vers le mois suivant.
+ * - next_month_label: Libellé du mois suivant.
+ * - events: Liste des événements.
+ * - empty_message: Message si aucun événement.
+ */
+#}
+
+<div class="page-agenda page-agenda-month">
+  <div class="page-header">
+    <h1 class="page-title">Agenda - {{ current_month }}</h1>
+  </div>
+
+  {# Navigation par mois #}
+  <div class="month-navigation">
+    <a href="{{ prev_month_link }}" class="btn-nav-month btn-prev">
+      ← {{ prev_month_label }}
+    </a>
+    <span class="current-month">{{ current_month }}</span>
+    <a href="{{ next_month_link }}" class="btn-nav-month btn-next">
+      {{ next_month_label }} →
+    </a>
+  </div>
+
+  {# Liste des événements #}
+  <div class="events-container">
+    {% if events is empty %}
+      <div class="no-events">
+        <p>{{ empty_message }}</p>
+      </div>
+    {% else %}
+      <div class="events-grid">
+        {% for event in events %}
+          <article class="event-card">
+            <div class="event-date">
+              {% if event.event_date %}
+                {{ event.event_date|date('d/m/Y') }}
+              {% endif %}
+            </div>
+            <h3 class="event-title">{{ event.title }}</h3>
+            {% if event.body %}
+              <div class="event-body">
+                {{ event.body|striptags|slice(0, 200) }}{% if event.body|length > 200 %}...{% endif %}
+              </div>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+      
+      <div class="events-count">
+        <p>Nombre d'événements affichés : <strong>{{ events|length }}</strong></p>
+      </div>
+    {% endif %}
+  </div>
+
+  {# Retour à la vue principale #}
+  <div class="back-to-agenda">
+    <a href="/agenda" class="btn-back">← Retour à l'agenda complet</a>
+  </div>
+</div>

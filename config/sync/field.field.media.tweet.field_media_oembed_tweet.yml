@@ -1,0 +1,19 @@
+uuid: 5889228a-dd1f-4a39-b90a-d5cace259a12
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.media.field_media_oembed_tweet
+    - media.type.tweet
+id: media.tweet.field_media_oembed_tweet
+field_name: field_media_oembed_tweet
+entity_type: media
+bundle: tweet
+label: 'URL du tweet'
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

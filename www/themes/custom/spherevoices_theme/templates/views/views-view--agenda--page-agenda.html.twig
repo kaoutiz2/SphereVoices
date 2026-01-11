@@ -1,0 +1,31 @@
+{#
+/**
+ * @file
+ * Template pour la page Agenda.
+ */
+#}
+<div class="agenda-page-wrapper">
+  <div class="page-header">
+    <h1 class="page-title">{{ title }}</h1>
+    <p class="page-description">Retrouvez tous les événements à venir</p>
+  </div>
+  
+  {# Afficher les filtres exposés #}
+  {% if rows %}
+    <div class="view-content">
+      {{ rows }}
+    </div>
+  {% else %}
+    <div class="view-empty">
+      {{ empty }}
+    </div>
+  {% endif %}
+  
+  {# Pagination #}
+  {% if pager %}
+    <div class="view-pager">
+      {{ pager }}
+    </div>
+  {% endif %}
+</div>
+
