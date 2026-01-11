@@ -37,3 +37,4 @@ echo 'Cache vidé avec succès!';
 
 echo "⚠️  Visitez https://www.spherevoices.com/clear-cache-now.php pour vider le cache"
 
+

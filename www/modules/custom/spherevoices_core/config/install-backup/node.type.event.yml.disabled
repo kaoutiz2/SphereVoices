@@ -1,0 +1,14 @@
+langcode: fr
+status: true
+dependencies:
+  module:
+    - node
+    - text
+name: 'Événement'
+type: event
+description: 'Utilisez les <em>événements</em> pour publier des événements avec une date.'
+help: 'Les événements apparaissent dans le bloc Agenda sur la page d''accueil et dans la page Agenda.'
+new_revision: true
+preview_mode: 1
+display_submitted: true
+

@@ -1,0 +1,4 @@
+# Rediriger /agenda vers /agenda.php
+RewriteEngine On
+RewriteRule ^agenda$ agenda.php [L,QSA]
+

@@ -3,13 +3,11 @@
  * Styles pour le layout galerie de la page d'accueil.
  */
 
-/* Layout principal : Contenu + Sidebar qui descend sur toute la hauteur */
+/* Layout principal : Position relative pour contenir la sidebar absolue */
 .homepage-main-layout {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 2rem;
+  position: relative;
   width: 100%;
-  align-items: start;
+  display: block;
 }
 
 /* Colonne principale : Breaking News + Galerie */
@@ -18,37 +16,66 @@
   flex-direction: column;
   gap: 2rem;
   width: 100%;
+  /* Padding à droite pour laisser la place à la sidebar */
+  padding-right: calc(320px + 2rem);
 }
 
 /* Breaking News dans la colonne principale */
 .homepage-main-column .breaking-news-section {
-  width: 100%;
-  max-width: 100%;
+  width: calc(75% - 1rem) !important;
+  max-width: 1200px !important;
   margin-bottom: 0;
 }
 
-/* Gallery Layout - 3 colonnes fixes */
+/* Gallery Layout - 3 colonnes par défaut avec possibilité d'extension */
 .homepage-gallery-layout {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 2rem;
   width: 100%;
   margin-top: 0;
+  /* Transition pour le changement de colonnes */
+  transition: grid-template-columns 0.3s ease;
 }
 
-/* Sidebar à droite - descend sur toute la hauteur */
+/* Quand des articles sont sous la sidebar, on passe en mode hybride */
+.homepage-gallery-layout.has-articles-below-sidebar {
+  /* On reste à la même largeur, le JS va gérer le positionnement */
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Sidebar à droite - position absolue */
 .homepage-sidebar {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 320px;
   display: flex;
   flex-direction: column;
-  align-self: start;
+  gap: 2rem;
+  z-index: 10;
+}
+
+/* Articles supplémentaires dans la sidebar (sous l'agenda) */
+.homepage-sidebar .sidebar-articles {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.homepage-sidebar .article-gallery-item {
+  width: 100%;
 }
 
 .homepage-sidebar .sidebar-breves-widget {
   width: 100%;
-  position: sticky;
-  top: calc(var(--header-height, 80px) + 1rem);
-  max-height: calc(100vh - var(--header-height, 80px) - 2rem);
-  overflow-y: auto;
+  position: static;
+  margin-bottom: 0;
+  /* Retirer le sticky pour éviter que les brèves suivent le scroll */
+}
+
+.homepage-sidebar .sidebar-agenda-widget {
+  margin-top: 0;
 }
 
 /* Article Gallery Item - Base */
@@ -173,7 +200,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   transition: color 0.2s ease;
 }
@@ -193,7 +220,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   flex: 1;
 }

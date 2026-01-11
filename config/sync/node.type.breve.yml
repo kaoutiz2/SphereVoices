@@ -1,0 +1,14 @@
+uuid: 147f9073-3af4-49c7-ad14-18c82e5756c0
+langcode: fr
+status: true
+dependencies:
+  module:
+    - node
+    - text
+name: Brève
+type: breve
+description: 'Utilisez les <em>brèves</em> pour des informations courtes et rapides à publier.'
+help: "Les brèves sont des articles courts qui apparaissent dans le bloc Brèves sur la page d'accueil."
+new_revision: true
+preview_mode: 1
+display_submitted: true

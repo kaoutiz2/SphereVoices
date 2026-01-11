@@ -1,0 +1,79 @@
+<!-- CSS pour l'agenda -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+.page-agenda-wrapper { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem; }
+.page-agenda-wrapper .page-title { font-size: 2.5rem; font-weight: 700; color: #333; border-bottom: 3px solid #cc0000; padding-bottom: 1rem; margin-bottom: 0.5rem; }
+.page-agenda-wrapper .page-subtitle { color: #666; font-size: 1.1rem; margin-bottom: 2rem; }
+.page-agenda-wrapper .search-form { background: #f5f5f5; padding: 2rem; border-radius: 8px; margin: 2rem 0; border: 1px solid #ddd; }
+.page-agenda-wrapper .form-row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; }
+.page-agenda-wrapper .form-item { flex: 1; min-width: 200px; }
+.page-agenda-wrapper label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #333; }
+.page-agenda-wrapper input { width: 100%; padding: 0.75rem 1rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; font-family: inherit; }
+.page-agenda-wrapper input:focus { outline: none; border-color: #cc0000; box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.1); }
+.page-agenda-wrapper .form-actions { display: flex; gap: 0.5rem; flex: 0 0 auto; }
+.page-agenda-wrapper button { padding: 0.75rem 2rem; background: #cc0000; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: background-color 0.2s ease; }
+.page-agenda-wrapper button:hover { background: #990000; }
+.page-agenda-wrapper .reset-btn { background: #f5f5f5; color: #333; text-decoration: none; display: inline-block; padding: 0.75rem 2rem; border-radius: 4px; font-weight: 600; border: 1px solid #ddd; transition: background-color 0.2s ease; }
+.page-agenda-wrapper .reset-btn:hover { background: #e0e0e0; }
+.page-agenda-wrapper .events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+.page-agenda-wrapper .event-card { border: 1px solid #ddd; border-radius: 8px; padding: 1.5rem; background: white; transition: box-shadow 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.page-agenda-wrapper .event-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.page-agenda-wrapper .event-date { color: #cc0000; font-weight: 700; font-size: 1.1rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+.page-agenda-wrapper .event-date:before { content: "📅"; }
+.page-agenda-wrapper .event-title { font-size: 1.3rem; font-weight: 600; margin-bottom: 0.75rem; color: #333; }
+.page-agenda-wrapper .event-body { color: #666; line-height: 1.7; }
+.page-agenda-wrapper .no-events { text-align: center; padding: 3rem; background: #f5f5f5; border-radius: 8px; color: #666; font-size: 1.2rem; }
+@media (max-width: 768px) {
+  .page-agenda-wrapper .page-title { font-size: 2rem; }
+  .page-agenda-wrapper .form-row { flex-direction: column; }
+  .page-agenda-wrapper .form-item, .page-agenda-wrapper .form-actions { width: 100%; }
+  .page-agenda-wrapper .events-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<!-- Contenu de l'agenda -->
+<div class="page-agenda-wrapper">
+<h1 class="page-title">Agenda des événements</h1>
+<p class="page-subtitle">Retrouvez tous les événements à venir</p>
+
+<div class="search-form">
+<form method="get" action="/node/1">
+<div class="form-row">
+<div class="form-item">
+<label for="title">Rechercher un événement</label>
+<input type="text" name="title" id="title" placeholder="Rechercher par titre...">
+</div>
+<div class="form-item">
+<label for="month">Mois</label>
+<input type="month" name="month" id="month">
+</div>
+<div class="form-actions">
+<button type="submit">Rechercher</button>
+<a href="/node/1" class="reset-btn">Réinitialiser</a>
+</div>
+</div>
+</form>
+</div>
+
+<div id="agenda-events-container">
+<p style="text-align:center; padding:2rem;">Chargement des événements...</p>
+</div>
+</div>
+
+<script>
+// Charger les événements via AJAX depuis agenda.php
+fetch('/agenda.php' + window.location.search)
+  .then(response => response.text())
+  .then(html => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const eventsGrid = doc.querySelector('.events-grid');
+    if (eventsGrid) {
+      document.getElementById('agenda-events-container').innerHTML = eventsGrid.outerHTML;
+    }
+  })
+  .catch(error => {
+    document.getElementById('agenda-events-container').innerHTML = '<p style="text-align:center; color:#cc0000;">Erreur de chargement</p>';
+  });
+</script>
+

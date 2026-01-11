@@ -2,21 +2,21 @@
 /**
  * @file
  * Template pour les articles en mode full.
- * Identique au template par défaut mais affiche explicitement tous les champs.
+ * Affiche l'image originale sans style Drupal.
  */
 #}
-<article{{ attributes }}>
+<article{{ attributes.addClass('article-full') }}>
 
   {{ title_prefix }}
   {% if label %}
-    <h1{{ title_attributes }}>
+    <h1{{ title_attributes.addClass('article-full-title') }}>
       {{ label }}
     </h1>
   {% endif %}
   {{ title_suffix }}
 
   {% if display_submitted %}
-    <footer>
+    <footer class="article-full-meta">
       {{ author_picture }}
       <div{{ author_attributes }}>
         {% trans %}Submitted by {{ author_name }} on {{ date }}{% endtrans %}
@@ -25,8 +25,18 @@
     </footer>
   {% endif %}
 
-  <div{{ content_attributes }}>
-    {{ content }}
+  <div{{ content_attributes.addClass('article-full-content') }}>
+    {# Afficher l'image originale si elle existe #}
+    {% if node.field_image.entity %}
+      <div class="article-full-image">
+        {% set image_file = node.field_image.entity %}
+        {% set image_uri = image_file.uri.value %}
+        <img src="{{ file_url(image_uri) }}" alt="{{ node.field_image.alt }}" />
+      </div>
+    {% endif %}
+    
+    {# Afficher les autres champs sauf l'image #}
+    {{ content|without('field_image') }}
   </div>
 
 </article>

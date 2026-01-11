@@ -108,3 +108,4 @@ Si vous préférez modifier directement `settings.php`, trouvez la section vers 
 3. Vérifiez que tous les fichiers ont bien été uploadés (taille des dossiers)
 
 
+
