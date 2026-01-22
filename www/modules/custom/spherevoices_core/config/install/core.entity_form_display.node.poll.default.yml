@@ -1,0 +1,38 @@
+uuid: poll-form-display-uuid-001
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.field.node.poll.field_poll_choices
+    - field.field.node.poll.field_poll_description
+    - node.type.poll
+  module:
+    - text
+id: node.poll.default
+targetEntityType: node
+bundle: poll
+mode: default
+content:
+  field_poll_choices:
+    type: poll_choices_widget
+    weight: 2
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  field_poll_description:
+    type: text_textarea
+    weight: 1
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  title:
+    type: string_textfield
+    weight: 0
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+hidden:
+  status: true
