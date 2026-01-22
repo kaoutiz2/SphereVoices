@@ -9,6 +9,9 @@ global-styling:
       css/components.css: {}
   js:
     js/main.js: {}
+    js/agenda-navigation.js: {}
+    js/gallery-layout.js: {}
+    js/breves-height.js: {}
   dependencies:
     - core/drupal
     - core/jquery
@@ -17,6 +20,12 @@ global-styling:
     - core/drupal.toolbar
     - core/drupal.bigPipe
     - core/drupal.contextual
+
+fix-image-preview:
+  js:
+    js/fix-image-preview.js: {}
+  dependencies:
+    - core/drupal
 
 responsive:
   css:
@@ -27,6 +36,8 @@ admin:
   css:
     theme:
       css/admin.css: {}
+  js:
+    js/fix-image-preview.js: {}
   dependencies:
     - spherevoices_theme/global-styling
 

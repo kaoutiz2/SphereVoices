@@ -1,0 +1,14 @@
+uuid: poll-type-uuid-001
+langcode: fr
+status: true
+dependencies:
+  module:
+    - node
+    - text
+name: Sondage
+type: poll
+description: 'Utilisez les <em>sondages</em> pour créer des sondages avec des choix multiples et permettre aux visiteurs de voter.'
+help: "Les sondages apparaissent dans le bloc Sondage sur la page d'accueil. Les visiteurs peuvent voter et voir les résultats en temps réel."
+new_revision: true
+preview_mode: 1
+display_submitted: true

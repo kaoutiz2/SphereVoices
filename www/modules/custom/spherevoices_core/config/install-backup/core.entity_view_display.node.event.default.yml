@@ -1,0 +1,40 @@
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.field.node.event.body
+    - field.field.node.event.field_event_date
+    - node.type.event
+  module:
+    - datetime
+    - text
+    - user
+id: node.event.default
+targetEntityType: node
+bundle: event
+mode: default
+content:
+  field_event_date:
+    type: datetime_default
+    label: hidden
+    weight: 0
+    region: content
+    settings:
+      timezone_override: ''
+      format_type: medium
+    third_party_settings: {  }
+  body:
+    type: text_default
+    label: hidden
+    weight: 1
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  links:
+    weight: 2
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+hidden:
+  langcode: true
+

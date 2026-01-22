@@ -1,0 +1,132 @@
+{#
+/**
+ * @file
+ * Template pour la page agenda avec navigation Drupal.
+ */
+#}
+<div class="page-wrapper">
+  <header class="site-header" role="banner">
+    {% if page.header_top %}
+      <div class="header-top">
+        {{ page.header_top }}
+      </div>
+    {% endif %}
+    <div class="header-main">
+      <div class="header-left-section">
+        {% if page.header %}
+          <div class="site-branding">
+            {{ page.header }}
+          </div>
+        {% endif %}
+        <button class="menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+          <span class="menu-toggle-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+        </button>
+        {% if page.navigation %}
+          <nav class="main-navigation mobile-menu-hidden" role="navigation" aria-label="Main navigation">
+            {{ page.navigation }}
+          </nav>
+        {% endif %}
+      </div>
+      <div class="header-right-section">
+        <div class="header-search">
+          <form action="/search" method="get" class="search-form-inline">
+            <input type="search" name="keys" placeholder="Rechercher..." class="search-input-inline" />
+            <button type="submit" class="search-button-inline">Rechercher</button>
+          </form>
+        </div>
+        <div class="header-user-section">
+          <div class="header-user-links">
+            {% if page.header_user %}
+              {{ page.header_user }}
+            {% endif %}
+          </div>
+          <div class="header-rss">
+            {% if page.header_rss %}
+              {{ page.header_rss }}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  {% if page.highlighted %}
+    <div class="highlighted">
+      {{ page.highlighted }}
+    </div>
+  {% endif %}
+  
+  <main class="main-content" role="main">
+    {% if page.breadcrumb %}
+      {{ page.breadcrumb }}
+    {% endif %}
+    
+    <div class="content-wrapper">
+      <div class="content-main">
+        <article class="content-article">
+          <div class="page-header">
+            <h1 class="page-title">Agenda des événements</h1>
+          </div>
+
+          <div class="page-content">
+            {# Contenu agenda en HTML brut #}
+            <div class="page-agenda-container">
+              <p class="page-subtitle">Retrouvez tous les événements à venir</p>
+
+              <div class="search-form">
+                <form method="get" action="/agenda" id="agenda-search-form">
+                  <div class="form-row">
+                    <div class="form-item">
+                      <label for="title">Rechercher un événement</label>
+                      <input type="text" name="title" id="title" value="{{ title_search|default('') }}" placeholder="Rechercher par titre..." autocomplete="off">
+                    </div>
+                    
+                    <div class="form-item">
+                      <label for="month">Mois</label>
+                      <input type="month" name="month" id="month" value="{{ month_filter|default('') }}" autocomplete="off">
+                    </div>
+                    
+                    <div class="form-actions">
+                      <button type="submit" class="btn-search">Rechercher</button>
+                      <button type="button" class="reset-btn" id="reset-search">Réinitialiser</button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+              
+              <script>
+                (function() {
+                  // Réinitialiser le formulaire
+                  document.getElementById('reset-search').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // Rediriger directement vers /agenda (sans soumettre le formulaire)
+                    window.location.replace('/agenda');
+                  });
+                })();
+              </script>
+
+              <div class="events-grid">
+                {{ events_html|raw }}
+              </div>
+
+              <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #ddd; text-align: center; color: #666;">
+                <p>Nombre d'événements affichés : <strong>{{ count|default(0) }}</strong></p>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    {% if page.footer %}
+      {{ page.footer }}
+    {% endif %}
+  </footer>
+</div>
+

@@ -1,0 +1,18 @@
+poll_choices_widget:
+  js:
+    js/poll_choices_widget.js: {}
+  dependencies:
+    - core/drupal
+    - core/jquery
+    - core/drupal.ajax
+
+poll_block:
+  js:
+    js/poll_block.js: {}
+  css:
+    theme:
+      css/poll_block.css: {}
+  dependencies:
+    - core/drupal
+    - core/jquery
+    - core/drupal.ajax

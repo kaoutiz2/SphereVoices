@@ -107,3 +107,4 @@ Pour plus d'informations, consultez : `CACHE_MANAGEMENT.md`
 
 🎉 **Une fois le cache vidé, votre site affichera la dernière version !**
 
+

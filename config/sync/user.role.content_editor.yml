@@ -1,0 +1,132 @@
+uuid: 3042c80c-032a-4d28-a8cf-039ecfba4dd8
+langcode: fr
+status: true
+dependencies:
+  config:
+    - media.type.audio
+    - media.type.document
+    - media.type.image
+    - media.type.remote_video
+    - media.type.tweet
+    - media.type.video
+    - node.type.article
+    - node.type.breve
+    - node.type.page
+    - taxonomy.vocabulary.tags
+  module:
+    - comment
+    - contextual
+    - file
+    - image
+    - media
+    - node
+    - path
+    - search
+    - system
+    - taxonomy
+    - toolbar
+_core:
+  default_config_hash: e_wG1u7SrGaJbY2-Szgbgl-c8T3kdirU3uTNq2c_QJQ
+id: content_editor
+label: 'Éditeur de contenu'
+weight: 2
+is_admin: false
+permissions:
+  - 'access administration pages'
+  - 'access content overview'
+  - 'access contextual links'
+  - 'access files overview'
+  - 'access media overview'
+  - 'access taxonomy overview'
+  - 'access toolbar'
+  - 'administer comment types'
+  - 'administer comments'
+  - 'administer image styles'
+  - 'administer media'
+  - 'administer media types'
+  - 'administer search'
+  - 'administer taxonomy'
+  - 'administer url aliases'
+  - 'create article content'
+  - 'create audio media'
+  - 'create breve content'
+  - 'create document media'
+  - 'create image media'
+  - 'create media'
+  - 'create page content'
+  - 'create remote_video media'
+  - 'create terms in tags'
+  - 'create tweet media'
+  - 'create url aliases'
+  - 'create video media'
+  - 'delete any article content'
+  - 'delete any audio media'
+  - 'delete any audio media revisions'
+  - 'delete any breve content'
+  - 'delete any document media'
+  - 'delete any document media revisions'
+  - 'delete any file'
+  - 'delete any image media'
+  - 'delete any image media revisions'
+  - 'delete any media'
+  - 'delete any remote_video media'
+  - 'delete any remote_video media revisions'
+  - 'delete any tweet media'
+  - 'delete any tweet media revisions'
+  - 'delete any video media'
+  - 'delete any video media revisions'
+  - 'delete article revisions'
+  - 'delete media'
+  - 'delete own article content'
+  - 'delete own audio media'
+  - 'delete own breve content'
+  - 'delete own document media'
+  - 'delete own files'
+  - 'delete own image media'
+  - 'delete own page content'
+  - 'delete own remote_video media'
+  - 'delete own tweet media'
+  - 'delete own video media'
+  - 'delete page revisions'
+  - 'edit any article content'
+  - 'edit any audio media'
+  - 'edit any breve content'
+  - 'edit any document media'
+  - 'edit any image media'
+  - 'edit any page content'
+  - 'edit any remote_video media'
+  - 'edit any tweet media'
+  - 'edit any video media'
+  - 'edit own article content'
+  - 'edit own audio media'
+  - 'edit own breve content'
+  - 'edit own comments'
+  - 'edit own document media'
+  - 'edit own image media'
+  - 'edit own page content'
+  - 'edit own remote_video media'
+  - 'edit own tweet media'
+  - 'edit own video media'
+  - 'edit terms in tags'
+  - 'revert all revisions'
+  - 'revert any audio media revisions'
+  - 'revert any document media revisions'
+  - 'revert any image media revisions'
+  - 'revert any remote_video media revisions'
+  - 'revert any tweet media revisions'
+  - 'revert any video media revisions'
+  - 'update any media'
+  - 'update media'
+  - 'view all media revisions'
+  - 'view all revisions'
+  - 'view all taxonomy revisions'
+  - 'view any audio media revisions'
+  - 'view any document media revisions'
+  - 'view any image media revisions'
+  - 'view any remote_video media revisions'
+  - 'view any tweet media revisions'
+  - 'view any video media revisions'
+  - 'view own unpublished content'
+  - 'view own unpublished media'
+  - 'view the administration theme'
+  - 'view vocabulary labels'

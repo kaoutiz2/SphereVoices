@@ -1,0 +1,15 @@
+<div class="page-agenda-container">
+  <p class="page-subtitle">Retrouvez tous les événements à venir</p>
+
+  <div class="search-form">
+    {{ search_form }}
+  </div>
+
+  <div class="events-grid">
+    {{ events_html|raw }}
+  </div>
+
+  <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #ddd; text-align: center; color: #666;">
+    <p>Nombre d'événements affichés : <strong>{{ count }}</strong></p>
+  </div>
+</div>

@@ -7,18 +7,11 @@
 <article{{ attributes.addClass('article-featured') }}>
   <a href="{{ url ?: node.url }}" class="article-featured-link">
     <div class="article-featured-image-wrapper">
-      {% if content.field_image and content.field_image|render|striptags|trim %}
-        <div class="article-featured-image">
-          {{ content.field_image }}
-        </div>
-      {% elseif node.field_image.value %}
-        {# Fallback: accéder directement au champ si pas dans content #}
+      {% if node.field_image.entity %}
         <div class="article-featured-image">
           {% set image_file = node.field_image.entity %}
-          {% if image_file %}
-            {% set image_uri = image_file.uri.value %}
-            <img src="{{ file_url(image_uri) }}" alt="{{ node.field_image.alt }}" />
-          {% endif %}
+          {% set image_uri = image_file.uri.value %}
+          <img src="{{ file_url(image_uri) }}" alt="{{ node.field_image.alt }}" />
         </div>
       {% else %}
         <div class="article-featured-image article-featured-image-placeholder">

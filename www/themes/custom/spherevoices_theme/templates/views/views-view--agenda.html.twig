@@ -1,0 +1,100 @@
+{#
+/**
+ * @file
+ * Template pour la vue Agenda avec filtres exposés.
+ */
+#}
+<div class="view view-{{ id }} view-id-{{ id }} view-display-id-{{ display_id }} {{ css_class }}">
+  
+  {{ title_prefix }}
+  {% if title %}
+    <h1 class="view-title">{{ title }}</h1>
+  {% endif %}
+  {{ title_suffix }}
+  
+  {% if header %}
+    <div class="view-header">
+      {{ header }}
+    </div>
+  {% endif %}
+  
+  {# FORMULAIRE DE FILTRES MANUEL SI EXPOSÉ N'EXISTE PAS #}
+  {% if not exposed %}
+    <div class="view-filters agenda-filters-manual">
+      <form action="{{ url('<current>') }}" method="get" id="views-exposed-form-agenda-page-agenda" accept-charset="UTF-8" class="views-exposed-form agenda-exposed-form">
+        <div class="form-inner-wrapper">
+          <div class="views-exposed-widgets">
+            <div class="views-exposed-widget views-widget-filter-title">
+              <label for="edit-title">Rechercher</label>
+              <input type="text" name="title" id="edit-title" size="30" maxlength="128" placeholder="Rechercher un événement par titre..." class="form-text" value="{{ query.title|default('') }}">
+            </div>
+            
+            <div class="views-exposed-widget views-widget-filter-month">
+              <label for="edit-month">Mois</label>
+              <input type="month" name="month" id="edit-month" class="form-date" value="{{ query.month|default('') }}">
+            </div>
+            
+            <div class="views-exposed-widget views-submit-button">
+              <button type="submit" id="edit-submit-agenda" class="button button--primary form-submit">Rechercher</button>
+            </div>
+            
+            <div class="views-exposed-widget views-reset-button">
+              <a href="{{ url('<current>') }}" class="button form-submit">Réinitialiser</a>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  {% else %}
+    {# AFFICHER LES FILTRES EXPOSÉS SI ILS EXISTENT #}
+    <div class="view-filters">
+      {{ exposed }}
+    </div>
+  {% endif %}
+  
+  {% if attachment_before %}
+    <div class="attachment attachment-before">
+      {{ attachment_before }}
+    </div>
+  {% endif %}
+  
+  {% if rows %}
+    <div class="view-content">
+      {{ rows }}
+    </div>
+  {% elseif empty %}
+    <div class="view-empty">
+      {{ empty }}
+    </div>
+  {% endif %}
+  
+  {% if pager %}
+    <div class="view-footer-pager">
+      {{ pager }}
+    </div>
+  {% endif %}
+  
+  {% if attachment_after %}
+    <div class="attachment attachment-after">
+      {{ attachment_after }}
+    </div>
+  {% endif %}
+  
+  {% if more %}
+    {{ more }}
+  {% endif %}
+  
+  {% if footer %}
+    <div class="view-footer">
+      {{ footer }}
+    </div>
+  {% endif %}
+  
+  {% if feed_icons %}
+    <div class="feed-icons">
+      {{ feed_icons }}
+    </div>
+  {% endif %}
+  
+</div>
+

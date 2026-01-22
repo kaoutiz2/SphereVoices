@@ -1,0 +1,22 @@
+uuid: poll-choices-field-uuid-001
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_poll_choices
+    - node.type.poll
+  module:
+    - text
+id: node.poll.field_poll_choices
+field_name: field_poll_choices
+entity_type: node
+bundle: poll
+label: Choix du sondage
+description: 'Les choix du sondage (format JSON). Utilisez le widget personnalisé pour ajouter des choix.'
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  text_processing: 0
+field_type: text_long

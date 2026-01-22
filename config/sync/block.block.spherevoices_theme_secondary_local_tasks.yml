@@ -1,0 +1,22 @@
+uuid: f90df1e3-e49c-403a-a642-948ecb122233
+langcode: fr
+status: true
+dependencies:
+  theme:
+    - spherevoices_theme
+_core:
+  default_config_hash: ydSxdq7R66I8UMC460rOzlfzvlUL4VRbdwc6z9DWaUI
+id: spherevoices_theme_secondary_local_tasks
+theme: spherevoices_theme
+region: highlighted
+weight: -2
+provider: null
+plugin: local_tasks_block
+settings:
+  id: local_tasks_block
+  label: 'Onglets secondaires'
+  label_display: '0'
+  provider: core
+  primary: false
+  secondary: true
+visibility: {  }
