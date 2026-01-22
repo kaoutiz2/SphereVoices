@@ -1,8 +1,19 @@
 # Drupal
 www/sites/default/settings.php
 www/sites/default/settings.local.php
-www/sites/default/files/
-www/sites/*/files/
+www/sites/default/files/**/*.yml
+www/sites/default/files/**/*.php
+www/sites/default/files/**/*.js
+www/sites/default/files/**/*.md
+www/sites/default/files/**/*.txt
+www/sites/default/files/**/*.json
+www/sites/default/files/**/*.xml
+www/sites/default/files/**/*.html
+www/sites/default/files/**/*.css
+www/sites/default/files/**/*.scss
+www/sites/default/files/**/*.less
+www/sites/default/files/**/*.fr.po
+/**/.htaccess
 www/sites/*/private/
 
 # Composer
