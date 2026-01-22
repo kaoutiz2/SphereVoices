@@ -14,6 +14,14 @@ spherevoices_core.agenda:
   requirements:
     _permission: 'access content'
 
+spherevoices_core.poll_vote:
+  path: '/api/poll/vote'
+  defaults:
+    _controller: '\Drupal\spherevoices_core\Controller\PollController::vote'
+  methods: [POST]
+  requirements:
+    _access: 'TRUE'
+
 # spherevoices_core.agenda_mois:
 #   path: '/agenda-mois'
 #   defaults:

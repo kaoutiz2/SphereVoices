@@ -786,6 +786,12 @@
   border: 1px solid var(--color-border);
   border-radius: 4px;
   padding: 1.5rem;
+  /* Hauteur pour correspondre au breaking news */
+  min-height: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
 .breves-block ul,
@@ -817,10 +823,12 @@
   letter-spacing: 0.05em;
 }
 
-.breves-block .view-content {
+.breves-block .view-content,
+.breves-block .breves-content {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  flex: 1; /* Prend tout l'espace disponible */
 }
 
 .breves-block .views-row {
@@ -934,7 +942,6 @@
   border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 1.5rem;
-  margin-bottom: 1.5rem;
 }
 
 .sidebar-agenda-widget {
@@ -946,9 +953,15 @@
   margin-bottom: 0;
 }
 
-/* L'agenda avec la hauteur exacte demandée */
+/* L'agenda avec la hauteur exacte de 2 articles */
+.homepage-sidebar .agenda-widget,
+.homepage-sidebar .sidebar-agenda-widget {
+  height: calc(2 * 420px + 32px); /* 2 articles (min-height: 420px) + gap (32px) */
+  min-height: calc(2 * 420px + 32px);
+}
+
 .homepage-sidebar .agenda-block {
-  height: 1450px;
+  height: 100%;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -970,6 +983,8 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  flex: 1;
+  overflow-y: auto;
 }
 
 /* Event Teaser Styles */
@@ -1062,10 +1077,12 @@
 
 /* Agenda Footer with "More" Link */
 .agenda-footer {
-  margin-top: 1rem;
+  margin-top: auto;
   padding-top: 1rem;
+  padding-bottom: 0;
   border-top: 1px solid var(--color-border);
   text-align: center;
+  flex-shrink: 0;
 }
 
 .agenda-more-link {

@@ -11,6 +11,7 @@ global-styling:
     js/main.js: {}
     js/agenda-navigation.js: {}
     js/gallery-layout.js: {}
+    js/breves-height.js: {}
   dependencies:
     - core/drupal
     - core/jquery

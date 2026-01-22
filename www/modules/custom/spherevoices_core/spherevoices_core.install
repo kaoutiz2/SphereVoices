@@ -94,5 +94,273 @@ function spherevoices_core_update_8002() {
   return t('Permissions for comment settings and publication options added to editor roles.');
 }
 
+/**
+ * Implements hook_update_N().
+ * 
+ * Crée les tables de base de données pour les champs du sondage.
+ */
+function spherevoices_core_update_8004() {
+  // Vérifier si les champs existent déjà
+  $field_storage_manager = \Drupal::entityTypeManager()->getStorage('field_storage_config');
+  $field_manager = \Drupal::entityTypeManager()->getStorage('field_config');
+  
+  // Créer le champ de stockage field_poll_description s'il n'existe pas
+  $field_storage_desc = $field_storage_manager->load('node.field_poll_description');
+  if (!$field_storage_desc) {
+    $field_storage_desc = $field_storage_manager->create([
+      'field_name' => 'field_poll_description',
+      'entity_type' => 'node',
+      'type' => 'text_long',
+      'settings' => [],
+    ]);
+    $field_storage_desc->save();
+  } else {
+    // Forcer la création des tables en sauvegardant à nouveau
+    $field_storage_desc->save();
+  }
+  
+  // Créer le champ de stockage field_poll_choices s'il n'existe pas
+  $field_storage_choices = $field_storage_manager->load('node.field_poll_choices');
+  if (!$field_storage_choices) {
+    $field_storage_choices = $field_storage_manager->create([
+      'field_name' => 'field_poll_choices',
+      'entity_type' => 'node',
+      'type' => 'text_long',
+      'settings' => [],
+    ]);
+    $field_storage_choices->save();
+  } else {
+    // Forcer la création des tables en sauvegardant à nouveau
+    $field_storage_choices->save();
+  }
+  
+  // Créer l'instance du champ field_poll_description pour poll s'il n'existe pas
+  if (!$field_manager->load('node.poll.field_poll_description')) {
+    $field = $field_manager->create([
+      'field_name' => 'field_poll_description',
+      'entity_type' => 'node',
+      'bundle' => 'poll',
+      'label' => 'Description',
+      'settings' => [
+        'text_processing' => 1,
+      ],
+    ]);
+    $field->save();
+  }
+  
+  // Créer l'instance du champ field_poll_choices pour poll s'il n'existe pas
+  if (!$field_manager->load('node.poll.field_poll_choices')) {
+    $field = $field_manager->create([
+      'field_name' => 'field_poll_choices',
+      'entity_type' => 'node',
+      'bundle' => 'poll',
+      'label' => 'Choix du sondage',
+      'settings' => [
+        'text_processing' => 0,
+      ],
+    ]);
+    $field->save();
+  }
+  
+  return t('Created database tables for poll fields.');
+}
+
+/**
+ * Implements hook_update_N().
+ * 
+ * Force la création des tables de base de données pour les champs du sondage.
+ */
+function spherevoices_core_update_8005() {
+  $database = \Drupal::database();
+  $schema_handler = $database->schema();
+  
+  $field_names = ['field_poll_description', 'field_poll_choices'];
+  
+  foreach ($field_names as $field_name) {
+    // Noms des tables
+    $table_name = 'node__' . $field_name;
+    $revision_table_name = 'node_revision__' . $field_name;
+    
+    // Créer la table principale si elle n'existe pas
+    if (!$schema_handler->tableExists($table_name)) {
+      $schema_handler->createTable($table_name, [
+        'fields' => [
+          'bundle' => [
+            'type' => 'varchar',
+            'length' => 128,
+            'not null' => TRUE,
+            'default' => '',
+          ],
+          'deleted' => [
+            'type' => 'int',
+            'size' => 'small',
+            'not null' => TRUE,
+            'default' => 0,
+          ],
+          'entity_id' => [
+            'type' => 'int',
+            'unsigned' => TRUE,
+            'not null' => TRUE,
+          ],
+          'revision_id' => [
+            'type' => 'int',
+            'unsigned' => TRUE,
+            'not null' => TRUE,
+          ],
+          'langcode' => [
+            'type' => 'varchar',
+            'length' => 32,
+            'not null' => TRUE,
+            'default' => '',
+          ],
+          'delta' => [
+            'type' => 'int',
+            'unsigned' => TRUE,
+            'not null' => TRUE,
+          ],
+          $field_name . '_value' => [
+            'type' => 'text',
+            'size' => 'big',
+            'not null' => FALSE,
+          ],
+          $field_name . '_format' => [
+            'type' => 'varchar',
+            'length' => 255,
+            'not null' => FALSE,
+          ],
+        ],
+        'primary key' => ['entity_id', 'deleted', 'delta', 'langcode'],
+        'indexes' => [
+          'bundle' => ['bundle'],
+          'revision_id' => ['revision_id'],
+        ],
+      ]);
+    }
+    
+    // Créer la table de révision si elle n'existe pas
+    if (!$schema_handler->tableExists($revision_table_name)) {
+      $schema_handler->createTable($revision_table_name, [
+        'fields' => [
+          'bundle' => [
+            'type' => 'varchar',
+            'length' => 128,
+            'not null' => TRUE,
+            'default' => '',
+          ],
+          'deleted' => [
+            'type' => 'int',
+            'size' => 'small',
+            'not null' => TRUE,
+            'default' => 0,
+          ],
+          'entity_id' => [
+            'type' => 'int',
+            'unsigned' => TRUE,
+            'not null' => TRUE,
+          ],
+          'revision_id' => [
+            'type' => 'int',
+            'unsigned' => TRUE,
+            'not null' => TRUE,
+          ],
+          'langcode' => [
+            'type' => 'varchar',
+            'length' => 32,
+            'not null' => TRUE,
+            'default' => '',
+          ],
+          'delta' => [
+            'type' => 'int',
+            'unsigned' => TRUE,
+            'not null' => TRUE,
+          ],
+          $field_name . '_value' => [
+            'type' => 'text',
+            'size' => 'big',
+            'not null' => FALSE,
+          ],
+          $field_name . '_format' => [
+            'type' => 'varchar',
+            'length' => 255,
+            'not null' => FALSE,
+          ],
+        ],
+        'primary key' => ['revision_id', 'deleted', 'delta', 'langcode'],
+        'indexes' => [
+          'bundle' => ['bundle'],
+          'entity_id' => ['entity_id'],
+        ],
+      ]);
+    }
+  }
+  
+  // Vider le cache
+  \Drupal::entityTypeManager()->clearCachedDefinitions();
+  \Drupal::service('entity_field.manager')->clearCachedFieldDefinitions();
+  
+  return t('Forced creation of database tables for poll fields.');
+}
+
+/**
+ * Implements hook_update_N().
+ * 
+ * Installe le type de contenu Sondage et ses champs.
+ */
+function spherevoices_core_update_8003() {
+  $module_path = \Drupal::service('extension.list.module')->getPath('spherevoices_core');
+  $config_path = $module_path . '/config/install';
+  
+  if (!is_dir($config_path)) {
+    return t('Configuration directory not found.');
+  }
+  
+  // Utiliser le ConfigInstaller pour installer la configuration
+  $config_installer = \Drupal::service('config.installer');
+  $storage = new \Drupal\Core\Config\FileStorage($config_path);
+  
+  // Liste des fichiers de configuration à installer dans l'ordre
+  $config_files = [
+    'field.storage.node.field_poll_description',
+    'field.storage.node.field_poll_choices',
+    'node.type.poll',
+    'field.field.node.poll.field_poll_description',
+    'field.field.node.poll.field_poll_choices',
+    'core.entity_form_display.node.poll.default',
+    'core.entity_view_display.node.poll.default',
+  ];
+  
+  $installed = [];
+  $skipped = [];
+  
+  foreach ($config_files as $config_name) {
+    // Vérifier si la configuration existe déjà
+    $config = \Drupal::configFactory()->get($config_name);
+    if ($config->isNew()) {
+      // Lire et installer la configuration
+      $data = $storage->read($config_name);
+      if ($data) {
+        \Drupal::configFactory()->getEditable($config_name)->setData($data)->save();
+        $installed[] = $config_name;
+      }
+    } else {
+      $skipped[] = $config_name;
+    }
+  }
+  
+  // Vider le cache des entités
+  \Drupal::entityTypeManager()->clearCachedDefinitions();
+  \Drupal::service('entity_field.manager')->clearCachedFieldDefinitions();
+  
+  $message = t('Installed poll content type configuration.');
+  if (!empty($installed)) {
+    $message .= ' ' . t('Installed: @count configuration(s)', ['@count' => count($installed)]);
+  }
+  if (!empty($skipped)) {
+    $message .= ' ' . t('Skipped (already exists): @count configuration(s)', ['@count' => count($skipped)]);
+  }
+  
+  return $message;
+}
+
 
 

@@ -575,7 +575,7 @@ function spherevoices_theme_preprocess_page(&$variables) {
       ->condition('promote', 1)
       ->condition('sticky', 0) // Exclure les sticky (déjà affichés comme breaking news)
       ->sort('created', 'DESC')
-      ->range(0, 20) // Récupérer assez d'articles pour avoir 13 après exclusion
+      // Pas de limite : récupérer tous les articles
       ->accessCheck(TRUE);
     
     // Exclure tous les articles déjà affichés (breaking news + featured)
@@ -595,10 +595,8 @@ function spherevoices_theme_preprocess_page(&$variables) {
       $all_articles_nids = array_values($all_articles_nids);
     }
     
-    // Répartir les articles sur les 3 colonnes de manière équilibrée
-    $variables['left_articles'] = [];
-    $variables['center_articles'] = [];
-    $variables['right_articles'] = [];
+    // Mettre tous les articles dans un seul tableau (la grille CSS gère la disposition)
+    $variables['all_articles'] = [];
     
     if (!empty($all_articles_nids)) {
       // Charger les nodes dans l'ordre des IDs
@@ -634,49 +632,34 @@ function spherevoices_theme_preprocess_page(&$variables) {
         return $time_b - $time_a; // DESC : plus récent en premier
       });
       
-      // Répartir équitablement sur les 3 colonnes
       // Réindexer le tableau pour avoir des indices séquentiels (0, 1, 2, 3...)
       $ordered_nodes = array_values($ordered_nodes);
       
-      // Limiter à un maximum d'articles
-      $max_total_articles = 20;
-      $ordered_nodes = array_slice($ordered_nodes, 0, $max_total_articles);
-      
+      // Afficher TOUS les articles (pas de limite)
       // Distribuer TOUS les articles dans la grille principale
       // La grille s'adaptera automatiquement (3 colonnes si sidebar, 4 si pas de sidebar)
-      $total_articles = count($ordered_nodes);
-      
-      foreach ($ordered_nodes as $index => $node) {
+      foreach ($ordered_nodes as $node) {
         $article_view = $view_builder->view($node, 'teaser');
-        
-        // Répartir de manière alternée stricte sur 3 colonnes
-        $column_index = $index % 3;
-        if ($column_index === 0) {
-          // Gauche
-          $variables['left_articles'][] = $article_view;
-        }
-        elseif ($column_index === 1) {
-          // Centre
-          $variables['center_articles'][] = $article_view;
-        }
-        else {
-          // Droite (column_index === 2)
-          $variables['right_articles'][] = $article_view;
-        }
+        $variables['all_articles'][] = $article_view;
       }
     }
+    
+    // Garder les anciennes variables pour compatibilité (mais vides)
+    $variables['left_articles'] = [];
+    $variables['center_articles'] = [];
+    $variables['right_articles'] = [];
     
     // Charger les brèves directement
     try {
       $node_storage = \Drupal::entityTypeManager()->getStorage('node');
       $view_builder = \Drupal::entityTypeManager()->getViewBuilder('node');
       
-      // Récupérer les brèves publiées
+      // Récupérer les brèves publiées (limité à 2)
       $breves_query = \Drupal::entityQuery('node')
         ->condition('type', 'breve')
         ->condition('status', 1)
         ->sort('created', 'DESC')
-        ->range(0, 5)
+        ->range(0, 2)
         ->accessCheck(TRUE);
       
       $breves_nids = $breves_query->execute();
@@ -718,12 +701,12 @@ function spherevoices_theme_preprocess_page(&$variables) {
       $node_storage = \Drupal::entityTypeManager()->getStorage('node');
       $view_builder = \Drupal::entityTypeManager()->getViewBuilder('node');
       
-      // Récupérer les événements à venir
+      // Récupérer les événements à venir (limité à 3)
       $events_query = \Drupal::entityQuery('node')
         ->condition('type', 'event')
         ->condition('status', 1)
         ->sort('field_event_date', 'ASC')
-        ->range(0, 5)
+        ->range(0, 3)
         ->accessCheck(TRUE);
       
       // Filtrer uniquement les événements futurs ou d'aujourd'hui
@@ -767,6 +750,25 @@ function spherevoices_theme_preprocess_page(&$variables) {
     catch (\Exception $e) {
       // En cas d'erreur, ne pas bloquer l'affichage de la page
       \Drupal::logger('spherevoices_theme')->error('Erreur lors du chargement de l\'agenda: @message', ['@message' => $e->getMessage()]);
+    }
+    
+    // Charger le bloc sondage
+    try {
+      $block_manager = \Drupal::service('plugin.manager.block');
+      $config = [];
+      $plugin_block = $block_manager->createInstance('poll_block', $config);
+      $access_result = $plugin_block->access(\Drupal::currentUser());
+      
+      if (is_object($access_result) && $access_result->isAllowed() || is_bool($access_result) && $access_result) {
+        $render = $plugin_block->build();
+        if (!empty($render)) {
+          $variables['poll_block'] = $render;
+        }
+      }
+    }
+    catch (\Exception $e) {
+      // En cas d'erreur, ne pas bloquer l'affichage de la page
+      \Drupal::logger('spherevoices_theme')->error('Erreur lors du chargement du sondage: @message', ['@message' => $e->getMessage()]);
     }
   }
   

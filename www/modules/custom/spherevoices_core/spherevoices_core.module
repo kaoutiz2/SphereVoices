@@ -29,8 +29,8 @@ function spherevoices_core_theme($existing, $type, $theme, $path) {
 function spherevoices_core_form_node_form_alter(&$form, FormStateInterface $form_state, $form_id) {
   $node = $form_state->getFormObject()->getEntity();
   
-  // Masquer les options de publication pour le type de contenu Event
-  if ($node->bundle() === 'event') {
+  // Masquer les options de publication pour les types de contenu Event et Poll
+  if ($node->bundle() === 'event' || $node->bundle() === 'poll') {
     // Masquer complètement la section "Options de publication"
     if (isset($form['options'])) {
       $form['options']['#access'] = FALSE;
@@ -42,6 +42,34 @@ function spherevoices_core_form_node_form_alter(&$form, FormStateInterface $form
     }
     if (isset($form['sticky'])) {
       $form['sticky']['#access'] = FALSE;
+    }
+    
+    // Masquer le champ status (publié/non publié) pour les sondages
+    if ($node->bundle() === 'poll') {
+      if (isset($form['status'])) {
+        $form['status']['#access'] = FALSE;
+      }
+      // Publier automatiquement les sondages lors de la création
+      if ($node->isNew()) {
+        $node->setPublished(TRUE);
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_entity_form_display_alter().
+ * 
+ * S'assure que third_party_settings est toujours présent dans la configuration des widgets.
+ */
+function spherevoices_core_entity_form_display_alter(&$display, $context) {
+  // Normaliser tous les composants pour s'assurer que third_party_settings est présent
+  $components = $display->getComponents();
+  foreach ($components as $field_name => $configuration) {
+    if (!isset($configuration['third_party_settings'])) {
+      // Ajouter third_party_settings s'il n'est pas présent
+      $configuration['third_party_settings'] = [];
+      $display->setComponent($field_name, $configuration);
     }
   }
 }
