@@ -8,10 +8,14 @@
 // Rediriger vers la route Drupal pour afficher le thème et le menu.
 // Évite la boucle si /agenda est réécrit vers ce script en amont.
 if (PHP_SAPI !== 'cli') {
-    $request_path = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
-    if ($request_path === '/agenda.php') {
-        header('Location: /agenda', true, 302);
-        exit;
+    $request_uri = $_SERVER['REQUEST_URI'] ?? '';
+    $request_path = parse_url($request_uri, PHP_URL_PATH);
+    // Si MultiViews sert agenda.php pour /agenda, forcer le passage par Drupal.
+    if ($request_path === '/agenda' || $request_path === '/agenda.php') {
+        if (strpos($request_uri, '/index.php/agenda') === false) {
+            header('Location: /index.php/agenda', true, 302);
+            exit;
+        }
     }
 }
 
