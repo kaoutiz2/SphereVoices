@@ -5,18 +5,59 @@
  * Génère le contenu de la page agenda (sans HTML wrapper).
  */
 
+// Charger les variables d'environnement (.env / .env.production)
+$project_root = dirname(__DIR__);
+$env_file_path = null;
+
+if (PHP_SAPI === 'cli') {
+    $env_type = getenv('DRUPAL_ENV') ?: 'development';
+    $env_file_path = ($env_type === 'production')
+        ? $project_root . '/.env.production'
+        : $project_root . '/.env';
+} else {
+    $request_host = $_SERVER['HTTP_HOST'] ?? '';
+    $is_production = preg_match('/^(www\.)?spherevoices\.com(:[0-9]+)?$/', $request_host);
+    $env_file_path = $is_production
+        ? $project_root . '/.env.production'
+        : $project_root . '/.env';
+}
+
+if ($env_file_path && file_exists($env_file_path)) {
+    $env_file = @file($env_file_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if ($env_file !== false) {
+        foreach ($env_file as $line) {
+            $line = trim($line);
+            if ($line === '' || strpos($line, '#') === 0) {
+                continue;
+            }
+            if (strpos($line, '=') !== false) {
+                list($key, $value) = explode('=', $line, 2);
+                $key = trim($key);
+                $value = trim($value);
+                $value = trim($value, '"\'');
+                if (!getenv($key)) {
+                    putenv("$key=$value");
+                    $_ENV[$key] = $value;
+                    $_SERVER[$key] = $value;
+                }
+            }
+        }
+    }
+}
+
 // Se connecter à la base de données
-$host = 'localhost';
-$dbname = 'spherevoices';
-$user = 'root';
-$pass = '';
+$host = getenv('DB_HOST') ?: '127.0.0.1';
+$port = getenv('DB_PORT') ?: '3306';
+$dbname = getenv('DB_NAME') ?: 'spherevoices';
+$user = getenv('DB_USER') ?: 'root';
+$pass = getenv('DB_PASSWORD') ?: '';
 
 // Récupérer les paramètres
 $title_search = $_GET['title'] ?? '';
 $month_filter = $_GET['month'] ?? '';
 
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $user, $pass);
+    $pdo = new PDO("mysql:host=$host;port=$port;dbname=$dbname;charset=utf8", $user, $pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
     $sql = "SELECT n.nid, n.title, nfd.field_event_date_value, b.body_value 
