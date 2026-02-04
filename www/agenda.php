@@ -5,6 +5,12 @@
  * Page agenda simple - sans bootstrap Drupal complet.
  */
 
+// Rediriger vers la route Drupal pour afficher le thème et le menu.
+if (PHP_SAPI !== 'cli') {
+    header('Location: /agenda', true, 302);
+    exit;
+}
+
 // Charger les paramètres
 $title_search = $_GET['title'] ?? '';
 $month_filter = $_GET['month'] ?? '';
