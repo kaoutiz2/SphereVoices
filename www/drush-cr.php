@@ -61,7 +61,9 @@ header('Content-Type: text/html; charset=utf-8');
                 $request = \Symfony\Component\HttpFoundation\Request::createFromGlobals();
                 $kernel = \Drupal\Core\DrupalKernel::createFromRequest($request, $autoloader, 'prod');
                 $kernel->boot();
-                $kernel->prepareLegacyRequest($request);
+                    // Enregistrer la requête dans la stack (Drupal 10+)
+                    \Drupal::setContainer($kernel->getContainer());
+                    $kernel->getContainer()->get('request_stack')->push($request);
                 
                 echo '<div class="success">✅ Drupal chargé</div>';
                 
