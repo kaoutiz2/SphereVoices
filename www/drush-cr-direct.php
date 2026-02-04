@@ -23,6 +23,13 @@ register_shutdown_function(function () {
     }
 });
 
+// Log debug dédié
+$cache_log_path = __DIR__ . '/sites/default/files/cache-rebuild.log';
+if (!is_dir(dirname($cache_log_path))) {
+    @mkdir(dirname($cache_log_path), 0777, true);
+}
+@file_put_contents($cache_log_path, "\n[" . date('Y-m-d H:i:s') . "] Start cache rebuild\n", FILE_APPEND);
+
 header('Content-Type: text/html; charset=utf-8');
 ?>
 <!DOCTYPE html>
@@ -91,8 +98,17 @@ header('Content-Type: text/html; charset=utf-8');
                 
                 // VIDAGE COMPLET (équivalent drush cr)
                 echo '<div class="info">🔄 Exécution de drupal_flush_all_caches()...</div>';
-                drupal_flush_all_caches();
-                echo '<div class="success">✅ drupal_flush_all_caches() terminé !</div>';
+                @file_put_contents($cache_log_path, "[" . date('Y-m-d H:i:s') . "] Before drupal_flush_all_caches()\n", FILE_APPEND);
+                try {
+                    drupal_flush_all_caches();
+                    @file_put_contents($cache_log_path, "[" . date('Y-m-d H:i:s') . "] drupal_flush_all_caches() OK\n", FILE_APPEND);
+                    echo '<div class="success">✅ drupal_flush_all_caches() terminé !</div>';
+                } catch (\Throwable $e) {
+                    @file_put_contents($cache_log_path, "[" . date('Y-m-d H:i:s') . "] ERROR: " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n", FILE_APPEND);
+                    echo '<div class="error">❌ Erreur pendant drupal_flush_all_caches(): ' . htmlspecialchars($e->getMessage()) . '</div>';
+                    echo '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
+                    throw $e;
+                }
                 
                 // Assets CSS/JS
                 echo '<div class="info">🎨 Invalidation des assets...</div>';
