@@ -12,7 +12,7 @@ _core:
   default_config_hash: KWAiziL39uEzmOJEql_wbUP2RtqGceL3WM2CfxhMelE
 id: spherevoices_theme_main_menu
 theme: spherevoices_theme
-region: header
+region: navigation
 weight: 0
 provider: null
 plugin: 'system_menu_block:main'
