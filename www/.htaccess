@@ -1,8 +1,9 @@
 # .htaccess minimal pour Drupal sur OVH
 # Version simplifiée pour éviter les erreurs 500
 
-# Désactiver les listings de répertoires
+# Désactiver les listings de répertoires et MultiViews
 Options -Indexes
+Options -MultiViews
 
 # Fichier index par défaut
 DirectoryIndex index.php index.html
