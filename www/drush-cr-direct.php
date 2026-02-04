@@ -83,6 +83,7 @@ header('Content-Type: text/html; charset=utf-8');
 
                 // Charger Drupal
                 require_once $drupal_root . '/autoload.php';
+                require_once $drupal_root . '/core/includes/bootstrap.inc';
                 $autoloader = require $drupal_root . '/autoload.php';
                 
                 // Bootstrap Drupal
