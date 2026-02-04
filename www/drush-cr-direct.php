@@ -46,6 +46,18 @@ header('Content-Type: text/html; charset=utf-8');
             }
             
             try {
+                // Forcer l'environnement de prod pour charger .env.production
+                if (!getenv('DRUPAL_ENV')) {
+                    putenv('DRUPAL_ENV=production');
+                    $_ENV['DRUPAL_ENV'] = 'production';
+                    $_SERVER['DRUPAL_ENV'] = 'production';
+                }
+
+                // Définir un HTTP_HOST valide si absent (nécessaire pour settings.php)
+                if (empty($_SERVER['HTTP_HOST'])) {
+                    $_SERVER['HTTP_HOST'] = 'www.spherevoices.com';
+                }
+
                 // Charger Drupal
                 require_once $drupal_root . '/autoload.php';
                 $autoloader = require $drupal_root . '/autoload.php';
@@ -54,7 +66,10 @@ header('Content-Type: text/html; charset=utf-8');
                 $request = \Symfony\Component\HttpFoundation\Request::createFromGlobals();
                 $kernel = \Drupal\Core\DrupalKernel::createFromRequest($request, $autoloader, 'prod');
                 $kernel->boot();
-                $kernel->prepareLegacyRequest($request);
+
+                // Enregistrer la requête dans la stack (Drupal 10+)
+                \Drupal::setContainer($kernel->getContainer());
+                $kernel->getContainer()->get('request_stack')->push($request);
                 
                 echo '<div class="success">✅ Drupal chargé avec succès</div>';
                 
