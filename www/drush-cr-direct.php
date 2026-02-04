@@ -101,9 +101,18 @@ header('Content-Type: text/html; charset=utf-8');
                 echo '<div class="info">🔄 Exécution de cache_rebuild()...</div>';
                 @file_put_contents($cache_log_path, "[" . date('Y-m-d H:i:s') . "] Before cache_rebuild()\n", FILE_APPEND);
                 try {
-                    cache_rebuild();
-                    @file_put_contents($cache_log_path, "[" . date('Y-m-d H:i:s') . "] cache_rebuild() OK\n", FILE_APPEND);
-                    echo '<div class="success">✅ cache_rebuild() terminé !</div>';
+                    if (function_exists('cache_rebuild')) {
+                        cache_rebuild();
+                        @file_put_contents($cache_log_path, "[" . date('Y-m-d H:i:s') . "] cache_rebuild() OK\n", FILE_APPEND);
+                        echo '<div class="success">✅ cache_rebuild() terminé !</div>';
+                    } else {
+                        @file_put_contents($cache_log_path, "[" . date('Y-m-d H:i:s') . "] cache_rebuild() not available, fallback deleteAll()\n", FILE_APPEND);
+                        $cache_bins = \Drupal::getContainer()->getParameter('cache_bins');
+                        foreach ($cache_bins as $bin) {
+                            \Drupal::service("cache.$bin")->deleteAll();
+                        }
+                        echo '<div class="success">✅ Caches vidés (fallback deleteAll)</div>';
+                    }
                 } catch (\Throwable $e) {
                     @file_put_contents($cache_log_path, "[" . date('Y-m-d H:i:s') . "] ERROR: " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n", FILE_APPEND);
                     echo '<div class="error">❌ Erreur pendant cache_rebuild(): ' . htmlspecialchars($e->getMessage()) . '</div>';
