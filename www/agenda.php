@@ -6,9 +6,13 @@
  */
 
 // Rediriger vers la route Drupal pour afficher le thème et le menu.
+// Évite la boucle si /agenda est réécrit vers ce script en amont.
 if (PHP_SAPI !== 'cli') {
-    header('Location: /agenda', true, 302);
-    exit;
+    $request_path = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+    if ($request_path === '/agenda.php') {
+        header('Location: /agenda', true, 302);
+        exit;
+    }
 }
 
 // Charger les paramètres
