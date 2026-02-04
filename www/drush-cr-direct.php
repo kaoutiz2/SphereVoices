@@ -11,6 +11,17 @@ $provided_token = $_GET['token'] ?? '';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
+@ini_set('memory_limit', '512M');
+@set_time_limit(300);
+
+// Capturer les erreurs fatales
+register_shutdown_function(function () {
+    $error = error_get_last();
+    if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+        echo '<div class="error">❌ Erreur fatale : ' . htmlspecialchars($error['message']) . '</div>';
+        echo '<pre>' . htmlspecialchars($error['file'] . ':' . $error['line']) . '</pre>';
+    }
+});
 
 header('Content-Type: text/html; charset=utf-8');
 ?>
