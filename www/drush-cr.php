@@ -41,6 +41,18 @@ header('Content-Type: text/html; charset=utf-8');
             }
             
             try {
+                // Forcer l'environnement de prod pour charger .env.production
+                if (!getenv('DRUPAL_ENV')) {
+                    putenv('DRUPAL_ENV=production');
+                    $_ENV['DRUPAL_ENV'] = 'production';
+                    $_SERVER['DRUPAL_ENV'] = 'production';
+                }
+
+                // Définir un HTTP_HOST valide si absent (nécessaire pour settings.php)
+                if (empty($_SERVER['HTTP_HOST'])) {
+                    $_SERVER['HTTP_HOST'] = 'www.spherevoices.com';
+                }
+
                 // Charger Drupal
                 require_once $drupal_root . '/autoload.php';
                 $autoloader = require $drupal_root . '/autoload.php';
