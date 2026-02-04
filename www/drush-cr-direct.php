@@ -97,15 +97,15 @@ header('Content-Type: text/html; charset=utf-8');
                 echo '<div class="success">✅ Drupal chargé avec succès</div>';
                 
                 // VIDAGE COMPLET (équivalent drush cr)
-                echo '<div class="info">🔄 Exécution de drupal_flush_all_caches()...</div>';
-                @file_put_contents($cache_log_path, "[" . date('Y-m-d H:i:s') . "] Before drupal_flush_all_caches()\n", FILE_APPEND);
+                echo '<div class="info">🔄 Exécution de cache_rebuild()...</div>';
+                @file_put_contents($cache_log_path, "[" . date('Y-m-d H:i:s') . "] Before cache_rebuild()\n", FILE_APPEND);
                 try {
-                    drupal_flush_all_caches();
-                    @file_put_contents($cache_log_path, "[" . date('Y-m-d H:i:s') . "] drupal_flush_all_caches() OK\n", FILE_APPEND);
-                    echo '<div class="success">✅ drupal_flush_all_caches() terminé !</div>';
+                    cache_rebuild();
+                    @file_put_contents($cache_log_path, "[" . date('Y-m-d H:i:s') . "] cache_rebuild() OK\n", FILE_APPEND);
+                    echo '<div class="success">✅ cache_rebuild() terminé !</div>';
                 } catch (\Throwable $e) {
                     @file_put_contents($cache_log_path, "[" . date('Y-m-d H:i:s') . "] ERROR: " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n", FILE_APPEND);
-                    echo '<div class="error">❌ Erreur pendant drupal_flush_all_caches(): ' . htmlspecialchars($e->getMessage()) . '</div>';
+                    echo '<div class="error">❌ Erreur pendant cache_rebuild(): ' . htmlspecialchars($e->getMessage()) . '</div>';
                     echo '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
                     throw $e;
                 }
