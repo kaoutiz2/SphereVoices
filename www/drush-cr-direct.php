@@ -7,6 +7,11 @@
 $security_token = 'spherevoices2026';
 $provided_token = $_GET['token'] ?? '';
 
+// Afficher les erreurs pour debug (à retirer après diagnostic)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+
 header('Content-Type: text/html; charset=utf-8');
 ?>
 <!DOCTYPE html>
