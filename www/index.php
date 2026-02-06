@@ -10,11 +10,24 @@ use Symfony\Component\HttpFoundation\Request;
 
 $autoloader = require_once 'autoload.php';
 
-// Force clean URLs: avoid index.php in generated links (logo, menu, etc.).
-// When SCRIPT_NAME ends with index.php, Drupal uses it as base path; we set it
-// to the script directory so the base path is empty and URLs are like /agenda.
-if (!empty($_SERVER['SCRIPT_NAME']) && str_ends_with($_SERVER['SCRIPT_NAME'], 'index.php')) {
-  $_SERVER['SCRIPT_NAME'] = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/') ?: '/';
+// Force clean URLs site-wide (front + back office): no index.php in any link.
+$sn = $_SERVER['SCRIPT_NAME'] ?? '';
+if ($sn !== '' && str_ends_with($sn, 'index.php')) {
+  $script_dir = dirname($sn);
+  $_SERVER['SCRIPT_NAME'] = ($script_dir === '/' || $script_dir === '.' || $script_dir === '') ? '/' : $script_dir;
+
+  if (!empty($_SERVER['REQUEST_URI'])) {
+    $uri = $_SERVER['REQUEST_URI'];
+    $q = (($p = strpos($uri, '?')) !== false) ? substr($uri, $p) : '';
+    $path = $q !== '' ? substr($uri, 0, $p) : $uri;
+    if (str_starts_with($path, $sn)) {
+      $path = substr($path, strlen($sn)) ?: '/';
+    }
+    $_SERVER['REQUEST_URI'] = $path . $q;
+  }
+  if (!empty($_SERVER['PHP_SELF']) && str_contains($_SERVER['PHP_SELF'], 'index.php')) {
+    $_SERVER['PHP_SELF'] = preg_replace('#/index\.php(/|$)#', '$1', $_SERVER['PHP_SELF']) ?: '/';
+  }
 }
 
 $kernel = new DrupalKernel('prod', $autoloader);
