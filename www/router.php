@@ -13,6 +13,7 @@ if ($uri !== '/' && file_exists(__DIR__ . $uri) && !is_dir(__DIR__ . $uri)) {
   return false;
 }
 
-// Pour tout le reste (y compris /agenda), laisser Drupal gérer via index.php
-$_SERVER['SCRIPT_NAME'] = '/index.php';
+// Pour tout le reste (y compris /agenda), laisser Drupal gérer via index.php.
+// SCRIPT_NAME = '/' pour que Drupal génère des URLs propres (sans index.php).
+$_SERVER['SCRIPT_NAME'] = '/';
 require 'index.php';
