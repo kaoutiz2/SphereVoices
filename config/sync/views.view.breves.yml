@@ -176,7 +176,7 @@ display:
         type: some
         options:
           offset: 0
-          items_per_page: 10
+          items_per_page: 3
           total_pages: 0
           id: 0
       access:
