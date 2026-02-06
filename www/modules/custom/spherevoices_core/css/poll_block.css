@@ -13,6 +13,7 @@
   min-height: calc(2 * 420px + 32px);
   height: auto; /* Permet de grandir si le contenu est plus grand */
   box-sizing: border-box;
+  overflow-y: auto;
 }
 
 .poll-title {

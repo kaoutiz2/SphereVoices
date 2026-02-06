@@ -10,7 +10,13 @@
     <a href="{{ url }}" class="article-breaking-news-link">
       <div class="article-breaking-news-image-wrapper">
         <div class="article-breaking-news-label">
-          <span class="breaking-news-badge">BREAKING NEWS</span>
+          {# Texte de badge breaking news personnalisable par champ #}
+          {% set breaking_label = 'BREAKING NEWS' %}
+          {# Utilise le champ texte si défini (nom machine: field_field_breaking_news_label) #}
+          {% if node.hasField('field_field_breaking_news_label') and node.field_field_breaking_news_label.value is not empty %}
+            {% set breaking_label = node.field_field_breaking_news_label.value %}
+          {% endif %}
+          <span class="breaking-news-badge">{{ breaking_label }}</span>
         </div>
         {% if node.field_image.entity %}
           <div class="article-breaking-news-image">

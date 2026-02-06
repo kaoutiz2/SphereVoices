@@ -654,12 +654,12 @@ function spherevoices_theme_preprocess_page(&$variables) {
       $node_storage = \Drupal::entityTypeManager()->getStorage('node');
       $view_builder = \Drupal::entityTypeManager()->getViewBuilder('node');
       
-      // Récupérer les brèves publiées (limité à 2)
+      // Récupérer les brèves publiées (limité à 3)
       $breves_query = \Drupal::entityQuery('node')
         ->condition('type', 'breve')
         ->condition('status', 1)
         ->sort('created', 'DESC')
-        ->range(0, 2)
+        ->range(0, 3)
         ->accessCheck(TRUE);
       
       $breves_nids = $breves_query->execute();
@@ -677,11 +677,25 @@ function spherevoices_theme_preprocess_page(&$variables) {
         $variables['breves_block'] = [
           '#type' => 'container',
           '#attributes' => ['class' => ['breves-block']],
-          'title' => [
-            '#type' => 'html_tag',
-            '#tag' => 'h2',
-            '#value' => 'Brèves',
-            '#attributes' => ['class' => ['breves-title']],
+          'header' => [
+            '#type' => 'container',
+            '#attributes' => ['class' => ['breves-header']],
+            'title' => [
+              '#type' => 'html_tag',
+              '#tag' => 'h2',
+              '#value' => 'Brèves',
+              '#attributes' => ['class' => ['breves-title']],
+            ],
+            'more_link' => [
+              '#type' => 'link',
+              '#title' => t('Afficher plus'),
+              // URL de la page listant toutes les brèves.
+              // Adapte le chemin si ta page a une autre URL.
+              '#url' => Url::fromUserInput('/breves'),
+              '#attributes' => [
+                'class' => ['breves-more-link'],
+              ],
+            ],
           ],
           'content' => [
             '#type' => 'container',

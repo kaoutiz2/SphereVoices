@@ -794,6 +794,100 @@
   box-sizing: border-box;
 }
 
+/* En-tête des brèves : titre + lien Afficher plus */
+.breves-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--color-secondary);
+}
+
+.breves-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.breves-more-link {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-primary);
+  text-decoration: none;
+  padding: 0.35rem 0.75rem;
+  border-radius: 3px;
+  border: 1px solid var(--color-primary);
+  background-color: transparent;
+  white-space: nowrap;
+}
+
+.breves-more-link:hover {
+  background-color: var(--color-primary);
+  color: var(--color-bg-light);
+  text-decoration: none;
+}
+
+/* Pagination (Views pager) */
+.pager {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.pager__items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  gap: 0.5rem;
+}
+
+.pager__item {
+  margin: 0;
+}
+
+.pager__item a,
+.pager__item span {
+  display: inline-block;
+  min-width: 2.25rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  text-align: center;
+  text-decoration: none;
+  color: var(--color-text);
+  background-color: var(--color-bg-light);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.pager__item a:hover {
+  border-color: var(--color-primary);
+  background-color: rgba(184, 0, 0, 0.05);
+  color: var(--color-primary);
+}
+
+.pager__item.is-active span {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: var(--color-bg);
+}
+
+.pager__item--ellipsis span {
+  border: none;
+  background: transparent;
+}
+
 .breves-block ul,
 .breves-block .view-content ul,
 .breves-block .breves-list ul {
@@ -810,7 +904,6 @@
   margin: 0;
 }
 
-.breves-block h2,
 .breves-block .view-header h2,
 .breves-block .views-element-container h2 {
   font-size: 1.5rem;
@@ -985,6 +1078,7 @@
   gap: 1rem;
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Event Teaser Styles */

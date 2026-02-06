@@ -29,14 +29,14 @@ function spherevoices_core_theme($existing, $type, $theme, $path) {
 function spherevoices_core_form_node_form_alter(&$form, FormStateInterface $form_state, $form_id) {
   $node = $form_state->getFormObject()->getEntity();
   
-  // Masquer les options de publication pour les types de contenu Event et Poll
+  // Masquer les options de publication pour les types de contenu Event et Poll.
   if ($node->bundle() === 'event' || $node->bundle() === 'poll') {
-    // Masquer complètement la section "Options de publication"
+    // Masquer complètement la section "Options de publication".
     if (isset($form['options'])) {
       $form['options']['#access'] = FALSE;
     }
     
-    // Alternative : masquer les champs individuels tout en gardant la section
+    // Alternative : masquer les champs individuels tout en gardant la section.
     if (isset($form['promote'])) {
       $form['promote']['#access'] = FALSE;
     }
@@ -44,14 +44,30 @@ function spherevoices_core_form_node_form_alter(&$form, FormStateInterface $form
       $form['sticky']['#access'] = FALSE;
     }
     
-    // Masquer le champ status (publié/non publié) pour les sondages
+    // Masquer le champ status (publié/non publié) pour les sondages.
     if ($node->bundle() === 'poll') {
       if (isset($form['status'])) {
         $form['status']['#access'] = FALSE;
       }
-      // Publier automatiquement les sondages lors de la création
+      // Publier automatiquement les sondages lors de la création.
       if ($node->isNew()) {
         $node->setPublished(TRUE);
+      }
+    }
+  }
+
+  // Article : afficher le champ "texte de breaking news" uniquement si l'article est épinglé.
+  if ($node->bundle() === 'article') {
+    // Le champ doit exister dans le formulaire (créé via l'UI avec ce machine name).
+    // Nom machine actuel: field_field_breaking_news_label.
+    if (isset($form['field_field_breaking_news_label'])) {
+      // Le champ "épingler en haut" est le sticky core.
+      // On utilise un #states pour afficher le champ seulement quand sticky est coché.
+      // Le nom exact de l'input est généralement sticky[value].
+      if (isset($form['sticky'])) {
+        $form['field_field_breaking_news_label']['#states']['visible'] = [
+          ':input[name="sticky[value]"]' => ['checked' => TRUE],
+        ];
       }
     }
   }
