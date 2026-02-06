@@ -53,6 +53,12 @@
             <div class="placeholder-content">Image</div>
           </div>
         {% endif %}
+        {# Label personnalisé en bas à droite de la miniature (nom machine: field_field_teaser_bottom_label) #}
+        {% if node.hasField('field_field_teaser_bottom_label') and node.field_field_teaser_bottom_label.value is not empty %}
+          <div class="article-teaser-bottom-label">
+            {{ node.field_field_teaser_bottom_label.value }}
+          </div>
+        {% endif %}
       </div>
       <div class="article-teaser-content">
         <h3 class="article-teaser-title">{{ label }}</h3>

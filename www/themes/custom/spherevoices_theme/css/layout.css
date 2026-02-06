@@ -544,6 +544,26 @@
   z-index: 10;
 }
 
+/* Label personnalisé en bas à droite de la miniature d'article */
+.article-teaser-bottom-label {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 10;
+  background-color: rgba(0, 0, 0, 0.9);
+  color: #ffffff;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 3px;
+  max-width: 70%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .article-teaser-content {
   padding: 1rem;
   flex: 1;

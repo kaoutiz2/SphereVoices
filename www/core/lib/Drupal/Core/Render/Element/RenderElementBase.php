@@ -429,8 +429,9 @@ abstract class RenderElementBase extends PluginBase implements ElementInterface 
         $settings['progress']['url'] = $settings['progress']['url']->toString();
       }
 
-      $element['#attached']['drupalSettings']['ajax'][$element['#id']] = $settings;
-      $element['#attached']['drupalSettings']['ajaxTrustedUrl'][$settings['url']] = TRUE;
+      // PHP 8.1+: null as array key is deprecated, use empty string instead.
+      $element['#attached']['drupalSettings']['ajax'][$element['#id'] ?? ''] = $settings;
+      $element['#attached']['drupalSettings']['ajaxTrustedUrl'][$settings['url'] ?? ''] = TRUE;
 
       // Indicate that Ajax processing was successful.
       $element['#ajax_processed'] = TRUE;
