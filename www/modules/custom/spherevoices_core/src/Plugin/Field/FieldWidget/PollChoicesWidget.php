@@ -81,8 +81,22 @@ class PollChoicesWidget extends WidgetBase {
       '#prefix' => '<div id="poll-choices-wrapper-' . $delta . '">',
       '#suffix' => '</div>',
     ];
+
+    // Calculer le total de votes pour afficher les pourcentages.
+    $total_votes = 0;
+    foreach ($choices as $choice) {
+      $total_votes += isset($choice['votes']) ? (int) $choice['votes'] : 0;
+    }
+    $total_votes = max(0, (int) $total_votes);
+    if ($total_votes === 0) {
+      // Éviter les divisions bizarres; tout sera affiché à 0%.
+      $total_votes = 0;
+    }
     
     foreach ($choices as $index => $choice) {
+      $votes_value = isset($choice['votes']) ? (int) $choice['votes'] : 0;
+      $percentage = $total_votes > 0 ? round(($votes_value / $total_votes) * 100, 1) : 0;
+      
       $element['choices'][$index] = [
         '#type' => 'container',
         '#attributes' => ['class' => ['poll-choice-item']],
@@ -93,9 +107,26 @@ class PollChoicesWidget extends WidgetBase {
           '#required' => TRUE,
           '#size' => 60,
         ],
+        // Nombre de votes éditable pour ce choix.
         'votes' => [
-          '#type' => 'hidden',
-          '#value' => isset($choice['votes']) ? (int) $choice['votes'] : 0,
+          '#type' => 'number',
+          '#title' => $this->t('Votes'),
+          '#default_value' => $votes_value,
+          '#min' => 0,
+          '#step' => 1,
+          '#size' => 6,
+          '#attributes' => [
+            'class' => ['poll-choice-votes-input'],
+          ],
+        ],
+        // Affichage du pourcentage (calculé à partir du total).
+        'percentage_display' => [
+          '#type' => 'item',
+          '#title' => $this->t('Pourcentage'),
+          '#markup' => $percentage . '%',
+          '#attributes' => [
+            'class' => ['poll-choice-percentage-display'],
+          ],
         ],
         'remove' => [
           '#type' => 'button',

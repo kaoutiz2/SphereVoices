@@ -18,18 +18,15 @@
       if ($choice.length) {
         console.log('Updating choice', result.index, 'with', result.votes, 'votes');
         
-        // Mettre à jour les votes - chercher dans poll-choice-info
-        var $votesContainer = $choice.find('.poll-choice-info .poll-votes');
-        if (!$votesContainer.length) {
-          // Essayer sans poll-choice-info
-          $votesContainer = $choice.find('.poll-votes');
+        // Mettre à jour le nombre de votes affiché à gauche (span.poll-votes-count)
+        // Ex : <div class="poll-choice-info"><span class="poll-votes-count">0</span> vote<span class="poll-percentage">100%</span></div>
+        var $votesCount = $choice.find('.poll-choice-info .poll-votes-count');
+        if ($votesCount.length) {
+          $votesCount.text(result.votes);
+          console.log('Updated votes count span to', result.votes);
         }
-        if ($votesContainer.length) {
-          var votesText = result.votes + ' vote' + (result.votes > 1 ? 's' : '');
-          $votesContainer.html('<span class="poll-votes-count">' + result.votes + '</span> vote' + (result.votes > 1 ? 's' : ''));
-          console.log('Updated votes container:', $votesContainer[0], 'to', votesText);
-        } else {
-          console.warn('Votes container not found for choice', result.index);
+        else {
+          console.warn('Votes count span (.poll-votes-count) not found for choice', result.index);
         }
         
         // Mettre à jour le pourcentage
