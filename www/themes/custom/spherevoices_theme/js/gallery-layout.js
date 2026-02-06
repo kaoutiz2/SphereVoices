@@ -54,7 +54,11 @@
 
     // Calculer combien de lignes la sidebar occupe réellement
     const sidebarHeight = sidebarRect.height;
-    const sidebarRows = Math.ceil(sidebarHeight / articleHeightWithGap);
+    // Nombre de lignes théoriques occupées par la sidebar.
+    // On retire volontairement 1 ligne pour que la grille passe plus tôt à 4 colonnes,
+    // évitant d'avoir une dernière ligne à 3 articles alors que la sidebar est déjà terminée.
+    const sidebarRowsRaw = Math.ceil(sidebarHeight / articleHeightWithGap);
+    const sidebarRows = Math.max(1, sidebarRowsRaw - 1);
     
     // Si le breaking news est présent, on doit tenir compte de sa hauteur
     let breakingNewsHeight = 0;
