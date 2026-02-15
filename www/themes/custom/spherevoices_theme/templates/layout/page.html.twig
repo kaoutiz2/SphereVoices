@@ -19,12 +19,19 @@
       </div>
     {% endif %}
     <div class="header-main">
-      <div class="header-left-section">
-        {% if page.header %}
-          <div class="site-branding">
-            {{ page.header }}
-          </div>
-        {% endif %}
+      <div class="header-left-section" style="display: flex !important; flex-direction: row !important; align-items: flex-end; flex-wrap: nowrap;">
+        <div class="header-logo-nav-row" style="display: flex !important; align-items: flex-end; gap: 1rem; flex-wrap: nowrap;">
+          {% if page.header %}
+            <div class="site-branding" style="flex: 0 0 100px !important; width: 100px !important; min-width: 100px !important;">
+              {{ page.header }}
+            </div>
+          {% endif %}
+          {% if page.navigation %}
+            <nav class="main-navigation mobile-menu-hidden" role="navigation" aria-label="Main navigation">
+              {{ page.navigation }}
+            </nav>
+          {% endif %}
+        </div>
         <button class="menu-toggle" aria-label="Toggle menu" aria-expanded="false">
           <span class="menu-toggle-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -32,11 +39,6 @@
             </svg>
           </span>
         </button>
-        {% if page.navigation %}
-          <nav class="main-navigation mobile-menu-hidden" role="navigation" aria-label="Main navigation">
-            {{ page.navigation }}
-          </nav>
-        {% endif %}
       </div>
       <div class="header-right-section">
         <div class="header-search">

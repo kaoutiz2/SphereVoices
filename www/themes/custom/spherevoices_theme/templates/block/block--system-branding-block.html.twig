@@ -3,6 +3,7 @@
  * @file
  * Template personnalisé pour le bloc de branding.
  * Affiche uniquement le logo, masque le nom du site.
+ * Le wrapper .site-logo-straddle permet de positionner le logo à cheval menu/page (style FOX News).
  */
 #}
 {% extends "block.html.twig" %}
@@ -10,9 +11,11 @@
 
 {% block content %}
   {% if site_logo %}
+  <div class="site-logo-straddle">
     <a href="/" rel="home" class="site-branding__logo">
       <img src="{{ site_logo }}" alt="{{ 'Home'|t }}" fetchpriority="high" />
     </a>
+  </div>
   {% endif %}
   {# Masquer le nom du site (site_name) #}
   {# {% if site_name %}
