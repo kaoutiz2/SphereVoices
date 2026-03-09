@@ -1,8 +1,8 @@
 {#
 /**
  * @file
- * Template pour les articles en mode full.
- * Affiche l'image originale sans style Drupal.
+ * Template pour les articles en mode default (page complète du nœud).
+ * Même logique que node--article--full : bandeau vidéo/image + corps avec drupal-media remplacé.
  */
 #}
 <article{{ attributes.addClass('article-full') }}>
@@ -26,7 +26,7 @@
   {% endif %}
 
   <div{{ content_attributes.addClass('article-full-content') }}>
-    {# Bandeau en haut : vidéo ou image (variables fournies par le preprocess pour fiabilité) #}
+    {# Bandeau en haut : vidéo ou image #}
     {% if article_hero_video_uri is defined and article_hero_video_uri %}
       <div class="article-full-image">
         <video controls preload="metadata" style="width: 100%; height: auto; display: block;">
@@ -55,6 +55,7 @@
       {% if article_body_processed is defined and article_body_processed %}
         {% set body_rendered = article_body_processed|render %}
         {% set msg = '<p class="media-video-missing">Vidéo : ré-enregistrez l’article après avoir ré-inséré la vidéo via le bouton « Média » dans le corps.</p>' %}
+        {# Remplacer la div vidéo vide (plusieurs variantes) par le message #}
         {% set body_rendered = body_rendered|replace({
           '<div class="media-video-embed"></div>': msg,
           '<div class="media-video-embed"> </div>': msg,
@@ -68,11 +69,8 @@
       {% endif %}
     </div>
 
-    {# Autres champs (résumé, tags, commentaires, etc.) #}
+    {# Autres champs #}
     {{ content|without('field_image', 'field_media_thumbnail', 'media_thumbnail', 'body') }}
   </div>
 
 </article>
-
-
-

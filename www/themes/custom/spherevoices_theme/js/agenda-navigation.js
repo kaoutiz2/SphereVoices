@@ -3,8 +3,9 @@
 
   Drupal.behaviors.agendaMonthNav = {
     attach: function (context, settings) {
-      // Ajouter une navigation par mois au-dessus du formulaire
-      var $form = $('.view-id-agenda .views-exposed-form', context).once('month-nav');
+      // API once() de Drupal 10 (core/drupal.once fournit la globale once).
+      var formElements = once('month-nav', '.view-id-agenda .views-exposed-form', context);
+      var $form = $(formElements);
       
       if ($form.length) {
         // Récupérer le mois actuel depuis l'URL ou utiliser le mois courant

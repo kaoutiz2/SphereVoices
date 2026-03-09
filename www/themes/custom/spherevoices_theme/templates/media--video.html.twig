@@ -1,0 +1,19 @@
+{#
+/**
+ * @file
+ * Theme override for video media (e.g. embedded in body).
+ * Prefer content from entity_view_alter (module) when present, else use video_src_url from preprocess.
+ */
+#}
+<div{{ attributes }}>
+  {{ title_suffix.contextual_links }}
+  {% if content|render|trim is not empty %}
+    {{ content }}
+  {% elseif video_src_url is defined and video_src_url %}
+    <video controls preload="metadata" style="max-width: 100%; height: auto; display: block;">
+      <source src="{{ video_src_url }}" type="{{ video_mime_type|default('video/mp4') }}">
+    </video>
+  {% else %}
+    {{ content }}
+  {% endif %}
+</div>

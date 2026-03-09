@@ -4,7 +4,8 @@
 
 // TEMPORAIRE : Activer le logging des erreurs pour le debug
 // SUPPRIMEZ ces lignes après avoir résolu le problème !
-error_reporting(E_ALL);
+// Exclure E_DEPRECATED pour masquer les avertissements PHP 8.4 / Drupal core (ex. Mapping->getDynamicallyValidKeys)
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 ini_set('log_errors', 1);
 // Créer un fichier de log dans sites/default/files/ (accessible en écriture)
 $log_file = __DIR__ . '/files/drupal_error_log.txt';

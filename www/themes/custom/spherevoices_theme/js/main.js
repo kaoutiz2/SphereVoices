@@ -77,6 +77,9 @@
 
           // Gestion du scroll pour la navigation sticky
           this.handleStickyNav(context);
+
+          // Le clic sur la miniature (vidéo ou image) doit rediriger vers l'article.
+          // (Désactivé : preventTeaserVideoClickNavigation qui bloquait la navigation.)
         },
 
         /**
@@ -1434,6 +1437,31 @@
       bodyObserver.observe(document.body, {
         attributes: true,
         attributeFilter: ['class']
+      });
+    },
+
+    /**
+     * Empêche la navigation (ouverture de l'article) quand on clique sur la vidéo
+     * dans un teaser (carte article). La vidéo peut ainsi se lancer sans ouvrir le lien.
+     */
+    preventTeaserVideoClickNavigation: function (context) {
+      const scope = context || document;
+      const links = scope.querySelectorAll('a.article-teaser-link, a.article-breaking-news-link');
+      links.forEach(function (link) {
+        if (link.dataset.teaserVideoHandled) {
+          return;
+        }
+        link.dataset.teaserVideoHandled = '1';
+        var container = link.querySelector('.js-teaser-video-container');
+        if (!container) {
+          return;
+        }
+        // Capture phase: we run before the link default, then preventDefault so the click still reaches the video
+        link.addEventListener('click', function (e) {
+          if (container.contains(e.target)) {
+            e.preventDefault();
+          }
+        }, true);
       });
     },
 

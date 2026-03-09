@@ -1,0 +1,89 @@
+# ----------------------------------------------------------------------
+# .htaccess Drupal minimal OVH - HTTPS + HTTP2 + Sécurité
+# ----------------------------------------------------------------------
+
+# Protéger les fichiers sensibles
+<FilesMatch "\.(engine|inc|install|make|module|profile|po|sh|.*sql|theme|twig|tpl(\.php)?|xtmpl|yml)(~|\.sw[op]|\.bak|\.orig|\.save)?$|^(\.(?!well-known).*|Entries.*|Repository|Root|Tag|Template|composer\.(json|lock)|web\.config|yarn\.lock|package\.json)$|^#.*#$|\.php(~|\.sw[op]|\.bak|\.orig|\.save)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# Autoriser index.php explicitement pour éviter 403
+<FilesMatch "^(index\.php)$">
+  <IfModule mod_authz_core.c>
+    Require all granted
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Allow from all
+  </IfModule>
+</FilesMatch>
+
+# Désactiver le listing des répertoires
+Options -Indexes
+Options -FollowSymLinks
+
+# Fichier index par défaut
+DirectoryIndex index.php index.html index.htm
+
+# Encodage UTF-8
+AddDefaultCharset utf-8
+
+# ----------------------------------------------------------------------
+# Redirection HTTPS
+# ----------------------------------------------------------------------
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Forcer HTTPS
+  RewriteCond %{HTTPS} off
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # Définir variable protossl
+  RewriteRule ^ - [E=protossl]
+  RewriteCond %{HTTPS} on
+  RewriteRule ^ - [E=protossl:s]
+
+  # Autorisation HTTP pour PHP
+  RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+  # Bloquer les fichiers cachés / dotfiles
+  RewriteRule "/\.|^\.(?!well-known/)" - [F]
+
+  # Redirection index.php/xxx → /xxx
+  RewriteCond %{THE_REQUEST} \s/index\.php/([^\s?]+) [NC]
+  RewriteRule ^ /%1 [R=301,L]
+
+  # Drupal Clean URLs
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_URI} !=/favicon.ico
+  RewriteRule ^ index.php [L]
+
+  # Bloquer l’accès direct aux autres fichiers PHP sensibles
+  RewriteCond %{REQUEST_URI} !/core/[^/]*\.php$
+  RewriteCond %{REQUEST_URI} !/core/modules/system/tests/https?\.php
+  RewriteCond %{REQUEST_URI} !/core/modules/statistics/statistics\.php$
+  RewriteRule "^(.+/.*|autoload)\.php($|/)" - [F]
+</IfModule>
+
+# ----------------------------------------------------------------------
+# Headers et cache navigateur
+# ----------------------------------------------------------------------
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresDefault "access plus 1 year"
+  <FilesMatch \.php$>
+    ExpiresActive Off
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options nosniff
+  RequestHeader unset Proxy
+</IfModule>
