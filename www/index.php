@@ -20,6 +20,12 @@ if ($sn !== '' && str_ends_with($sn, 'index.php')) {
     $uri = $_SERVER['REQUEST_URI'];
     $q = (($p = strpos($uri, '?')) !== false) ? substr($uri, $p) : '';
     $path = $q !== '' ? substr($uri, 0, $p) : $uri;
+    // Si la racine web est le parent de www/, l'URI peut arriver en /www/... : enlever le préfixe pour Drupal
+    if (str_starts_with($path, '/www/')) {
+      $path = '/' . substr($path, 5) ?: '/';
+    } elseif ($path === '/www' || $path === '/www/') {
+      $path = '/';
+    }
     if (str_starts_with($path, $sn)) {
       $path = substr($path, strlen($sn)) ?: '/';
     }
