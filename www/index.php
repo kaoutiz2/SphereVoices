@@ -24,6 +24,11 @@ if (($host === 'www.spherevoices.com' || $host === 'spherevoices.com') && empty(
   $_SERVER['HTTPS'] = 'on';
   $_SERVER['SERVER_PORT'] = '443';
 }
+// Pour Symfony / Drupal (éviter ERR_HTTP2_PROTOCOL_ERROR quand les assets passent en https).
+if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+  $_SERVER['REQUEST_SCHEME'] = 'https';
+  $_SERVER['SERVER_PORT'] = '443';
+}
 
 $autoloader = require_once 'autoload.php';
 

@@ -2,6 +2,15 @@
 
 // phpcs:ignoreFile
 
+// Production : forcer HTTPS pour que tous les liens/ressources soient en https:// (éviter contenu mixte et ERR_HTTP2_PROTOCOL_ERROR).
+if (PHP_SAPI !== 'cli' && !empty($_SERVER['HTTP_HOST'])) {
+  $h = $_SERVER['HTTP_HOST'];
+  if ($h === 'www.spherevoices.com' || $h === 'spherevoices.com') {
+    $_SERVER['HTTPS'] = 'on';
+    $_SERVER['SERVER_PORT'] = '443';
+  }
+}
+
 // TEMPORAIRE : Activer le logging des erreurs pour le debug
 // SUPPRIMEZ ces lignes après avoir résolu le problème !
 // Exclure E_DEPRECATED pour masquer les avertissements PHP 8.4 / Drupal core (ex. Mapping->getDynamicallyValidKeys)
@@ -393,6 +402,16 @@ $settings['update_free_access'] = FALSE;
  * address spoofing unless more advanced precautions are taken.
  */
 # $settings['reverse_proxy'] = TRUE;
+
+// OVH production : activer le reverse proxy pour que X-Forwarded-Proto (https) soit pris en compte.
+if (PHP_SAPI !== 'cli' && !empty($_SERVER['HTTP_HOST'])) {
+  $h = $_SERVER['HTTP_HOST'];
+  if ($h === 'www.spherevoices.com' || $h === 'spherevoices.com') {
+    $settings['reverse_proxy'] = TRUE;
+    $settings['reverse_proxy_addresses'] = ['127.0.0.1', '::1'];
+    $settings['reverse_proxy_trusted_headers'] = \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_FOR | \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_HOST | \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_PORT | \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_PROTO;
+  }
+}
 
 /**
  * Reverse proxy addresses.

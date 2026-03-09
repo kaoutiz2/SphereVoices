@@ -30,6 +30,12 @@ AddDefaultCharset utf-8
   RewriteEngine on
   RewriteBase /
 
+  # Forcer HTTPS en prod uniquement (éviter contenu mixte et ERR_HTTP2_PROTOCOL_ERROR).
+  RewriteCond %{HTTP_HOST} ^(www\.)?spherevoices\.com$ [NC]
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteCond %{HTTPS} off
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
   # Rediriger index.php/xxx vers /xxx (URLs propres) pour tout le site
   RewriteCond %{THE_REQUEST} \s/index\.php/([^\s?]+) [NC]
   RewriteRule ^ /%1 [R=301,L]
