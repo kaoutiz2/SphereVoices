@@ -96,6 +96,18 @@ jobs:
             **/vendor/**/sample/**
           dangerous-clean-slate: false
 
+      - name: Upload .ovhconfig to FTP root (OVH reads it only at root; FTP-Deploy may skip dotfiles)
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+          lftp -c "
+            set ftp:ssl-allow no
+            set net:timeout 10
+            set net:max-retries 3
+            open -u ${{ secrets.OVH_FTP_USER }},${{ secrets.OVH_FTP_PASSWORD }} ${{ secrets.OVH_FTP_HOST }}
+            put .ovhconfig -o .ovhconfig
+            bye
+          "
+
       - name: Deploy www root files (Step 2/5)
         timeout-minutes: 10
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5

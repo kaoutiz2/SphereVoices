@@ -29,6 +29,12 @@ if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
   $_SERVER['REQUEST_SCHEME'] = 'https';
   $_SERVER['SERVER_PORT'] = '443';
 }
+// Contourner ERR_HTTP2_PROTOCOL_ERROR : forcer Connection close en HTTPS (évite des problèmes de framing HTTP/2 côté OVH).
+if (!empty($_SERVER['HTTP_HOST']) && in_array($_SERVER['HTTP_HOST'], ['www.spherevoices.com', 'spherevoices.com'], true)) {
+  if (!headers_sent()) {
+    header('Connection: close', true);
+  }
+}
 
 $autoloader = require_once 'autoload.php';
 
