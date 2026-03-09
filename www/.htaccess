@@ -1,9 +1,12 @@
 # .htaccess minimal pour Drupal sur OVH
-# Version simplifiée pour éviter les erreurs 500
+# Version simplifiée pour éviter les erreurs 500 et 403
 
-# Désactiver les listings de répertoires et MultiViews
+# Désactiver les listings (souvent le seul Options accepté en .htaccess sur OVH)
 Options -Indexes
-Options -MultiViews
+
+# Ne pas surcharger Options sur OVH (FollowSymLinks/MultiViews peuvent provoquer 403)
+# Options -MultiViews
+# Options -FollowSymLinks
 
 # Fichier index par défaut
 DirectoryIndex index.php index.html
@@ -53,9 +56,6 @@ AddDefaultCharset utf-8
   # RewriteCond %{HTTPS} off
   # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 </IfModule>
-
-# Désactiver le suivi des liens symboliques pour la sécurité
-Options -FollowSymLinks
 
 # Types MIME
 <IfModule mod_mime.c>

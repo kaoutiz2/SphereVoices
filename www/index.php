@@ -8,6 +8,23 @@
 use Drupal\Core\DrupalKernel;
 use Symfony\Component\HttpFoundation\Request;
 
+// Force HTTPS in $_SERVER when the client used HTTPS (proxy/load balancer behind SSL).
+// Evite le contenu mixte : JS/CSS en http:// sur une page https://.
+if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+  $_SERVER['HTTPS'] = 'on';
+  $_SERVER['SERVER_PORT'] = '443';
+}
+if (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && strtolower($_SERVER['HTTP_X_FORWARDED_SSL']) === 'on') {
+  $_SERVER['HTTPS'] = 'on';
+  $_SERVER['SERVER_PORT'] = '443';
+}
+// Fallback production : si le domaine est le site en prod, forcer HTTPS (au cas où le proxy n'envoie pas les en-têtes).
+$host = $_SERVER['HTTP_HOST'] ?? '';
+if (($host === 'www.spherevoices.com' || $host === 'spherevoices.com') && empty($_SERVER['HTTPS'])) {
+  $_SERVER['HTTPS'] = 'on';
+  $_SERVER['SERVER_PORT'] = '443';
+}
+
 $autoloader = require_once 'autoload.php';
 
 // Force clean URLs site-wide (front + back office): no index.php in any link.
