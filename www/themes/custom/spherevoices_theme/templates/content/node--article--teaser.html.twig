@@ -18,11 +18,28 @@
           {% endif %}
           <span class="breaking-news-badge">{{ breaking_label }}</span>
         </div>
-        {% if node.field_image.entity %}
+        {% if node.field_media_thumbnail is defined and node.field_media_thumbnail.entity %}
+          {% set media = node.field_media_thumbnail.entity %}
+          {% if media.field_media_video_file is defined and media.field_media_video_file.entity %}
+            {% set video_file = media.field_media_video_file.entity %}
+            {% set video_uri = video_file.uri.value %}
+            <div class="article-breaking-news-image js-teaser-video-container">
+              <video class="js-teaser-video" controls autoplay muted playsinline preload="metadata" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                <source src="{{ file_url(video_uri) }}">
+              </video>
+            </div>
+          {% else %}
+            {% if content.field_media_thumbnail is defined %}
+              <div class="article-breaking-news-image">
+                {{ content.field_media_thumbnail }}
+              </div>
+            {% endif %}
+          {% endif %}
+        {% elseif node.field_image.entity %}
           <div class="article-breaking-news-image">
             {% set image_file = node.field_image.entity %}
             {% set image_uri = image_file.uri.value %}
-            <img src="{{ file_url(image_uri) }}" alt="{{ node.field_image.alt }}" />
+            <img src="{{ file_url(image_uri) }}" alt="{{ node.field_image.alt }}" class="article-teaser-img-cover" />
           </div>
         {% else %}
           <div class="article-breaking-news-image article-breaking-news-image-placeholder">
@@ -37,9 +54,6 @@
             {{ content.field_summary }}
           </div>
         {% endif %}
-        <div class="article-breaking-news-meta">
-          <span class="article-date">{{ node.created.value|date('d/m/Y H:i') }}</span>
-        </div>
       </div>
     </a>
   </article>
@@ -48,11 +62,28 @@
   <article{{ attributes.addClass('article-teaser') }}>
     <a href="{{ url }}" class="article-teaser-link">
       <div class="article-teaser-image-wrapper">
-        {% if node.field_image.entity %}
+        {% if node.field_media_thumbnail is defined and node.field_media_thumbnail.entity %}
+          {% set media = node.field_media_thumbnail.entity %}
+          {% if media.field_media_video_file is defined and media.field_media_video_file.entity %}
+            {% set video_file = media.field_media_video_file.entity %}
+            {% set video_uri = video_file.uri.value %}
+            <div class="article-teaser-image js-teaser-video-container">
+              <video class="js-teaser-video" controls autoplay muted playsinline preload="metadata" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                <source src="{{ file_url(video_uri) }}">
+              </video>
+            </div>
+          {% else %}
+            {% if content.field_media_thumbnail is defined %}
+              <div class="article-teaser-image">
+                {{ content.field_media_thumbnail }}
+              </div>
+            {% endif %}
+          {% endif %}
+        {% elseif node.field_image.entity %}
           <div class="article-teaser-image">
             {% set image_file = node.field_image.entity %}
             {% set image_uri = image_file.uri.value %}
-            <img src="{{ file_url(image_uri) }}" alt="{{ node.field_image.alt }}" />
+            <img src="{{ file_url(image_uri) }}" alt="{{ node.field_image.alt }}" class="article-teaser-img-cover" />
           </div>
         {% else %}
           <div class="article-teaser-image article-teaser-image-placeholder">
@@ -73,9 +104,6 @@
             {{ content.field_summary }}
           </div>
         {% endif %}
-        <div class="article-teaser-meta">
-          <span class="article-date">{{ node.created.value|date('d/m/Y') }}</span>
-        </div>
       </div>
     </a>
   </article>

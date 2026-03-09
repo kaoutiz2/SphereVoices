@@ -6,6 +6,7 @@
  */
 
 use Drupal\Core\Url;
+use Drupal\Core\Link;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Template\Attribute;
 
@@ -179,7 +180,7 @@ function spherevoices_theme_toolbar_alter(&$items) {
       '#type' => 'toolbar_item',
       'tab' => [
         '#type' => 'link',
-        '#title' => $username ?: t('Mon compte'),
+        '#title' => '',
         '#url' => \Drupal\Core\Url::fromRoute('user.page'),
         '#attributes' => [
           'title' => t('Mon compte'),
@@ -733,8 +734,65 @@ function spherevoices_theme_preprocess_page(&$variables) {
         $events_rendered = [];
         
         foreach ($events_nodes as $event_node) {
-          $event_view = $view_builder->view($event_node, 'teaser');
-          $events_rendered[] = $event_view;
+          // Afficher uniquement titre + date (sans le contenu/body de l'événement)
+          $event_date_value = $event_node->get('field_event_date')->value;
+          $event_url = $event_node->toUrl();
+          $event_link = Link::fromTextAndUrl($event_node->getTitle(), $event_url)->toRenderable();
+          $event_link['#attributes']['rel'] = 'bookmark';
+          
+          $item = [
+            '#type' => 'container',
+            '#attributes' => [
+              'class' => ['node', 'node--type-event', 'node--view-mode-teaser', 'agenda-sidebar-item'],
+            ],
+            'event_teaser' => [
+              '#type' => 'container',
+              '#attributes' => ['class' => ['event-teaser']],
+              'event_date' => NULL,
+              'event_content' => [
+                '#type' => 'container',
+                '#attributes' => ['class' => ['event-content']],
+                'title' => [
+                  '#type' => 'html_tag',
+                  '#tag' => 'h3',
+                  '#attributes' => ['class' => ['event-title']],
+                  '#value' => NULL,
+                ],
+              ],
+            ],
+          ];
+          
+          if ($event_date_value) {
+            $item['event_teaser']['event_date'] = [
+              '#type' => 'container',
+              '#attributes' => ['class' => ['event-date']],
+              'day' => [
+                '#type' => 'html_tag',
+                '#tag' => 'div',
+                '#attributes' => ['class' => ['event-date-day']],
+                '#value' => \Drupal::service('date.formatter')->format(strtotime($event_date_value), 'custom', 'd'),
+              ],
+              'month' => [
+                '#type' => 'html_tag',
+                '#tag' => 'div',
+                '#attributes' => ['class' => ['event-date-month']],
+                '#value' => \Drupal::service('date.formatter')->format(strtotime($event_date_value), 'custom', 'M'),
+              ],
+            ];
+          }
+          
+          $item['event_teaser']['event_content']['title']['#value'] = $event_link;
+          $events_rendered[] = $item;
+        }
+        
+        // Remplacer le titre par un h3 contenant le lien (inline_template avec lien déjà rendu)
+        foreach ($events_rendered as &$item) {
+          $link = $item['event_teaser']['event_content']['title']['#value'];
+          $item['event_teaser']['event_content']['title'] = [
+            '#type' => 'inline_template',
+            '#template' => '<h3 class="event-title">{{ link|raw }}</h3>',
+            '#context' => ['link' => \Drupal::service('renderer')->renderRoot($link)],
+          ];
         }
         
         // Construire le render array du bloc
@@ -750,8 +808,7 @@ function spherevoices_theme_preprocess_page(&$variables) {
           'content' => [
             '#type' => 'container',
             '#attributes' => ['class' => ['agenda-content']],
-            'items' => $events_rendered,
-          ],
+          ] + $events_rendered,
           'footer' => [
             '#type' => 'html_tag',
             '#tag' => 'div',
@@ -835,9 +892,12 @@ function spherevoices_theme_preprocess_page(&$variables) {
     $username = $account ? $account->getDisplayName() : $user->getAccountName();
     
     $user_links['account'] = [
-      'title' => $username ?: t('Mon compte'),
+      'title' => '',
       'url' => \Drupal\Core\Url::fromRoute('user.page'),
-      'attributes' => ['class' => ['account-link']],
+      'attributes' => [
+        'class' => ['account-link'],
+        'title' => t('Mon compte'),
+      ],
     ];
     $user_links['logout'] = [
       'title' => t('Se déconnecter'),
@@ -1134,15 +1194,138 @@ function spherevoices_theme_preprocess_form_element(&$variables) {
 }
 
 /**
- * Implements hook_preprocess_image_widget().
- * 
- * S'assure que le preview est bien dans data.preview pour l'affichage dans le wrapper.
+ * Remplace les balises <drupal-media> par le HTML vidéo ou image (corps d'article).
+ * Si le corps contient déjà la div vide (sauvegarde sans drupal-media), on la supprime et on affiche un message.
  */
+function _spherevoices_theme_replace_drupal_media_tags($html) {
+  if (!is_string($html)) {
+    return $html;
+  }
+  // 1) Remplacer drupal-media par le HTML vidéo/image.
+  if (stripos($html, 'drupal-media') !== FALSE) {
+    $pattern = '/<drupal-media\s[^>]*\bdata-entity-uuid="([^"]+)"[^>]*>.*?<\/drupal-media>/si';
+    $html = preg_replace_callback($pattern, function ($m) {
+      $uuid = trim($m[1]);
+      if ($uuid === '') {
+        return '';
+      }
+      try {
+        $media = \Drupal::service('entity.repository')->loadEntityByUuid('media', $uuid);
+      } catch (\Throwable $e) {
+        return '';
+      }
+      if (!$media) {
+        return '';
+      }
+      $media = \Drupal::service('entity.repository')->getTranslationFromContext($media);
+
+      if ($media->hasField('field_media_video_file') && !$media->get('field_media_video_file')->isEmpty()) {
+        $file = $media->get('field_media_video_file')->entity;
+        if (!$file) {
+          $item = $media->get('field_media_video_file')->first();
+          if ($item && !empty($item->target_id)) {
+            $file = \Drupal::entityTypeManager()->getStorage('file')->load($item->target_id);
+          }
+        }
+        if ($file) {
+          $url = \Drupal::service('file_url_generator')->generateAbsoluteString($file->getFileUri());
+          $mime = $file->getMimeType() ?: 'video/mp4';
+          $url_attr = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+          $mime_attr = htmlspecialchars($mime, ENT_QUOTES, 'UTF-8');
+          return '<div class="media-video-embed"><video controls preload="metadata" style="max-width:100%;height:auto;display:block;"><source src="' . $url_attr . '" type="' . $mime_attr . '"></video></div>';
+        }
+      }
+
+      if ($media->bundle() === 'image' && $media->hasField('field_media_image') && !$media->get('field_media_image')->isEmpty()) {
+        $item = $media->get('field_media_image')->first();
+        if ($item && $item->entity) {
+          $url = \Drupal::service('file_url_generator')->generateAbsoluteString($item->entity->getFileUri());
+          $alt = $item->get('alt')->getValue() ?? '';
+          $url_attr = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+          $alt_attr = htmlspecialchars($alt, ENT_QUOTES, 'UTF-8');
+          return '<div class="media-image-embed"><img src="' . $url_attr . '" alt="' . $alt_attr . '" loading="lazy" style="max-width:100%;height:auto;display:block;" /></div>';
+        }
+      }
+
+      return '';
+    }, $html);
+  }
+
+  // 2) Remplacer la div vidéo vide (toute variante : espaces, newlines, attributs) par un message.
+  $msg = '<p class="media-video-missing">' . t('Vidéo : ré-enregistrez l’article après avoir ré-inséré la vidéo via le bouton « Média » dans le corps.') . '</p>';
+  $html = str_ireplace('<div class="media-video-embed"></div>', $msg, $html);
+  // Regex permissive : div avec class contenant media-video-embed, contenu uniquement espaces/newlines/&nbsp;.
+  $html = preg_replace('/<div[^>]*class="[^"]*media-video-embed[^"]*"[^>]*>[\s\xc2\xa0]*<\/div>/su', $msg, $html);
+
+  return $html;
+}
+
 /**
  * Implements hook_preprocess_node().
  */
 function spherevoices_theme_preprocess_node(&$variables) {
   $node = $variables['node'];
+  
+  // Pour les articles en mode full/default (page complète) : fournir l'URL de la vidéo ou de l'image du bandeau
+  // et remplacer les drupal-media dans le corps.
+  $view_mode = $variables['view_mode'] ?? 'full';
+  $is_article_full_page = $node->bundle() === 'article' && ($view_mode === 'full' || $view_mode === 'default');
+  if ($is_article_full_page) {
+    $variables['article_hero_video_uri'] = NULL;
+    $variables['article_hero_image'] = NULL; // [uri => ..., alt => ...]
+    // Recharger le nœud depuis la base pour avoir le body brut (éviter cache/altération).
+    $node_storage = \Drupal::entityTypeManager()->getStorage('node');
+    $fresh_node = $node_storage->load($node->id());
+    if ($fresh_node) {
+      $node = $fresh_node;
+    }
+    $body_field = $node->get('body');
+    if (!$body_field->isEmpty()) {
+      $first = $body_field->first();
+      $variables['body_format_debug'] = $first ? ($first->get('format')->getValue() ?? 'non défini') : 'vide';
+      $text = $first ? $first->value : '';
+      // Toujours remplacer drupal-media et utiliser cette sortie (jamais content.body pour éviter la div vide).
+      if (is_string($text) && $text !== '') {
+        $processed_markup = _spherevoices_theme_replace_drupal_media_tags($text);
+        $variables['article_body_processed'] = ['#markup' => \Drupal\Core\Render\Markup::create($processed_markup)];
+      } else {
+        $variables['article_body_processed'] = NULL;
+      }
+    } else {
+      $variables['body_format_debug'] = 'vide';
+      $variables['article_body_processed'] = NULL;
+    }
+    if ($node->hasField('field_media_thumbnail') && !$node->get('field_media_thumbnail')->isEmpty()) {
+      $media = $node->get('field_media_thumbnail')->entity;
+      if ($media && $media->hasField('field_media_video_file') && !$media->get('field_media_video_file')->isEmpty()) {
+        $file = $media->get('field_media_video_file')->entity;
+        if ($file) {
+          $variables['article_hero_video_uri'] = $file->getFileUri();
+        }
+      }
+    }
+    if (!$variables['article_hero_video_uri'] && $node->hasField('field_image') && !$node->get('field_image')->isEmpty()) {
+      $img = $node->get('field_image')->entity;
+      if ($img) {
+        $item = $node->get('field_image')->first();
+        $variables['article_hero_image'] = [
+          'uri' => $img->getFileUri(),
+          'alt' => $item ? $item->get('alt')->getValue() : '',
+        ];
+      }
+    }
+  }
+  
+  // Cacher le label "Media en miniature" / "Image" sur les champs média et image en teaser et full
+  $view_mode = $variables['view_mode'] ?? 'full';
+  $hide_label_view_modes = ['teaser', 'full'];
+  if ($node->bundle() === 'article' && in_array($view_mode, $hide_label_view_modes)) {
+    foreach (['field_media_thumbnail', 'field_image'] as $field_name) {
+      if (isset($variables['content'][$field_name])) {
+        $variables['content'][$field_name]['#title_display'] = 'hidden';
+      }
+    }
+  }
   
   // Pour les articles en mode teaser qui sont sticky (breaking news)
   if ($node->bundle() === 'article' && $variables['view_mode'] === 'teaser' && $node->isSticky()) {
@@ -1158,6 +1341,27 @@ function spherevoices_theme_preprocess_node(&$variables) {
       $attributes_array[$key] = $value;
     }
     $variables['attributes'] = $attributes_array;
+  }
+}
+
+/**
+ * Implements hook_preprocess_media().
+ *
+ * For video media, provide a direct file URL so the template can render the
+ * video even when the file_video formatter skips the file (e.g. wrong MIME type).
+ */
+function spherevoices_theme_preprocess_media(&$variables) {
+  $media = $variables['media'];
+  if ($media->bundle() !== 'video') {
+    return;
+  }
+  if (!$media->hasField('field_media_video_file') || $media->get('field_media_video_file')->isEmpty()) {
+    return;
+  }
+  $file = $media->get('field_media_video_file')->entity;
+  if ($file) {
+    $variables['video_src_url'] = \Drupal::service('file_url_generator')->generateAbsoluteString($file->getFileUri());
+    $variables['video_mime_type'] = $file->getMimeType() ?: 'video/mp4';
   }
 }
 
@@ -1294,8 +1498,15 @@ function spherevoices_theme_preprocess_views_exposed_form(&$variables) {
  * Implements hook_preprocess_field().
  * 
  * Force l'utilisation de l'image originale au lieu des styles d'image.
+ * Cache le label "Media en miniature" / "Image" sur les articles.
  */
 function spherevoices_theme_preprocess_field(&$variables) {
+  // Cacher le label du champ pour image et média miniature sur les articles
+  if ($variables['element']['#bundle'] === 'article' && in_array($variables['field_name'], ['field_image', 'field_media_thumbnail'], TRUE)) {
+    $variables['label_hidden'] = TRUE;
+    $variables['element']['#title_display'] = 'hidden';
+  }
+
   // Seulement pour le champ image des articles
   if ($variables['field_name'] === 'field_image' && $variables['element']['#bundle'] === 'article') {
     // Parcourir tous les items du champ

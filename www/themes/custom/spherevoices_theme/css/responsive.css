@@ -124,6 +124,8 @@
     padding: 0.75rem var(--spacing-unit) !important;
     padding-left: var(--spacing-unit) !important;
     padding-bottom: 1rem !important;
+    width: 100% !important;
+    background-color: var(--color-primary) !important;
   }
   
   /* Retirer le margin-top du header en mobile car la toolbar est cachée */
@@ -281,11 +283,17 @@
     padding: 0;
     top: auto;
     right: auto;
-    background-color: transparent;
+    /* Fond rouge sur tout le dropdown du menu en mobile */
+    background-color: var(--color-primary);
     box-shadow: none;
-    border-top: 1px solid var(--color-border);
-    border-bottom: 1px solid var(--color-border);
-    margin-top: 1rem;
+    border-top: none;
+    border-bottom: none;
+    margin-top: 0;
+  }
+
+  /* Quand le menu mobile est ouvert, décaler le bloc de menu principal vers le bas */
+  .site-header.menu-open #block-spherevoices-theme-main-menu {
+    margin-top: 100px;
   }
 
   /* Réafficher les éléments enfants quand menu ouvert */
@@ -311,7 +319,7 @@
   .site-header.menu-open .main-navigation li {
     width: 100%;
     margin: 0;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   }
 
   .site-header.menu-open .main-navigation li:last-child {
