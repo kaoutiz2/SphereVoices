@@ -6,6 +6,186 @@
  */
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Element;
+use Drupal\Core\Render\Markup;
+use Drupal\filter\Element\ProcessedText;
+
+/**
+ * Implements hook_entity_view_alter().
+ *
+ * - For media video: force video tag (no "Video file" label), including in body.
+ * - For node article full: ensure body drupal-media tags are processed (fallback if filter/cache skips).
+ */
+function spherevoices_core_entity_view_alter(array &$build, $entity, $display) {
+  if ($entity->getEntityTypeId() === 'media' && $entity->bundle() === 'video') {
+    _spherevoices_core_alter_media_video_build($build, $entity);
+    return;
+  }
+
+  if ($entity->getEntityTypeId() === 'node' && $entity->bundle() === 'article') {
+    $mode = $display->getMode() ?? 'full';
+    if (in_array($mode, ['full', 'default'], TRUE) && !empty($build['content']['body']) && _spherevoices_core_body_contains_drupal_media($entity)) {
+      $build['#pre_render'] = array_merge(['spherevoices_core_node_article_body_media_pre_render'], $build['#pre_render'] ?? []);
+      // Forcer le recalcul à chaque requête pour que le remplacement vidéo soit toujours appliqué.
+      $build['#cache']['max-age'] = 0;
+    }
+  }
+}
+
+/**
+ * Alters media video build: output only video HTML, no "Video file" label.
+ */
+function _spherevoices_core_alter_media_video_build(array &$build, $entity) {
+  if (!$entity->hasField('field_media_video_file') || $entity->get('field_media_video_file')->isEmpty()) {
+    return;
+  }
+  $file = $entity->get('field_media_video_file')->entity;
+  if (!$file) {
+    return;
+  }
+  $url = \Drupal::service('file_url_generator')->generateAbsoluteString($file->getFileUri());
+  $mime = $file->getMimeType() ?: 'video/mp4';
+  $url_attr = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+  $mime_attr = htmlspecialchars($mime, ENT_QUOTES, 'UTF-8');
+
+  $html = '<div class="media-video-embed"><video controls preload="metadata" style="max-width:100%;height:auto;display:block;"><source src="' . $url_attr . '" type="' . $mime_attr . '"></video></div>';
+
+  $build['#spherevoices_video_html'] = $html;
+
+  foreach (Element::children($build) as $key) {
+    unset($build[$key]);
+  }
+  $build['content'] = [
+    '#markup' => Markup::create($html),
+  ];
+
+  $build['#pre_render'][] = 'spherevoices_core_media_video_pre_render';
+  $build['#cache']['max-age'] = 0;
+}
+
+/**
+ * Checks if the node body (raw value) contains a drupal-media tag.
+ */
+function _spherevoices_core_body_contains_drupal_media($node) {
+  if (!$node->hasField('body') || $node->get('body')->isEmpty()) {
+    return FALSE;
+  }
+  $value = $node->get('body')->value;
+  return is_string($value) && stripos($value, '<drupal-media') !== FALSE;
+}
+
+/**
+ * Pre-render callback: force body with embedded media (article full/default).
+ * Sans passer par les filtres du format : remplacement direct drupal-media → vidéo/image,
+ * puis affichage du HTML (évite que les filtres suppriment <video> ou le placeholder).
+ */
+function spherevoices_core_node_article_body_media_pre_render(array $build) {
+  $node = $build['#node'] ?? NULL;
+  if (!$node || !$node->hasField('body') || $node->get('body')->isEmpty()) {
+    return $build;
+  }
+  $body_item = $node->get('body')->first();
+  $text = $body_item->value;
+
+  if (!is_string($text) || stripos($text, '<drupal-media') === FALSE) {
+    return $build;
+  }
+
+  // Remplacement direct drupal-media → HTML vidéo/image, sans ProcessedText (les filtres suppriment <video>).
+  $markup = _spherevoices_core_replace_drupal_media_tags($text);
+
+  $build['content']['body'] = [
+    0 => [
+      '#markup' => Markup::create($markup),
+      '#cache' => [
+        'tags' => $node->getCacheTags(),
+        'contexts' => ['url.path'],
+      ],
+    ],
+  ];
+
+  return $build;
+}
+
+/**
+ * Remplace les balises <drupal-media> par le HTML vidéo ou image (corps d'article).
+ * Supprime aussi la div vidéo vide si le corps a été enregistré sans la balise drupal-media.
+ */
+function _spherevoices_core_replace_drupal_media_tags($html) {
+  if (!is_string($html)) {
+    return $html;
+  }
+  if (stripos($html, 'drupal-media') !== FALSE) {
+    $pattern = '/<drupal-media\s[^>]*\bdata-entity-uuid="([^"]+)"[^>]*>.*?<\/drupal-media>/si';
+    $html = preg_replace_callback($pattern, function ($m) {
+      $uuid = trim($m[1]);
+      if ($uuid === '') {
+        return '';
+      }
+      try {
+        $media = \Drupal::service('entity.repository')->loadEntityByUuid('media', $uuid);
+      } catch (\Throwable $e) {
+        return '';
+      }
+      if (!$media) {
+        return '';
+      }
+      $media = \Drupal::service('entity.repository')->getTranslationFromContext($media);
+
+      if ($media->hasField('field_media_video_file') && !$media->get('field_media_video_file')->isEmpty()) {
+        $file = $media->get('field_media_video_file')->entity;
+        if (!$file) {
+          $item = $media->get('field_media_video_file')->first();
+          if ($item && !empty($item->target_id)) {
+            $file = \Drupal::entityTypeManager()->getStorage('file')->load($item->target_id);
+          }
+        }
+        if ($file) {
+          $url = \Drupal::service('file_url_generator')->generateAbsoluteString($file->getFileUri());
+          $mime = $file->getMimeType() ?: 'video/mp4';
+          $url_attr = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+          $mime_attr = htmlspecialchars($mime, ENT_QUOTES, 'UTF-8');
+          return '<div class="media-video-embed"><video controls preload="metadata" style="max-width:100%;height:auto;display:block;"><source src="' . $url_attr . '" type="' . $mime_attr . '"></video></div>';
+        }
+      }
+
+      if ($media->bundle() === 'image' && $media->hasField('field_media_image') && !$media->get('field_media_image')->isEmpty()) {
+        $item = $media->get('field_media_image')->first();
+        if ($item && $item->entity) {
+          $url = \Drupal::service('file_url_generator')->generateAbsoluteString($item->entity->getFileUri());
+          $alt = $item->get('alt')->value ?? '';
+          $url_attr = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+          $alt_attr = htmlspecialchars($alt, ENT_QUOTES, 'UTF-8');
+          return '<div class="media-image-embed"><img src="' . $url_attr . '" alt="' . $alt_attr . '" loading="lazy" style="max-width:100%;height:auto;display:block;" /></div>';
+        }
+      }
+
+      return '';
+    }, $html);
+  }
+
+  $empty_video_div = '/<div\s+class="[^"]*media-video-embed[^"]*"\s*>\s*<\/div>/i';
+  if (preg_match($empty_video_div, $html)) {
+    $html = preg_replace($empty_video_div, '<p class="media-video-missing">' . t('Video: re-save the article after re-inserting the video via the Media button in the body.') . '</p>', $html);
+  }
+
+  return $html;
+}
+
+/**
+ * Pre-render callback: force video HTML into media build (runs at render time).
+ */
+function spherevoices_core_media_video_pre_render(array $element) {
+  if (!empty($element['#spherevoices_video_html'])) {
+    foreach (Element::children($element) as $key) {
+      unset($element[$key]);
+    }
+    $element['content'] = [
+      '#markup' => Markup::create($element['#spherevoices_video_html']),
+    ];
+  }
+  return $element;
+}
 
 /**
  * Implements hook_theme().

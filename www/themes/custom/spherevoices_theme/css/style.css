@@ -17,7 +17,18 @@
   --font-primary: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-heading: 'Roboto', 'Roboto Slab', 'Lora', Georgia, serif;
   --spacing-unit: 1rem;
-  --max-width: 1600px;
+  --max-width: 1400px;
+}
+
+/* Largeur du contenu du site : utilisée par le header ET le main pour qu'ils aient exactement la même largeur */
+.site-content-width {
+  width: 100%;
+  max-width: var(--max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--spacing-unit);
+  padding-right: var(--spacing-unit);
+  box-sizing: border-box;
 }
 
 /* Reset & Base */
@@ -130,22 +141,33 @@ a:focus {
 
 /* Barre menu : fond rouge (primary), logo aligné avec le menu et qui sort vers le bas */
 .header-main {
-  max-width: var(--max-width);
-  margin: 0 auto;
-  padding: 0.75rem var(--spacing-unit) 0;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0;
+  padding: 0;
   display: flex;
-  align-items: flex-end; /* Logo et menu alignés en bas de la ligne */
-  gap: 2rem;
-  width: 100%;
+  justify-content: center;
+  align-items: stretch;
   box-sizing: border-box;
   position: relative;
   overflow: visible;
+  background-color: var(--color-primary) !important;
+  height: 60px;
+  min-height: 60px;
+}
+
+/* Contenu du header : même largeur que le contenu du site (.main-content) */
+.header-main-inner {
+  padding: 0.75rem var(--spacing-unit) 0;
+  display: flex;
+  align-items: flex-end;
+  min-width: 0;
   background-color: var(--color-primary);
-  min-height: 3.5rem; /* Hauteur min pour la ligne menu */
-  /* FORCER le padding horizontal pour l'alignement */
-  padding-left: var(--spacing-unit) !important;
-  padding-right: var(--spacing-unit) !important;
-  /* Le .main-content doit avoir EXACTEMENT le même padding horizontal */
+}
+
+/* Décaler le bloc de menu principal sous le header (Drupal block id) */
+#block-spherevoices-theme-main-menu {
+  margin-top: 0;
 }
 
 /* Margin-top quand la toolbar est affichée */
@@ -219,8 +241,8 @@ body:has(#toolbar-administration) .header-main {
   margin: 0;
   padding: 0;
   align-self: flex-end;
-  margin-bottom: -50px; /* Sort du bandeau rouge vers le bas */
-  transform: translateY(0.9rem); /* Descend sans agrandir la box */
+  margin-bottom: -60px; /* Sort du bandeau rouge vers le bas */
+  transform: translateY(2rem); /* Descend encore plus sur la page */
   z-index: 2;
   position: relative;
 }
@@ -260,33 +282,33 @@ body:has(#toolbar-administration) .header-main {
 /* Conteneur pour recherche + utilisateur à droite */
 .header-right-section {
   display: flex !important;
-  align-items: center !important;
+  align-items: flex-end !important;
   gap: 1.5rem !important;
   flex-shrink: 0 !important;
   justify-content: flex-end !important;
   margin-left: auto !important;
   margin-right: 0 !important;
   padding-left: 1rem !important;
-  align-self: center !important; /* Aligner verticalement avec le logo */
+  align-self: flex-end !important; /* Même alignement que le menu (bas de la barre) */
 }
 
-/* Barre de recherche - Dans le conteneur droit */
+/* Barre de recherche - Dans le conteneur droit, alignée sur la ligne du menu */
 .header-search {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  align-self: stretch; /* Prendre toute la hauteur disponible */
-  height: 100%;
+  align-self: flex-end;
   padding: 0;
   margin: 0;
 }
 
-/* Section utilisateur - Tout à droite */
+/* Section utilisateur - Alignée sur la ligne du menu */
 .header-user-section {
   display: flex !important;
-  flex-direction: column !important;
+  flex-direction: row !important;
   gap: 0.5rem !important;
-  align-items: flex-end !important;
+  align-items: center !important;
+  align-self: flex-end !important;
   flex-shrink: 0 !important;
   text-align: right !important;
   margin-left: 0 !important;
@@ -306,6 +328,12 @@ body:has(#toolbar-administration) .header-main {
   align-items: center;
   justify-content: flex-end;
   width: 100%;
+}
+
+/* Aligner la section utilisateur sur la même ligne que le menu */
+.header-main .header-user-section {
+  padding-bottom: calc(0.875rem + 3px);
+  box-sizing: border-box;
 }
 
 /* Forcer TOUS les éléments utilisateur/RSS à droite - CSS très spécifique */
@@ -523,11 +551,13 @@ body:has(#toolbar-administration) .header-main {
   background-color: rgba(255, 255, 255, 0.15);
 }
 
-/* Barre de recherche intégrée - Style CNN */
+/* Barre de recherche intégrée - Style CNN, alignée sur les items du menu */
 .header-search {
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  padding-bottom: calc(0.875rem + 3px); /* même ligne de base que .main-navigation a.menu-link */
+  box-sizing: border-box;
 }
 
 .header-search form,
@@ -541,13 +571,15 @@ body:has(#toolbar-administration) .header-main {
 .header-search input[type="search"],
 .header-search input[type="text"],
 .search-input-inline {
-  padding: 0.5rem 1rem;
+  padding: 0.875rem 1rem;
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 4px;
-  font-size: 0.875rem;
-  min-width: 200px;
+  font-size: 0.8125rem;
+  min-width: 140px;
   background-color: rgba(255, 255, 255, 0.95);
-  height: 36px;
+  height: 26px;
+  min-height: 26px;
+  box-sizing: border-box;
 }
 
 /* Sur fond rouge (header-main), input plus visible */
@@ -576,17 +608,37 @@ body:has(#toolbar-administration) .header-main {
 .header-search button,
 .header-search input[type="submit"],
 .search-button-inline {
-  padding: 0.5rem 1.25rem;
+  padding: 0.35rem;
   background-color: var(--color-secondary);
   color: var(--color-bg-light);
   border: none;
   border-radius: 4px;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
-  height: 36px;
+  height: 26px;
+  min-height: 26px;
+  width: 26px;
+  min-width: 26px;
+  box-sizing: border-box;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-button-inline .search-button-icon {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Ne montrer que l'icône : masquer tout texte dans le bouton recherche */
+.search-button-inline {
+  font-size: 0;
+  line-height: 0;
+}
+.search-button-inline .search-button-icon {
+  font-size: initial;
 }
 
 .header-main .header-search button,
@@ -861,6 +913,14 @@ body:has(#toolbar-administration) .header-main {
   margin-bottom: 2rem;
 }
 
+/* Cacher le titre du champ d'image / miniature sur les articles (teasers + full) */
+.node--type-article .field--name-field-image .field__label,
+.node--type-article .field--name-field-media-thumbnail .field__label,
+.node--type-article .field--name-field-image .field-label,
+.node--type-article .field--name-field-media-thumbnail .field-label {
+  display: none !important;
+}
+
 .article-card {
   border: 1px solid var(--color-border);
   border-radius: 4px;
@@ -1071,8 +1131,9 @@ form textarea,
   opacity: 1 !important;
   width: 100%;
   max-width: 100%;
-  min-height: 2.5rem;
-  padding: 0.5rem 1rem;
+  min-height: 26px;
+  height: 26px;
+  padding: 0.2rem 0.6rem;
   color: var(--color-text);
   border: 1px solid var(--color-border);
   border-radius: 4px;
@@ -1082,6 +1143,7 @@ form textarea,
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
+  box-sizing: border-box;
 }
 
 form input[type="text"]:focus,
@@ -1137,14 +1199,14 @@ form button[type="submit"],
   display: inline-block !important;
   visibility: visible !important;
   opacity: 1 !important;
-  padding: 0.75rem 2rem;
+  padding: 0;
   background-color: var(--color-primary);
   color: var(--color-bg-light);
   border: none;
   border-radius: 4px;
   font-weight: 600;
   font-size: 1rem;
-  line-height: 15px;
+  line-height: 0;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
@@ -1219,8 +1281,9 @@ form.user-pass input[type="email"],
   opacity: 1 !important;
   width: 100% !important;
   max-width: 100% !important;
-  min-height: 2.5rem !important;
-  padding: 0.5rem 1rem !important;
+  min-height: 26px !important;
+  height: 26px !important;
+  padding: 0.2rem 0.6rem !important;
   color: var(--color-text) !important;
   border: 1px solid var(--color-border) !important;
   border-radius: 4px !important;
@@ -1231,8 +1294,8 @@ form.user-pass input[type="email"],
   -webkit-appearance: none !important;
   -moz-appearance: none !important;
   position: relative !important;
+  box-sizing: border-box !important;
   z-index: 1 !important;
-  height: auto !important;
   line-height: normal !important;
 }
 
@@ -1277,8 +1340,9 @@ form select {
   opacity: 1 !important;
   width: 100% !important;
   max-width: 100% !important;
-  min-height: 2.5rem !important;
-  padding: 0.5rem 1rem !important;
+  min-height: 26px !important;
+  height: 26px !important;
+  padding: 0.2rem 0.6rem !important;
   color: var(--color-text) !important;
   border: 1px solid var(--color-border) !important;
   border-radius: 4px !important;
@@ -1290,9 +1354,15 @@ form select {
   -moz-appearance: none !important;
   position: relative !important;
   z-index: 1 !important;
-  height: auto !important;
   line-height: normal !important;
   margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Textareas : hauteur auto pour permettre plusieurs lignes */
+form textarea {
+  height: auto !important;
+  min-height: 4rem !important;
 }
 
 /* Styles spécifiques pour les checkboxes - Style simple avec le rouge du site */

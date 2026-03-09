@@ -15,7 +15,7 @@ global-styling:
   dependencies:
     - core/drupal
     - core/jquery
-    - core/jquery.once
+    - core/drupal.once
     - core/drupal.ajax
     - core/drupal.toolbar
     - core/drupal.bigPipe
