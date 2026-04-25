@@ -1406,10 +1406,12 @@ function spherevoices_core_preprocess_image_widget(&$variables) {
     // Récupérer le fichier depuis l'élément
     $element = $variables['element'];
     
-    if (isset($element['#files']) && !empty($element['#files'])) {
-      \Drupal::logger('spherevoices_core')->notice('Fichiers trouvés: @count', ['@count' => count($element['#files'])]);
-      
-      foreach ($element['#files'] as $file) {
+    if (isset($element['#files']) && !empty($element['#files']) && (is_array($element['#files']) || $element['#files'] instanceof \Traversable)) {
+      $files = $element['#files'];
+      $files_count = is_countable($files) ? count($files) : 0;
+      \Drupal::logger('spherevoices_core')->notice('Fichiers trouvés: @count', ['@count' => $files_count]);
+
+      foreach ($files as $file) {
         if ($file) {
           $uri = $file->getFileUri();
           
