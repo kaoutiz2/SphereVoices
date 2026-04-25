@@ -1396,6 +1396,13 @@ function spherevoices_core_entity_form_display_alter(&$display, $context) {
  * Remplace la preview du widget d'image pour utiliser l'image originale au lieu du style thumbnail.
  */
 function spherevoices_core_preprocess_image_widget(&$variables) {
+  // Never alter image widget rendering inside Media Library dialog.
+  // Keep the custom preview tweak only for regular edit forms.
+  $route_name = \Drupal::routeMatch()->getRouteName() ?? '';
+  if (str_starts_with($route_name, 'media_library.')) {
+    return;
+  }
+
   // Debug: vérifier si le hook est appelé
   \Drupal::logger('spherevoices_core')->notice('hook_preprocess_image_widget appelé');
   
