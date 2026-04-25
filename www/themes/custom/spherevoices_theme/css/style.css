@@ -152,8 +152,8 @@ a:focus {
   position: relative;
   overflow: visible;
   background-color: var(--color-primary) !important;
-  height: 60px;
-  min-height: 60px;
+  height: 70px;
+  min-height: 70px;
 }
 
 /* Contenu du header : même largeur que le contenu du site (.main-content) */
@@ -168,6 +168,76 @@ a:focus {
 /* Décaler le bloc de menu principal sous le header (Drupal block id) */
 #block-spherevoices-theme-main-menu {
   margin-top: 0;
+}
+
+/* Sous-barre blanche : région header_subnav (liens secondaires, ex. Tendances) */
+.header-subnav {
+  background-color: #fff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+/* Décalage gauche : aligner « Tendances » après la colonne logo (évite qu’il paraisse sous le logo) */
+.header-subnav-inner {
+  padding: 0.4rem var(--spacing-unit);
+  padding-left: calc(var(--spacing-unit) + 100px + 0.75rem);
+}
+
+@media (max-width: 767px) {
+  .header-subnav-inner {
+    padding-left: var(--spacing-unit);
+  }
+}
+
+/* Ligne flex : menu à gauche, bandeau bourse à droite */
+.header-subnav-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  width: 100%;
+}
+
+.header-subnav-row #block-spherevoices-core-bourse-ticker {
+  margin-left: auto;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .header-subnav-row #block-spherevoices-core-bourse-ticker {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+.header-subnav .menu--header-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.header-subnav .menu--header-subnav .menu-link {
+  color: #000 !important;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  text-decoration: none;
+  padding: 0.25rem 0;
+  display: inline-block;
+  font-family: var(--font-primary);
+}
+
+.header-subnav .menu--header-subnav .menu-link:hover,
+.header-subnav .menu--header-subnav .menu-link:focus,
+.header-subnav .menu--header-subnav .menu-link.is-active,
+.header-subnav .menu--header-subnav .menu-item--active-trail .menu-link {
+  color: #000 !important;
+  text-decoration: underline;
+  background-color: transparent;
 }
 
 /* Margin-top quand la toolbar est affichée */
@@ -186,22 +256,22 @@ body:has(#toolbar-administration) .header-main {
 .header-left-section {
   display: flex !important;
   flex-direction: row !important;
-  align-items: flex-end;
+  align-items: center;
   gap: 1rem;
-  flex-shrink: 0;
+  flex: 1 1 auto;
   width: auto;
   min-width: 0;
   flex-wrap: nowrap;
 }
 
-/* Ligne unique : logo à GAUCHE, menu à DROITE (côte à côte) */
+/* Ligne unique : logo à GAUCHE, menu à DROITE (côte à côte) — le menu peut s’étirer */
 .header-logo-nav-row {
   display: flex !important;
   flex-direction: row !important;
-  align-items: flex-end;
+  align-items: center;
   gap: 1rem;
   flex-wrap: nowrap;
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -213,9 +283,9 @@ body:has(#toolbar-administration) .header-main {
   max-width: 100px !important;
 }
 
-/* Menu : à droite du logo, ne pas forcer de largeur */
+/* Menu : occupe l’espace disponible jusqu’à la recherche (évite le retour à la ligne Live + icône) */
 .header-logo-nav-row > .main-navigation {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -230,7 +300,36 @@ body:has(#toolbar-administration) .header-main {
   position: static;
 }
 
-/* Logo aligné avec le menu, qui sort du fond rouge vers le bas (margin-bottom négatif + padding-top sur le contenu) */
+/* Bloc logo : ancrage explicite pour les liens contextuels (crayon) — sinon le trigger se retrouve au bout du menu */
+.header-logo-nav-row .block-system-branding-block {
+  position: relative !important;
+  flex: 0 0 100px !important;
+  width: 100px !important;
+  max-width: 100px !important;
+  min-width: 100px !important;
+  box-sizing: border-box;
+}
+
+/* Crayon / liens contextuels : dans la boîte logo (title_suffix déplacé dans .site-logo-straddle) */
+.header-logo-nav-row .site-logo-straddle .contextual {
+  position: absolute !important;
+  top: 4px !important;
+  right: 4px !important;
+  left: auto !important;
+  float: none !important;
+  width: auto !important;
+  margin: 0 !important;
+  z-index: 5 !important;
+}
+
+.header-logo-nav-row .site-logo-straddle .contextual .trigger {
+  float: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Logo aligné avec le menu, léger chevauchement sous le bandeau rouge (sans descendre trop bas) */
 .site-logo-straddle {
   display: flex;
   align-items: center;
@@ -240,9 +339,9 @@ body:has(#toolbar-administration) .header-main {
   flex-shrink: 0;
   margin: 0;
   padding: 0;
-  align-self: flex-end;
-  margin-bottom: -60px; /* Sort du bandeau rouge vers le bas */
-  transform: translateY(2rem); /* Descend encore plus sur la page */
+  align-self: center;
+  margin-bottom: -44px;
+  transform: translateY(0.35rem);
   z-index: 2;
   position: relative;
 }
@@ -282,14 +381,14 @@ body:has(#toolbar-administration) .header-main {
 /* Conteneur pour recherche + utilisateur à droite */
 .header-right-section {
   display: flex !important;
-  align-items: flex-end !important;
+  align-items: center !important;
   gap: 1.5rem !important;
   flex-shrink: 0 !important;
   justify-content: flex-end !important;
   margin-left: auto !important;
   margin-right: 0 !important;
   padding-left: 1rem !important;
-  align-self: flex-end !important; /* Même alignement que le menu (bas de la barre) */
+  align-self: center !important;
 }
 
 /* Barre de recherche - Dans le conteneur droit, alignée sur la ligne du menu */
@@ -297,7 +396,7 @@ body:has(#toolbar-administration) .header-main {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  align-self: flex-end;
+  align-self: center;
   padding: 0;
   margin: 0;
 }
@@ -308,7 +407,7 @@ body:has(#toolbar-administration) .header-main {
   flex-direction: row !important;
   gap: 0.5rem !important;
   align-items: center !important;
-  align-self: flex-end !important;
+  align-self: center !important;
   flex-shrink: 0 !important;
   text-align: right !important;
   margin-left: 0 !important;
@@ -332,7 +431,7 @@ body:has(#toolbar-administration) .header-main {
 
 /* Aligner la section utilisateur sur la même ligne que le menu */
 .header-main .header-user-section {
-  padding-bottom: calc(0.875rem + 3px);
+  padding-bottom: 0;
   box-sizing: border-box;
 }
 
@@ -478,6 +577,7 @@ body:has(#toolbar-administration) .header-main {
   align-items: center;
   margin: 0 !important;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 /* Sur mobile, la navigation est CACHÉE par défaut - FORCER le masquage */
@@ -517,6 +617,11 @@ body:has(#toolbar-administration) .header-main {
   flex-wrap: wrap;
 }
 
+/* Barre rouge : une seule ligne de liens pour éviter que « Live » passe sous l’icône ou à la ligne */
+.header-main .main-navigation ul.menu--main {
+  flex-wrap: nowrap;
+}
+
 .main-navigation li {
   position: relative;
   white-space: nowrap;
@@ -533,12 +638,21 @@ body:has(#toolbar-administration) .header-main {
   font-weight: 500;
   text-transform: uppercase;
   font-size: 0.8125rem;
-  padding: 0.875rem 1rem;
-  display: block;
+  padding: 0.875rem 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  white-space: nowrap;
   transition: all 0.2s ease;
   border-bottom: 3px solid transparent;
   letter-spacing: 0.02em;
   font-family: var(--font-primary);
+}
+
+/* Surcharge : le texte ne doit pas être en bloc (sinon l’icône Live passe au-dessus) */
+.header-main .menu--main .menu-link-text {
+  display: inline;
 }
 
 .header-main .main-navigation a.menu-link:hover,
@@ -1028,6 +1142,25 @@ body:has(#toolbar-administration) .header-main {
   margin-bottom: 0.75rem;
 }
 
+/* Lecteur vidéo dans le corps (HTML généré par spherevoices_core, hors field formatters). */
+.article-body .media-video-embed {
+  width: 100%;
+  margin: 1.5rem 0;
+  clear: both;
+}
+
+.article-body .media-video-embed video,
+.article-body .media-video-embed__video {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  min-height: 200px;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background-color: #111;
+}
+
 /* Footer */
 .site-footer {
   background-color: var(--color-secondary);
@@ -1190,32 +1323,34 @@ form input[type="password"]:disabled,
   color: var(--color-text);
 }
 
-/* S'assurer que les boutons de formulaire sont visibles */
-form input[type="submit"],
-form button[type="submit"],
+/* Boutons submit visibles (exclut le bouton icône recherche du header). */
+form input[type="submit"]:not(.search-button-inline),
+form button[type="submit"]:not(.search-button-inline),
 .form-actions input[type="submit"],
-.form-actions button[type="submit"],
-.form-submit {
+.form-actions button[type="submit"]:not(.search-button-inline),
+.form-submit:not(.search-button-inline) {
   display: inline-block !important;
   visibility: visible !important;
   opacity: 1 !important;
-  padding: 0;
+  padding: 0.65rem 1.75rem !important;
+  min-height: 2.75rem;
+  box-sizing: border-box;
   background-color: var(--color-primary);
   color: var(--color-bg-light);
   border: none;
   border-radius: 4px;
   font-weight: 600;
   font-size: 1rem;
-  line-height: 0;
+  line-height: 1.25 !important;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
-form input[type="submit"]:hover,
-form button[type="submit"]:hover,
+form input[type="submit"]:not(.search-button-inline):hover,
+form button[type="submit"]:not(.search-button-inline):hover,
 .form-actions input[type="submit"]:hover,
-.form-actions button[type="submit"]:hover,
-.form-submit:hover {
+.form-actions button[type="submit"]:not(.search-button-inline):hover,
+.form-submit:not(.search-button-inline):hover {
   background-color: var(--color-primary-dark);
 }
 
@@ -1229,6 +1364,23 @@ form button[type="submit"]:hover,
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
+}
+
+.user-login-form .form-actions,
+.user-login-form #edit-actions,
+.user-register-form .form-actions,
+.user-register-form #edit-actions,
+.user-pass .form-actions,
+.user-pass #edit-actions,
+form#user-login-form .form-actions,
+form#user-register-form .form-actions,
+form#user-pass .form-actions {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin-top: 0.5rem;
+  padding: 0;
+  clear: both;
 }
 
 /* S'assurer que les descriptions de formulaire sont visibles */

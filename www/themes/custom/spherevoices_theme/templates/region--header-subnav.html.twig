@@ -1,0 +1,11 @@
+{#
+/**
+ * @file
+ * Sous-barre : menu (Tendances, etc.) + blocs complémentaires sur une ligne flex.
+ */
+#}
+{% if content %}
+  <div{{ attributes.addClass('header-subnav-row') }}>
+    {{ content }}
+  </div>
+{% endif %}

@@ -2,7 +2,7 @@
 /**
  * @file
  * Template pour les articles en mode default (page complète du nœud).
- * Même logique que node--article--full : bandeau vidéo/image + corps avec drupal-media remplacé.
+ * Même logique que node--article--full : bandeau vidéo/image + corps (champ body).
  */
 #}
 <article{{ attributes.addClass('article-full') }}>
@@ -26,16 +26,16 @@
   {% endif %}
 
   <div{{ content_attributes.addClass('article-full-content') }}>
-    {# Bandeau en haut : vidéo ou image #}
-    {% if article_hero_video_uri is defined and article_hero_video_uri %}
+    {# Bandeau : field_cover_media puis miniature / image #}
+    {% if article_cover_video_src is defined and article_cover_video_src %}
       <div class="article-full-image">
-        <video controls preload="metadata" style="width: 100%; height: auto; display: block;">
-          <source src="{{ file_url(article_hero_video_uri) }}">
+        <video controls preload="metadata" playsinline style="width: 100%; height: auto; display: block;">
+          <source src="{{ article_cover_video_src }}" type="video/mp4">
         </video>
       </div>
-    {% elseif article_hero_image is defined and article_hero_image and article_hero_image.uri %}
+    {% elseif article_cover_image is defined and article_cover_image.uri is defined and article_cover_image.uri %}
       <div class="article-full-image">
-        <img src="{{ file_url(article_hero_image.uri) }}" alt="{{ article_hero_image.alt|default('') }}" />
+        <img src="{{ file_url(article_cover_image.uri) }}" alt="{{ article_cover_image.alt|default('') }}" />
       </div>
     {% elseif content.field_media_thumbnail is defined and content.field_media_thumbnail|render|trim is not empty %}
       <div class="article-full-image">
@@ -47,30 +47,30 @@
       </div>
     {% endif %}
 
-    {# Corps : uniquement article_body_processed ; si div vidéo vide détectée, afficher un message #}
+    {# Corps : segments = HTML + lecteur (balise <video> ici, URL fournie par spherevoices_core). #}
     <div class="article-body">
       {% if body_format_debug is defined %}
         <p class="body-format-debug" style="font-size:0.75rem;color:#666;margin-bottom:0.5rem;">Format du corps : <strong>{{ body_format_debug }}</strong></p>
       {% endif %}
-      {% if article_body_processed is defined and article_body_processed %}
-        {% set body_rendered = article_body_processed|render %}
-        {% set msg = '<p class="media-video-missing">Vidéo : ré-enregistrez l’article après avoir ré-inséré la vidéo via le bouton « Média » dans le corps.</p>' %}
-        {# Remplacer la div vidéo vide (plusieurs variantes) par le message #}
-        {% set body_rendered = body_rendered|replace({
-          '<div class="media-video-embed"></div>': msg,
-          '<div class="media-video-embed"> </div>': msg,
-          '<div class="media-video-embed">  </div>': msg,
-          '<div class="media-video-embed">&nbsp;</div>': msg,
-          '<div class="media-video-embed">\n</div>': msg,
-          '<div class="media-video-embed">\n\n</div>': msg,
-          '<div class="media-video-embed">\n \n</div>': msg,
-        }) %}
-        {{ body_rendered|raw }}
+      {% if article_body_segments is defined and article_body_segments|length > 0 %}
+        {% for segment in article_body_segments %}
+          {% if segment.kind == 'video_stream' and segment.src %}
+            <div class="media-video-embed">
+              <video class="media-video-embed__video" src="{{ segment.src }}" controls preload="metadata" playsinline></video>
+            </div>
+          {% elseif segment.kind == 'html' %}
+            {{ segment.html }}
+          {% endif %}
+        {% endfor %}
+      {% elseif article_body_final is defined %}
+        {{ article_body_final }}
+      {% elseif content.body %}
+        {{ content.body }}
       {% endif %}
     </div>
 
-    {# Autres champs #}
-    {{ content|without('field_image', 'field_media_thumbnail', 'media_thumbnail', 'body') }}
+    {# Autres champs — pas de commentaires / liens d’action #}
+    {{ content|without('field_couverture', 'field_cover_media', 'field_image', 'field_media_thumbnail', 'media_thumbnail', 'body', 'comment', 'links') }}
   </div>
 
 </article>

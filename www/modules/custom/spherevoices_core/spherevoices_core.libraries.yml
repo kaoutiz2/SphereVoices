@@ -16,3 +16,34 @@ poll_block:
     - core/drupal
     - core/jquery
     - core/drupal.ajax
+
+facebook_live:
+  css:
+    theme:
+      css/facebook_live.css: {}
+
+trending_page:
+  css:
+    theme:
+      css/trending_page.css: {}
+
+breves_simple_page:
+  css:
+    theme:
+      css/breves_simple_page.css: {}
+
+bourse_ticker:
+  js:
+    js/bourse_tradingview.js: {}
+  css:
+    theme:
+      css/bourse_ticker.css: {}
+  dependencies:
+    - core/drupal
+    - core/once
+
+# Édition de nœud (admin) : médiathèque / prévisualisation couverture.
+admin_node_form:
+  css:
+    theme:
+      css/admin_node_form.css: {}

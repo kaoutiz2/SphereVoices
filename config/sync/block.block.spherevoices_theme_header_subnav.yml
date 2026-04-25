@@ -1,0 +1,25 @@
+uuid: d5e6f7a8-b9c0-4123-d456-e7f8a9b0c1d2
+langcode: fr
+status: true
+dependencies:
+  config:
+    - system.menu.header_subnav
+  module:
+    - system
+  theme:
+    - spherevoices_theme
+id: spherevoices_theme_header_subnav
+theme: spherevoices_theme
+region: header_subnav
+weight: 0
+provider: null
+plugin: 'system_menu_block:header_subnav'
+settings:
+  id: 'system_menu_block:header_subnav'
+  label: 'Sous-barre header'
+  label_display: '0'
+  provider: system
+  level: 1
+  depth: 2
+  expand_all_items: true
+visibility: {  }

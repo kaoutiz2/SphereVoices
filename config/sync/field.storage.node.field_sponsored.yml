@@ -1,0 +1,20 @@
+uuid: 841a14ac-50e8-428b-a07d-679d4e6feeca
+langcode: fr
+status: true
+dependencies:
+  module:
+    - node
+id: node.field_sponsored
+field_name: field_sponsored
+entity_type: node
+type: boolean
+settings:
+  on_label: 'Article sponsorisé'
+  off_label: ''
+module: core
+locked: false
+cardinality: 1
+translatable: false
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

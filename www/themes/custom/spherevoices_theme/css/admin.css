@@ -23,3 +23,30 @@
   height: auto;
 }
 
+/**
+ * Formulaire d’édition de nœud (Claro) : la prévisualisation vidéo de la médiathèque
+ * ne doit pas déborder vers la colonne latérale (méta / Publié).
+ */
+.layout-node-form .layout-region--main,
+.layout-node-form .layout-region__content,
+.node-form .layout-region--main {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.media-library-widget,
+.field--widget-media-library-widget {
+  max-width: 100%;
+}
+
+.media-library-widget .media-library-item__preview video,
+.media-library-widget video,
+.media-library-item--grid .media-library-item__preview video,
+.media-library-item__preview video {
+  max-width: 100% !important;
+  width: 100%;
+  height: auto !important;
+  display: block;
+  box-sizing: border-box;
+}

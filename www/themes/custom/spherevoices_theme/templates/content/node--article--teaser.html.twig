@@ -4,21 +4,42 @@
  * Template pour l'affichage d'un article en mode teaser (colonnes gauche/droite).
  */
 #}
-{% if node.breaking_news_context or node.sticky.value %}
+{% set miniature_label = '' %}
+{% if node.hasField('field_teaser_bottom_label') and node.field_teaser_bottom_label.value is not empty %}
+  {% set miniature_label = node.field_teaser_bottom_label.value %}
+{% elseif node.hasField('field_label_miniature') and node.field_label_miniature.value is not empty %}
+  {% set miniature_label = node.field_label_miniature.value %}
+{% elseif node.hasField('field_field_teaser_bottom_label') and node.field_field_teaser_bottom_label.value is not empty %}
+  {% set miniature_label = node.field_field_teaser_bottom_label.value %}
+{% endif %}
+
+{% set is_sponsored_article = node.hasField('field_sponsored') and node.field_sponsored.value %}
+
+{% if (node.breaking_news_context or node.sticky.value) and not (force_standard_teaser|default(false)) %}
   {# Breaking News - Layout horizontal #}
   <article{{ attributes.addClass('article-breaking-news') }}>
     <a href="{{ url }}" class="article-breaking-news-link">
       <div class="article-breaking-news-image-wrapper">
         <div class="article-breaking-news-label">
-          {# Texte de badge breaking news personnalisable par champ #}
           {% set breaking_label = 'BREAKING NEWS' %}
-          {# Utilise le champ texte si défini (nom machine: field_field_breaking_news_label) #}
-          {% if node.hasField('field_field_breaking_news_label') and node.field_field_breaking_news_label.value is not empty %}
+          {% if node.hasField('field_breaking_news_label') and node.field_breaking_news_label.value is not empty %}
+            {% set breaking_label = node.field_breaking_news_label.value %}
+          {% elseif node.hasField('field_field_breaking_news_label') and node.field_field_breaking_news_label.value is not empty %}
             {% set breaking_label = node.field_field_breaking_news_label.value %}
           {% endif %}
           <span class="breaking-news-badge">{{ breaking_label }}</span>
         </div>
-        {% if node.field_media_thumbnail is defined and node.field_media_thumbnail.entity %}
+        {% if article_cover_video_src is defined and article_cover_video_src %}
+          <div class="article-breaking-news-image js-teaser-video-container">
+            <video class="js-teaser-video" controls autoplay muted playsinline preload="metadata" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+              <source src="{{ article_cover_video_src }}" type="video/mp4">
+            </video>
+          </div>
+        {% elseif article_cover_image is defined and article_cover_image.uri is defined and article_cover_image.uri %}
+          <div class="article-breaking-news-image">
+            <img src="{{ file_url(article_cover_image.uri) }}" alt="{{ article_cover_image.alt|default('') }}" class="article-teaser-img-cover" />
+          </div>
+        {% elseif node.field_media_thumbnail is defined and node.field_media_thumbnail.entity %}
           {% set media = node.field_media_thumbnail.entity %}
           {% if media.field_media_video_file is defined and media.field_media_video_file.entity %}
             {% set video_file = media.field_media_video_file.entity %}
@@ -46,6 +67,11 @@
             <div class="placeholder-content">Image</div>
           </div>
         {% endif %}
+        {% if is_sponsored_article %}
+          <div class="article-teaser-bottom-label article-teaser-sponsored-label">{{ 'Article sponsorisé'|t }}</div>
+        {% elseif miniature_label %}
+          <div class="article-teaser-bottom-label">{{ miniature_label }}</div>
+        {% endif %}
       </div>
       <div class="article-breaking-news-content">
         <h2 class="article-breaking-news-title">{{ label }}</h2>
@@ -62,7 +88,17 @@
   <article{{ attributes.addClass('article-teaser') }}>
     <a href="{{ url }}" class="article-teaser-link">
       <div class="article-teaser-image-wrapper">
-        {% if node.field_media_thumbnail is defined and node.field_media_thumbnail.entity %}
+        {% if article_cover_video_src is defined and article_cover_video_src %}
+          <div class="article-teaser-image js-teaser-video-container">
+            <video class="js-teaser-video" controls autoplay muted playsinline preload="metadata" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+              <source src="{{ article_cover_video_src }}" type="video/mp4">
+            </video>
+          </div>
+        {% elseif article_cover_image is defined and article_cover_image.uri is defined and article_cover_image.uri %}
+          <div class="article-teaser-image">
+            <img src="{{ file_url(article_cover_image.uri) }}" alt="{{ article_cover_image.alt|default('') }}" class="article-teaser-img-cover" />
+          </div>
+        {% elseif node.field_media_thumbnail is defined and node.field_media_thumbnail.entity %}
           {% set media = node.field_media_thumbnail.entity %}
           {% if media.field_media_video_file is defined and media.field_media_video_file.entity %}
             {% set video_file = media.field_media_video_file.entity %}
@@ -90,11 +126,10 @@
             <div class="placeholder-content">Image</div>
           </div>
         {% endif %}
-        {# Label personnalisé en bas à droite de la miniature (nom machine: field_field_teaser_bottom_label) #}
-        {% if node.hasField('field_field_teaser_bottom_label') and node.field_field_teaser_bottom_label.value is not empty %}
-          <div class="article-teaser-bottom-label">
-            {{ node.field_field_teaser_bottom_label.value }}
-          </div>
+        {% if is_sponsored_article %}
+          <div class="article-teaser-bottom-label article-teaser-sponsored-label">{{ 'Article sponsorisé'|t }}</div>
+        {% elseif miniature_label %}
+          <div class="article-teaser-bottom-label">{{ miniature_label }}</div>
         {% endif %}
       </div>
       <div class="article-teaser-content">
@@ -108,4 +143,3 @@
     </a>
   </article>
 {% endif %}
-

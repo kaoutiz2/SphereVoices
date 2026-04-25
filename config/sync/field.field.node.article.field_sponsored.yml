@@ -1,0 +1,23 @@
+uuid: ae42d0ff-9861-4a08-a526-d38f48eaf371
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_sponsored
+    - node.type.article
+id: node.article.field_sponsored
+field_name: field_sponsored
+entity_type: node
+bundle: article
+label: 'Article sponsorisé'
+description: 'Met l’article en tête de la grille d’accueil et affiche le label « Article sponsorisé » sur la miniature.'
+required: false
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'Article sponsorisé'
+  off_label: ''
+field_type: boolean

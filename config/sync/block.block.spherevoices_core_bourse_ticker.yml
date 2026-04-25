@@ -1,0 +1,16 @@
+uuid: 8c3a1f2e-9b4d-4e1a-8f7c-2d6e5a9b1c0d
+langcode: fr
+status: true
+dependencies:
+  module:
+    - spherevoices_core
+  theme:
+    - spherevoices_theme
+id: spherevoices_core_bourse_ticker
+theme: spherevoices_theme
+region: header_subnav
+weight: 10
+provider: null
+plugin: spherevoices_bourse_ticker
+settings: {  }
+visibility: {  }

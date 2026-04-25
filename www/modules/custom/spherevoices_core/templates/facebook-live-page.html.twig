@@ -1,0 +1,29 @@
+{#
+/**
+ * @file
+ * Page Live : lecteur Facebook si le direct est actif, sinon message.
+ */
+#}
+<div class="facebook-live-page">
+  {% if show_player %}
+    <div class="facebook-live-on-air" role="region" aria-label="{{ 'Live Facebook'|t }}">
+      <p class="facebook-live-badge">{{ on_air_heading }}</p>
+      <div class="facebook-live-embed">
+        <iframe
+          src="{{ embed_src }}"
+          width="1280"
+          height="720"
+          scrolling="no"
+          frameborder="0"
+          allowfullscreen="true"
+          allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+          title="{% trans %}Lecteur Facebook Live{% endtrans %}"
+        ></iframe>
+      </div>
+    </div>
+  {% else %}
+    <div class="facebook-live-off-air" role="status" aria-live="polite">
+      <p class="facebook-live-empty">{{ empty_message }}</p>
+    </div>
+  {% endif %}
+</div>

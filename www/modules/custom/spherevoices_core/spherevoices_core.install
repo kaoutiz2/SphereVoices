@@ -362,5 +362,205 @@ function spherevoices_core_update_8003() {
   return $message;
 }
 
+/**
+ * Removes wrong custom « Tendances » links from header_subnav (keeps route link only).
+ *
+ * Custom menu_link_content entries often pointed to /node/… or an old path while the
+ * discovered link uses route spherevoices_core.trending → wrong destination in the UI.
+ */
+function spherevoices_core_update_8006() {
+  $storage = \Drupal::entityTypeManager()->getStorage('menu_link_content');
+  $ids = $storage->getQuery()
+    ->condition('menu_name', 'header_subnav')
+    ->accessCheck(FALSE)
+    ->execute();
+  if (empty($ids)) {
+    return t('No custom links in header_subnav; nothing to clean.');
+  }
+  $deleted = 0;
+  foreach ($storage->loadMultiple($ids) as $link) {
+    if (stripos($link->getTitle(), 'tendance') === FALSE) {
+      continue;
+    }
+    $uri = $link->get('link')->uri;
+    if ($uri === 'route:spherevoices_core.trending') {
+      continue;
+    }
+    $link->delete();
+    $deleted++;
+  }
+  if ($deleted > 0) {
+    \Drupal::service('cache_tags.invalidator')->invalidateTags(['config:system.menu.header_subnav']);
+  }
+  return t('Removed @n incorrect « Tendances » menu link(s) from the header subnav.', ['@n' => $deleted]);
+}
+
+/**
+ * Supprime les alias d’URL dont l’alias est « /tendances » (ou « tendances »).
+ *
+ * Si un alias pointe vers une page nœud (/node/…), Drupal réécrit la requête avant
+ * le routeur : la route spherevoices_core.trending n’est jamais atteinte et la page
+ * « Tendances » du module ne s’affiche pas — vider le cache ne suffit pas.
+ */
+function spherevoices_core_update_8013() {
+  $storage = \Drupal::entityTypeManager()->getStorage('path_alias');
+  $query = $storage->getQuery()->accessCheck(FALSE);
+  $query->condition(
+    $query->orConditionGroup()
+      ->condition('alias', '/tendances')
+      ->condition('alias', 'tendances')
+  );
+  $ids = $query->execute();
+  if (empty($ids)) {
+    return t('No path aliases on /tendances; nothing to remove.');
+  }
+  $storage->delete($storage->loadMultiple($ids));
+  return t('Removed @n path alias(es) that blocked the /tendances route.', ['@n' => count($ids)]);
+}
+
+/**
+ * Corrige la page d'accueil si elle pointe vers /node/1 alors que ce nœud n'existe pas (404 sur /).
+ */
+function spherevoices_core_update_8014() {
+  $config = \Drupal::configFactory()->getEditable('system.site');
+  $front = $config->get('page.front');
+  if ($front !== '/node/1') {
+    return t('Front page is not /node/1; no change.');
+  }
+  $node = \Drupal::entityTypeManager()->getStorage('node')->load(1);
+  if ($node) {
+    return t('Node 1 exists; keeping /node/1 as front page.');
+  }
+  $config->set('page.front', '/node')->save();
+  return t('Front page was /node/1 but node 1 is missing; set to /node (vue Page d’accueil).');
+}
+
+/**
+ * Supprime les entrées menu_link_content « Tendances » en doublon du lien découvert (links.menu.yml).
+ *
+ * Même route sur le même menu = deux liens « Tendances » dans la sous-barre.
+ */
+function spherevoices_core_update_8015() {
+  $storage = \Drupal::entityTypeManager()->getStorage('menu_link_content');
+  $ids = $storage->getQuery()
+    ->condition('menu_name', 'header_subnav')
+    ->condition('link.uri', 'route:spherevoices_core.trending')
+    ->accessCheck(FALSE)
+    ->execute();
+  if (empty($ids)) {
+    return t('No duplicate Tendances menu_link_content in header_subnav.');
+  }
+  $storage->delete($storage->loadMultiple($ids));
+  \Drupal::service('cache_tags.invalidator')->invalidateTags(['config:system.menu.header_subnav']);
+  return t('Removed @n duplicate « Tendances » menu link(s) (keeps the discovered link from links.menu.yml).', ['@n' => count($ids)]);
+}
+
+/**
+ * Ajoute l’affichage « page » de la vue Brèves sur le chemin /breves (lien « Afficher plus »).
+ */
+function spherevoices_core_update_8016() {
+  $factory = \Drupal::configFactory();
+  if (!$factory->get('views.view.breves')) {
+    return t('View breves not found; skipped.');
+  }
+  $editable = $factory->getEditable('views.view.breves');
+  if ($editable->get('display.page_1')) {
+    return t('View breves page display already exists.');
+  }
+  $data = $editable->getRawData();
+  $data['display']['page_1'] = [
+    'id' => 'page_1',
+    'display_title' => 'Page',
+    'display_plugin' => 'page',
+    'position' => 2,
+    'display_options' => [
+      'title' => 'Brèves',
+      'path' => 'breves',
+      'style' => [
+        'type' => 'default',
+        'options' => [
+          'grouping' => [],
+          'row_class' => '',
+          'default_row_class' => TRUE,
+          'uses_fields' => FALSE,
+        ],
+      ],
+      'row' => [
+        'type' => 'entity:node',
+        'options' => [
+          'view_mode' => 'teaser',
+          'links' => FALSE,
+        ],
+      ],
+      'defaults' => [
+        'style' => FALSE,
+        'row' => FALSE,
+      ],
+      'display_extenders' => [],
+      'field_langcode' => '***LANGUAGE_language_content***',
+      'field_langcode_add_to_query' => FALSE,
+    ],
+  ];
+  $editable->setData($data);
+  $editable->save();
+  \Drupal::service('router.builder')->rebuild();
+  return t('Added view breves page display at /breves.');
+}
+
+/**
+ * Supprime l’affichage page de la vue Brèves : /breves est la route du module (liste à puces).
+ */
+function spherevoices_core_update_8017() {
+  $factory = \Drupal::configFactory();
+  if (!$factory->get('views.view.breves')) {
+    return t('View breves not found; skipped.');
+  }
+  $editable = $factory->getEditable('views.view.breves');
+  if (!$editable->get('display.page_1')) {
+    return t('No view breves page display; nothing to remove.');
+  }
+  $data = $editable->getRawData();
+  unset($data['display']['page_1']);
+  $editable->setData($data);
+  $editable->save();
+  \Drupal::service('router.builder')->rebuild();
+  return t('Removed view breves page display; /breves is served by BrevesController.');
+}
+
+/**
+ * Ajoute le champ booléen « Article sponsorisé » sur les articles (formulaire + BDD).
+ *
+ * @see spherevoices_core_ensure_article_sponsored_field()
+ */
+function spherevoices_core_update_8018() {
+  spherevoices_core_ensure_article_sponsored_field();
+  return t('Field « Article sponsorisé » (field_sponsored) added to Article content type and form display.');
+}
+
+/**
+ * Place le bloc « Bandeau bourse » dans la région header_subnav (sous-menu).
+ */
+function spherevoices_core_update_8019() {
+  $storage = \Drupal::entityTypeManager()->getStorage('block');
+  if ($storage->load('spherevoices_core_bourse_ticker')) {
+    return t('Bourse ticker block already exists.');
+  }
+  $default_theme = \Drupal::config('system.theme')->get('default');
+  if ($default_theme !== 'spherevoices_theme') {
+    return t('Skipped: default theme is not spherevoices_theme. Import block.block.spherevoices_core_bourse_ticker.yml or place the block manually.');
+  }
+  $block = \Drupal\block\Entity\Block::create([
+    'id' => 'spherevoices_core_bourse_ticker',
+    'theme' => 'spherevoices_theme',
+    'plugin' => 'spherevoices_bourse_ticker',
+    'region' => 'header_subnav',
+    'weight' => 10,
+    'settings' => [],
+    'visibility' => [],
+  ]);
+  $block->save();
+  return t('Placed bourse ticker block in header_subnav region.');
+}
+
 
 

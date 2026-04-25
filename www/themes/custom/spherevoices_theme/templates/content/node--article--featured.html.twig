@@ -7,7 +7,17 @@
 <article{{ attributes.addClass('article-featured') }}>
   <a href="{{ url ?: node.url }}" class="article-featured-link">
     <div class="article-featured-image-wrapper">
-      {% if node.field_image.entity %}
+      {% if article_cover_video_src is defined and article_cover_video_src %}
+        <div class="article-featured-image js-teaser-video-container">
+          <video class="js-teaser-video" controls autoplay muted playsinline preload="metadata" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+            <source src="{{ article_cover_video_src }}" type="video/mp4">
+          </video>
+        </div>
+      {% elseif article_cover_image is defined and article_cover_image.uri is defined and article_cover_image.uri %}
+        <div class="article-featured-image">
+          <img src="{{ file_url(article_cover_image.uri) }}" alt="{{ article_cover_image.alt|default('') }}" />
+        </div>
+      {% elseif node.field_image.entity %}
         <div class="article-featured-image">
           {% set image_file = node.field_image.entity %}
           {% set image_uri = image_file.uri.value %}

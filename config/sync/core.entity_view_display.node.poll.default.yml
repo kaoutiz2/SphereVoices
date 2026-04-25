@@ -1,0 +1,26 @@
+uuid: poll-view-display-uuid-001
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.field.node.poll.field_poll_choices
+    - field.field.node.poll.field_poll_description
+    - node.type.poll
+  module:
+    - text
+id: node.poll.default
+targetEntityType: node
+bundle: poll
+mode: default
+content:
+  field_poll_description:
+    type: text_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 1
+    region: content
+hidden:
+  field_poll_choices: true
+  langcode: true
+  links: false

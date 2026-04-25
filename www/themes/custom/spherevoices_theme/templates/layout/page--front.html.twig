@@ -19,8 +19,8 @@
     {% endif %}
     <div class="header-main">
       <div class="header-main-inner site-content-width">
-        <div class="header-left-section" style="display: flex !important; flex-direction: row !important; align-items: flex-end; flex-wrap: nowrap;">
-        <div class="header-logo-nav-row" style="display: flex !important; align-items: flex-end; gap: 1rem; flex-wrap: nowrap;">
+        <div class="header-left-section" style="display: flex !important; flex-direction: row !important; align-items: center !important; flex-wrap: nowrap;">
+        <div class="header-logo-nav-row">
           {% if page.header %}
             <div class="site-branding" style="flex: 0 0 100px !important; width: 100px !important; min-width: 100px !important;">
               {{ page.header }}
@@ -59,6 +59,11 @@
           </div>
         </div>
       </div>
+      </div>
+    </div>
+    <div class="header-subnav" role="navigation" aria-label="{{ 'Sous-navigation'|t }}">
+      <div class="header-subnav-inner site-content-width">
+        {{ page.header_subnav }}
       </div>
     </div>
   </header>

@@ -5,10 +5,13 @@
  * Functions and preprocess functions for the SphereVoices theme.
  */
 
+use Drupal\Core\Datetime\DrupalDateTime;
+use Drupal\Core\Render\Element;
+use Drupal\Core\Render\Markup;
 use Drupal\Core\Url;
-use Drupal\Core\Link;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Template\Attribute;
+use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
 
 /**
  * Implements hook_preprocess_maintenance_page().
@@ -344,17 +347,22 @@ function spherevoices_theme_preprocess_block(&$variables) {
     }
   }
   
-  // Retirer "Bienvenue" du contenu des blocs
-  if (isset($variables['content']['#markup'])) {
-    $content = $variables['content']['#markup'];
-    // Retirer les titres h1 avec "Bienvenue" ou "Welcome"
-    $content = preg_replace('/<h1[^>]*>.*?Bienvenue.*?<\/h1>/i', '', $content);
-    $content = preg_replace('/<h1[^>]*>.*?Welcome.*?<\/h1>/i', '', $content);
-    // Retirer aussi les divs ou autres éléments contenant "Bienvenue"
-    $content = preg_replace('/<div[^>]*>.*?Bienvenue.*?<\/div>/is', '', $content);
-    $content = preg_replace('/<div[^>]*>.*?Welcome.*?<\/div>/is', '', $content);
-    $variables['content']['#markup'] = $content;
+  // Retirer "Bienvenue" / "Welcome" uniquement si présents. Ne pas réassigner
+  // #markup en chaîne brute sans Markup::create() : le Renderer traiterait le
+  // HTML comme non sûr et supprimerait des balises (ex. <video> dans le bloc
+  // contenu principal).
+  if (!isset($variables['content']['#markup'])) {
+    return;
   }
+  $content = (string) $variables['content']['#markup'];
+  if (stripos($content, 'Bienvenue') === FALSE && stripos($content, 'Welcome') === FALSE) {
+    return;
+  }
+  $content = preg_replace('/<h1[^>]*>.*?Bienvenue.*?<\/h1>/i', '', $content);
+  $content = preg_replace('/<h1[^>]*>.*?Welcome.*?<\/h1>/i', '', $content);
+  $content = preg_replace('/<div[^>]*>.*?Bienvenue.*?<\/div>/is', '', $content);
+  $content = preg_replace('/<div[^>]*>.*?Welcome.*?<\/div>/is', '', $content);
+  $variables['content']['#markup'] = Markup::create($content);
 }
 
 /**
@@ -395,6 +403,79 @@ function spherevoices_theme_preprocess_links(&$variables) {
 /**
  * Implements hook_preprocess_page().
  */
+/**
+ * Noms des mois en français (forme longue).
+ *
+ * @return array<int, string>
+ *   Tableau indexé 1–12.
+ */
+function _spherevoices_theme_french_month_names(): array {
+  return [
+    1 => 'Janvier',
+    2 => 'Février',
+    3 => 'Mars',
+    4 => 'Avril',
+    5 => 'Mai',
+    6 => 'Juin',
+    7 => 'Juillet',
+    8 => 'Août',
+    9 => 'Septembre',
+    10 => 'Octobre',
+    11 => 'Novembre',
+    12 => 'Décembre',
+  ];
+}
+
+/**
+ * Abréviations françaises courtes (badges teaser / colonne étroite).
+ *
+ * @return array<int, string>
+ */
+function _spherevoices_theme_french_month_abbrev(): array {
+  return [
+    1 => 'janv.',
+    2 => 'févr.',
+    3 => 'mars',
+    4 => 'avr.',
+    5 => 'mai',
+    6 => 'juin',
+    7 => 'juil.',
+    8 => 'août',
+    9 => 'sept.',
+    10 => 'oct.',
+    11 => 'nov.',
+    12 => 'déc.',
+  ];
+}
+
+/**
+ * Options pour le sélecteur de mois (libellés français : Mars, Avril, …).
+ *
+ * @return array<int, array{value: string, label: string}>
+ */
+function _spherevoices_theme_agenda_month_select_options(): array {
+  $tz_name = \Drupal::config('system.date')->get('timezone.default') ?: date_default_timezone_get();
+  try {
+    $tz = new \DateTimeZone($tz_name);
+  }
+  catch (\Exception $e) {
+    $tz = new \DateTimeZone('UTC');
+  }
+  $fr_months = _spherevoices_theme_french_month_names();
+  $start = new \DateTime('first day of this month midnight', $tz);
+  $start->modify('-6 months');
+  $options = [];
+  for ($i = 0; $i < 31; $i++) {
+    $month_num = (int) $start->format('n');
+    $options[] = [
+      'value' => $start->format('Y-m'),
+      'label' => $fr_months[$month_num] . ' ' . $start->format('Y'),
+    ];
+    $start->modify('+1 month');
+  }
+  return $options;
+}
+
 function spherevoices_theme_preprocess_page(&$variables) {
   // Ajouter la variable is_front pour vérifier si c'est la page d'accueil
   $variables['is_front'] = \Drupal::service('path.matcher')->isFrontPage();
@@ -412,7 +493,8 @@ function spherevoices_theme_preprocess_page(&$variables) {
     
     $variables['title_search'] = $title_search;
     $variables['month_filter'] = $month_filter;
-    
+    $variables['agenda_month_select_options'] = _spherevoices_theme_agenda_month_select_options();
+
     // Récupérer les événements
     $database = \Drupal::database();
     $query = $database->select('node_field_data', 'n');
@@ -506,142 +588,56 @@ function spherevoices_theme_preprocess_page(&$variables) {
       }
     }
     
-    // 2. Récupérer l'article principal (promoted to front page, le plus récent)
-    // EXCLURE le breaking news pour éviter les doublons
-    $featured_query = \Drupal::entityQuery('node')
+    // 2. Articles promus (hors breaking news) : les sponsorisés en premier, puis date DESC.
+    $is_sponsored = static function ($node): bool {
+      return $node->hasField('field_sponsored') && (bool) $node->get('field_sponsored')->value;
+    };
+
+    $pool_query = \Drupal::entityQuery('node')
       ->condition('type', 'article')
       ->condition('status', 1)
       ->condition('promote', 1)
+      ->condition('sticky', 0)
       ->sort('created', 'DESC')
-      ->range(0, 5) // Récupérer plus d'articles pour pouvoir exclure le breaking news
       ->accessCheck(TRUE);
-    
-    // Exclure explicitement les articles sticky (breaking news)
-    $featured_query->condition('sticky', 0);
-    
-    // Exclure aussi par ID si on a le breaking news
+
     if (!empty($breaking_news_nids)) {
-      $breaking_news_nid = (int) reset($breaking_news_nids);
-      $featured_query->condition('nid', $breaking_news_nid, '<>');
+      $pool_query->condition('nid', array_values($breaking_news_nids), 'NOT IN');
     }
-    
-    $featured_nids = $featured_query->execute();
-    
-    // Prendre le premier qui n'est pas le breaking news
-    if (!empty($featured_nids)) {
-      // Filtrer pour s'assurer qu'on n'a pas le breaking news
-      $featured_nids = array_diff($featured_nids, $breaking_news_nids);
-      
-      if (!empty($featured_nids)) {
-        $featured_nid = reset($featured_nids);
-        $featured_node = $node_storage->load($featured_nid);
-        if ($featured_node) {
-          // Double vérification : ne pas utiliser le breaking news
-          if (empty($breaking_news_nids) || !in_array($featured_node->id(), $breaking_news_nids)) {
-            // Marquer le node comme featured pour le template
-            $featured_node->featured_context = TRUE;
-            // Utiliser le mode 'teaser' pour avoir un rendu cohérent avec les autres articles
-            // Le template featured sera utilisé grâce à la suggestion de template
-            $variables['featured_article'] = $view_builder->view($featured_node, 'teaser');
-            $featured_nids = [$featured_nid]; // Garder seulement l'ID utilisé
-          }
-          else {
-            $featured_nids = [];
-          }
-        }
-      }
-    }
-    
-    // S'assurer que featured_nids est un tableau
-    if (empty($featured_nids)) {
-      $featured_nids = [];
-    }
-    
-    // 3. Récupérer tous les articles restants pour les 3 colonnes (gauche, centre, droite)
-    // EXCLURE le breaking news ET l'article principal
-    $excluded_nids = [];
-    if (!empty($breaking_news_nids)) {
-      $excluded_nids = array_merge($excluded_nids, $breaking_news_nids);
-    }
-    if (!empty($featured_nids)) {
-      $excluded_nids = array_merge($excluded_nids, $featured_nids);
-    }
-    
-    // Récupérer tous les articles restants pour les 3 colonnes
-    // Limiter à 14 articles pour les colonnes
-    $max_articles_for_columns = 14;
-    $all_articles_query = \Drupal::entityQuery('node')
-      ->condition('type', 'article')
-      ->condition('status', 1)
-      ->condition('promote', 1)
-      ->condition('sticky', 0) // Exclure les sticky (déjà affichés comme breaking news)
-      ->sort('created', 'DESC')
-      // Pas de limite : récupérer tous les articles
-      ->accessCheck(TRUE);
-    
-    // Exclure tous les articles déjà affichés (breaking news + featured)
-    if (!empty($excluded_nids)) {
-      $excluded_nids_int = array_map('intval', $excluded_nids);
-      $all_articles_query->condition('nid', $excluded_nids_int, 'NOT IN');
-    }
-    
-    $all_articles_nids = $all_articles_query->execute();
-    
-    // Filtrer les IDs pour s'assurer qu'ils ne sont pas dans breaking_news_nids ou featured_nids
-    // Réindexer le tableau pour préserver l'ordre après array_diff
-    if (!empty($all_articles_nids)) {
-      $all_articles_nids = array_diff($all_articles_nids, $breaking_news_nids);
-      $all_articles_nids = array_diff($all_articles_nids, $featured_nids);
-      // Réindexer pour avoir des clés numériques séquentielles (0, 1, 2, ...)
-      $all_articles_nids = array_values($all_articles_nids);
-    }
-    
-    // Mettre tous les articles dans un seul tableau (la grille CSS gère la disposition)
+
+    $pool_nids = array_values($pool_query->execute());
+    $variables['featured_article'] = NULL;
     $variables['all_articles'] = [];
-    
-    if (!empty($all_articles_nids)) {
-      // Charger les nodes dans l'ordre des IDs
-      $all_articles_nodes = $node_storage->loadMultiple($all_articles_nids);
-      
-      // Créer un tableau ordonné selon l'ordre des IDs (pour préserver l'ordre de création DESC)
+
+    if (!empty($pool_nids)) {
+      $pool_nodes = $node_storage->loadMultiple($pool_nids);
       $ordered_nodes = [];
-      foreach ($all_articles_nids as $nid) {
-        if (isset($all_articles_nodes[$nid])) {
-          $node = $all_articles_nodes[$nid];
-          // Double vérification : ne pas inclure le breaking news ou featured
-          if (!empty($breaking_news_nids) && in_array($node->id(), $breaking_news_nids)) {
-            continue;
-          }
-          if (!empty($featured_nids) && in_array($node->id(), $featured_nids)) {
-            continue;
-          }
-          
-          // Marquer comme breaking news si sticky
-          if ($node->isSticky()) {
-            $node->breaking_news_context = TRUE;
-          }
-          
-          $ordered_nodes[] = $node;
+      foreach ($pool_nids as $nid) {
+        if (isset($pool_nodes[$nid])) {
+          $ordered_nodes[] = $pool_nodes[$nid];
         }
       }
-      
-      // Trier les nodes par date de création DESC (du plus récent au plus ancien)
-      // pour s'assurer que l'ordre est correct même après loadMultiple
-      usort($ordered_nodes, function($a, $b) {
-        $time_a = $a->getCreatedTime();
-        $time_b = $b->getCreatedTime();
-        return $time_b - $time_a; // DESC : plus récent en premier
+
+      usort($ordered_nodes, function ($a, $b) use ($is_sponsored) {
+        $sa = $is_sponsored($a);
+        $sb = $is_sponsored($b);
+        if ($sa !== $sb) {
+          return $sb <=> $sa;
+        }
+        return $b->getCreatedTime() <=> $a->getCreatedTime();
       });
-      
-      // Réindexer le tableau pour avoir des indices séquentiels (0, 1, 2, 3...)
-      $ordered_nodes = array_values($ordered_nodes);
-      
-      // Afficher TOUS les articles (pas de limite)
-      // Distribuer TOUS les articles dans la grille principale
-      // La grille s'adaptera automatiquement (3 colonnes si sidebar, 4 si pas de sidebar)
+
+      $featured_node = array_shift($ordered_nodes);
+      if ($featured_node) {
+        $featured_node->featured_context = TRUE;
+        $variables['featured_article'] = $view_builder->view($featured_node, 'teaser');
+      }
+
       foreach ($ordered_nodes as $node) {
-        $article_view = $view_builder->view($node, 'teaser');
-        $variables['all_articles'][] = $article_view;
+        if ($node->isSticky()) {
+          $node->breaking_news_context = TRUE;
+        }
+        $variables['all_articles'][] = $view_builder->view($node, 'teaser');
       }
     }
     
@@ -711,112 +707,70 @@ function spherevoices_theme_preprocess_page(&$variables) {
       \Drupal::logger('spherevoices_theme')->error('Erreur lors du chargement des brèves: @message', ['@message' => $e->getMessage()]);
     }
     
-    // Charger l'agenda (événements) directement
+    // Charger l'agenda (événements) directement — toujours afficher le widget (au-dessus du sondage).
     try {
       $node_storage = \Drupal::entityTypeManager()->getStorage('node');
       $view_builder = \Drupal::entityTypeManager()->getViewBuilder('node');
-      
-      // Récupérer les événements à venir (limité à 3)
+
+      $tz_name = \Drupal::config('system.date')->get('timezone.default') ?: date_default_timezone_get();
+      $tz = new \DateTimeZone($tz_name ?: 'UTC');
+      $today = DrupalDateTime::createFromTimestamp(\Drupal::time()->getRequestTime(), $tz);
+      $date_today = $today->format(DateTimeItemInterface::DATE_STORAGE_FORMAT);
+
+      // Colonne .value requise pour les conditions / tri sur champ datetime.
       $events_query = \Drupal::entityQuery('node')
         ->condition('type', 'event')
         ->condition('status', 1)
-        ->sort('field_event_date', 'ASC')
+        ->condition('field_event_date.value', $date_today, '>=')
+        ->sort('field_event_date.value', 'ASC')
         ->range(0, 3)
         ->accessCheck(TRUE);
-      
-      // Filtrer uniquement les événements futurs ou d'aujourd'hui
-      $events_query->condition('field_event_date', date('Y-m-d'), '>=');
-      
+
       $events_nids = $events_query->execute();
-      
+      $events_rendered = [];
+
       if (!empty($events_nids)) {
         $events_nodes = $node_storage->loadMultiple($events_nids);
-        $events_rendered = [];
-        
-        foreach ($events_nodes as $event_node) {
-          // Afficher uniquement titre + date (sans le contenu/body de l'événement)
-          $event_date_value = $event_node->get('field_event_date')->value;
-          $event_url = $event_node->toUrl();
-          $event_link = Link::fromTextAndUrl($event_node->getTitle(), $event_url)->toRenderable();
-          $event_link['#attributes']['rel'] = 'bookmark';
-          
-          $item = [
-            '#type' => 'container',
-            '#attributes' => [
-              'class' => ['node', 'node--type-event', 'node--view-mode-teaser', 'agenda-sidebar-item'],
-            ],
-            'event_teaser' => [
-              '#type' => 'container',
-              '#attributes' => ['class' => ['event-teaser']],
-              'event_date' => NULL,
-              'event_content' => [
-                '#type' => 'container',
-                '#attributes' => ['class' => ['event-content']],
-                'title' => [
-                  '#type' => 'html_tag',
-                  '#tag' => 'h3',
-                  '#attributes' => ['class' => ['event-title']],
-                  '#value' => NULL,
-                ],
-              ],
-            ],
-          ];
-          
-          if ($event_date_value) {
-            $item['event_teaser']['event_date'] = [
-              '#type' => 'container',
-              '#attributes' => ['class' => ['event-date']],
-              'day' => [
-                '#type' => 'html_tag',
-                '#tag' => 'div',
-                '#attributes' => ['class' => ['event-date-day']],
-                '#value' => \Drupal::service('date.formatter')->format(strtotime($event_date_value), 'custom', 'd'),
-              ],
-              'month' => [
-                '#type' => 'html_tag',
-                '#tag' => 'div',
-                '#attributes' => ['class' => ['event-date-month']],
-                '#value' => \Drupal::service('date.formatter')->format(strtotime($event_date_value), 'custom', 'M'),
-              ],
-            ];
+        foreach ($events_nids as $nid) {
+          if (isset($events_nodes[$nid])) {
+            $events_rendered[] = $view_builder->view($events_nodes[$nid], 'teaser');
           }
-          
-          $item['event_teaser']['event_content']['title']['#value'] = $event_link;
-          $events_rendered[] = $item;
         }
-        
-        // Remplacer le titre par un h3 contenant le lien (inline_template avec lien déjà rendu)
-        foreach ($events_rendered as &$item) {
-          $link = $item['event_teaser']['event_content']['title']['#value'];
-          $item['event_teaser']['event_content']['title'] = [
-            '#type' => 'inline_template',
-            '#template' => '<h3 class="event-title">{{ link|raw }}</h3>',
-            '#context' => ['link' => \Drupal::service('renderer')->renderRoot($link)],
-          ];
-        }
-        
-        // Construire le render array du bloc
-        $variables['agenda_block'] = [
-          '#type' => 'container',
-          '#attributes' => ['class' => ['agenda-block']],
-          'title' => [
-            '#type' => 'html_tag',
-            '#tag' => 'h2',
-            '#value' => 'Agenda',
-            '#attributes' => ['class' => ['agenda-title']],
-          ],
-          'content' => [
-            '#type' => 'container',
-            '#attributes' => ['class' => ['agenda-content']],
-          ] + $events_rendered,
-          'footer' => [
-            '#type' => 'html_tag',
-            '#tag' => 'div',
-            '#attributes' => ['class' => ['agenda-footer']],
-            '#value' => '<a href="/agenda" class="agenda-more-link">Afficher plus</a>',
-          ],
+      }
+
+      $agenda_content = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['agenda-content']],
+      ];
+      if (!empty($events_rendered)) {
+        $agenda_content['items'] = $events_rendered;
+      }
+      else {
+        $agenda_content['empty'] = [
+          '#type' => 'html_tag',
+          '#tag' => 'p',
+          '#value' => t('Aucun événement à venir pour le moment.'),
+          '#attributes' => ['class' => ['agenda-empty']],
         ];
       }
+
+      $variables['agenda_block'] = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['agenda-block']],
+        'title' => [
+          '#type' => 'html_tag',
+          '#tag' => 'h2',
+          '#value' => (string) t('Agenda'),
+          '#attributes' => ['class' => ['agenda-title']],
+        ],
+        'content' => $agenda_content,
+        'footer' => [
+          '#type' => 'html_tag',
+          '#tag' => 'div',
+          '#attributes' => ['class' => ['agenda-footer']],
+          '#value' => '<a href="/agenda" class="agenda-more-link">Afficher plus</a>',
+        ],
+      ];
     }
     catch (\Exception $e) {
       // En cas d'erreur, ne pas bloquer l'affichage de la page
@@ -840,6 +794,18 @@ function spherevoices_theme_preprocess_page(&$variables) {
     catch (\Exception $e) {
       // En cas d'erreur, ne pas bloquer l'affichage de la page
       \Drupal::logger('spherevoices_theme')->error('Erreur lors du chargement du sondage: @message', ['@message' => $e->getMessage()]);
+    }
+
+    // La grille d'accueil remplace la vue « frontpage » (system_main). Sans cela,
+    // page.content réaffiche les mêmes articles, le sticky en tête (effet breaking
+    // news), le titre de page et le pager.
+    if (isset($variables['page']['content']) && is_array($variables['page']['content'])) {
+      foreach (Element::children($variables['page']['content']) as $key) {
+        $element = $variables['page']['content'][$key];
+        if (is_array($element) && (($element['#plugin_id'] ?? '') === 'system_main_block')) {
+          unset($variables['page']['content'][$key]);
+        }
+      }
     }
   }
   
@@ -1194,144 +1160,44 @@ function spherevoices_theme_preprocess_form_element(&$variables) {
 }
 
 /**
- * Remplace les balises <drupal-media> par le HTML vidéo ou image (corps d'article).
- * Si le corps contient déjà la div vide (sauvegarde sans drupal-media), on la supprime et on affiche un message.
+ * Implements hook_preprocess_image_widget().
+ * 
+ * S'assure que le preview est bien dans data.preview pour l'affichage dans le wrapper.
  */
-function _spherevoices_theme_replace_drupal_media_tags($html) {
-  if (!is_string($html)) {
-    return $html;
-  }
-  // 1) Remplacer drupal-media par le HTML vidéo/image.
-  if (stripos($html, 'drupal-media') !== FALSE) {
-    $pattern = '/<drupal-media\s[^>]*\bdata-entity-uuid="([^"]+)"[^>]*>.*?<\/drupal-media>/si';
-    $html = preg_replace_callback($pattern, function ($m) {
-      $uuid = trim($m[1]);
-      if ($uuid === '') {
-        return '';
-      }
-      try {
-        $media = \Drupal::service('entity.repository')->loadEntityByUuid('media', $uuid);
-      } catch (\Throwable $e) {
-        return '';
-      }
-      if (!$media) {
-        return '';
-      }
-      $media = \Drupal::service('entity.repository')->getTranslationFromContext($media);
-
-      if ($media->hasField('field_media_video_file') && !$media->get('field_media_video_file')->isEmpty()) {
-        $file = $media->get('field_media_video_file')->entity;
-        if (!$file) {
-          $item = $media->get('field_media_video_file')->first();
-          if ($item && !empty($item->target_id)) {
-            $file = \Drupal::entityTypeManager()->getStorage('file')->load($item->target_id);
-          }
-        }
-        if ($file) {
-          $url = \Drupal::service('file_url_generator')->generateAbsoluteString($file->getFileUri());
-          $mime = $file->getMimeType() ?: 'video/mp4';
-          $url_attr = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
-          $mime_attr = htmlspecialchars($mime, ENT_QUOTES, 'UTF-8');
-          return '<div class="media-video-embed"><video controls preload="metadata" style="max-width:100%;height:auto;display:block;"><source src="' . $url_attr . '" type="' . $mime_attr . '"></video></div>';
-        }
-      }
-
-      if ($media->bundle() === 'image' && $media->hasField('field_media_image') && !$media->get('field_media_image')->isEmpty()) {
-        $item = $media->get('field_media_image')->first();
-        if ($item && $item->entity) {
-          $url = \Drupal::service('file_url_generator')->generateAbsoluteString($item->entity->getFileUri());
-          $alt = $item->get('alt')->getValue() ?? '';
-          $url_attr = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
-          $alt_attr = htmlspecialchars($alt, ENT_QUOTES, 'UTF-8');
-          return '<div class="media-image-embed"><img src="' . $url_attr . '" alt="' . $alt_attr . '" loading="lazy" style="max-width:100%;height:auto;display:block;" /></div>';
-        }
-      }
-
-      return '';
-    }, $html);
-  }
-
-  // 2) Remplacer la div vidéo vide (toute variante : espaces, newlines, attributs) par un message.
-  $msg = '<p class="media-video-missing">' . t('Vidéo : ré-enregistrez l’article après avoir ré-inséré la vidéo via le bouton « Média » dans le corps.') . '</p>';
-  $html = str_ireplace('<div class="media-video-embed"></div>', $msg, $html);
-  // Regex permissive : div avec class contenant media-video-embed, contenu uniquement espaces/newlines/&nbsp;.
-  $html = preg_replace('/<div[^>]*class="[^"]*media-video-embed[^"]*"[^>]*>[\s\xc2\xa0]*<\/div>/su', $msg, $html);
-
-  return $html;
-}
-
 /**
  * Implements hook_preprocess_node().
  */
 function spherevoices_theme_preprocess_node(&$variables) {
   $node = $variables['node'];
-  
-  // Pour les articles en mode full/default (page complète) : fournir l'URL de la vidéo ou de l'image du bandeau
-  // et remplacer les drupal-media dans le corps.
-  $view_mode = $variables['view_mode'] ?? 'full';
-  $is_article_full_page = $node->bundle() === 'article' && ($view_mode === 'full' || $view_mode === 'default');
-  if ($is_article_full_page) {
-    $variables['article_hero_video_uri'] = NULL;
-    $variables['article_hero_image'] = NULL; // [uri => ..., alt => ...]
-    // Recharger le nœud depuis la base pour avoir le body brut (éviter cache/altération).
-    $node_storage = \Drupal::entityTypeManager()->getStorage('node');
-    $fresh_node = $node_storage->load($node->id());
-    if ($fresh_node) {
-      $node = $fresh_node;
+
+  // Dates d'événement en français (Twig |date('M') reste en anglais).
+  if ($node->bundle() === 'event' && $node->hasField('field_event_date') && !$node->get('field_event_date')->isEmpty()) {
+    $field = $node->get('field_event_date');
+    $raw = $field->value;
+    if (is_string($raw) && preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $raw, $m)) {
+      $month_num = (int) $m[2];
+      $day = (int) $m[3];
+      $abbrev = _spherevoices_theme_french_month_abbrev();
+      $variables['event_date_day'] = sprintf('%02d', $day);
+      $variables['event_date_month_fr'] = $abbrev[$month_num] ?? '';
     }
-    $body_field = $node->get('body');
-    if (!$body_field->isEmpty()) {
-      $first = $body_field->first();
-      $variables['body_format_debug'] = $first ? ($first->get('format')->getValue() ?? 'non défini') : 'vide';
-      $text = $first ? $first->value : '';
-      // Toujours remplacer drupal-media et utiliser cette sortie (jamais content.body pour éviter la div vide).
-      if (is_string($text) && $text !== '') {
-        $processed_markup = _spherevoices_theme_replace_drupal_media_tags($text);
-        $variables['article_body_processed'] = ['#markup' => \Drupal\Core\Render\Markup::create($processed_markup)];
-      } else {
-        $variables['article_body_processed'] = NULL;
-      }
-    } else {
-      $variables['body_format_debug'] = 'vide';
-      $variables['article_body_processed'] = NULL;
-    }
-    if ($node->hasField('field_media_thumbnail') && !$node->get('field_media_thumbnail')->isEmpty()) {
-      $media = $node->get('field_media_thumbnail')->entity;
-      if ($media && $media->hasField('field_media_video_file') && !$media->get('field_media_video_file')->isEmpty()) {
-        $file = $media->get('field_media_video_file')->entity;
-        if ($file) {
-          $variables['article_hero_video_uri'] = $file->getFileUri();
-        }
-      }
-    }
-    if (!$variables['article_hero_video_uri'] && $node->hasField('field_image') && !$node->get('field_image')->isEmpty()) {
-      $img = $node->get('field_image')->entity;
-      if ($img) {
-        $item = $node->get('field_image')->first();
-        $variables['article_hero_image'] = [
-          'uri' => $img->getFileUri(),
-          'alt' => $item ? $item->get('alt')->getValue() : '',
-        ];
-      }
+    $dt = $field->date;
+    if ($dt) {
+      $variables['event_date_long_fr'] = \Drupal::service('date.formatter')->format(
+        $dt->getTimestamp(),
+        'custom',
+        'j F Y',
+        $dt->getTimezone()->getName(),
+        'fr'
+      );
     }
   }
-  
-  // Cacher le label "Media en miniature" / "Image" sur les champs média et image en teaser et full
-  $view_mode = $variables['view_mode'] ?? 'full';
-  $hide_label_view_modes = ['teaser', 'full'];
-  if ($node->bundle() === 'article' && in_array($view_mode, $hide_label_view_modes)) {
-    foreach (['field_media_thumbnail', 'field_image'] as $field_name) {
-      if (isset($variables['content'][$field_name])) {
-        $variables['content'][$field_name]['#title_display'] = 'hidden';
-      }
-    }
-  }
-  
-  // Pour les articles en mode teaser qui sont sticky (breaking news)
-  if ($node->bundle() === 'article' && $variables['view_mode'] === 'teaser' && $node->isSticky()) {
-    // Ajouter une suggestion de template spécifique
-    $variables['theme_hook_suggestions'][] = 'node__article__breaking_news';
-  }
+
+  // Couverture média : spherevoices_core_preprocess_node (dernier) fournit article_cover_*.
+
+  // Tendances / teaser standard : spherevoices_core_preprocess_node (dernier) pose force_standard_teaser.
+  // La suggestion node__article__breaking_news en preprocess n’influence pas le fichier Twig réellement
+  // chargé (choix fait avant preprocess) ; le layout breaking passe par node--article--teaser.html.twig.
   
   // Corriger les attributes pour les brèves dans les vues
   if ($variables['node']->bundle() === 'breve' && isset($variables['attributes']) && is_object($variables['attributes'])) {
@@ -1342,26 +1208,11 @@ function spherevoices_theme_preprocess_node(&$variables) {
     }
     $variables['attributes'] = $attributes_array;
   }
-}
 
-/**
- * Implements hook_preprocess_media().
- *
- * For video media, provide a direct file URL so the template can render the
- * video even when the file_video formatter skips the file (e.g. wrong MIME type).
- */
-function spherevoices_theme_preprocess_media(&$variables) {
-  $media = $variables['media'];
-  if ($media->bundle() !== 'video') {
-    return;
-  }
-  if (!$media->hasField('field_media_video_file') || $media->get('field_media_video_file')->isEmpty()) {
-    return;
-  }
-  $file = $media->get('field_media_video_file')->entity;
-  if ($file) {
-    $variables['video_src_url'] = \Drupal::service('file_url_generator')->generateAbsoluteString($file->getFileUri());
-    $variables['video_mime_type'] = $file->getMimeType() ?: 'video/mp4';
+  // Garantit article_body_segments / sv-video même si le preprocess du module
+  // n’est pas invoqué pour le hook de suggestion réellement utilisé.
+  if (function_exists('spherevoices_core_apply_article_body_display')) {
+    spherevoices_core_apply_article_body_display($variables);
   }
 }
 
@@ -1498,15 +1349,8 @@ function spherevoices_theme_preprocess_views_exposed_form(&$variables) {
  * Implements hook_preprocess_field().
  * 
  * Force l'utilisation de l'image originale au lieu des styles d'image.
- * Cache le label "Media en miniature" / "Image" sur les articles.
  */
 function spherevoices_theme_preprocess_field(&$variables) {
-  // Cacher le label du champ pour image et média miniature sur les articles
-  if ($variables['element']['#bundle'] === 'article' && in_array($variables['field_name'], ['field_image', 'field_media_thumbnail'], TRUE)) {
-    $variables['label_hidden'] = TRUE;
-    $variables['element']['#title_display'] = 'hidden';
-  }
-
   // Seulement pour le champ image des articles
   if ($variables['field_name'] === 'field_image' && $variables['element']['#bundle'] === 'article') {
     // Parcourir tous les items du champ

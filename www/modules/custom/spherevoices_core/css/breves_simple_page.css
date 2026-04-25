@@ -1,0 +1,17 @@
+/**
+ * Page liste des brèves (/breves) — liste à puces simple.
+ */
+.breves-simple-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  max-width: 42rem;
+}
+
+.breves-simple-list li {
+  margin-bottom: 0.5rem;
+  line-height: 1.45;
+}
+
+.breves-page-empty {
+  color: #666;
+}

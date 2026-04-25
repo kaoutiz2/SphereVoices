@@ -1,0 +1,58 @@
+/**
+ * @file
+ * Formulaire article (Claro, Gin, etc.) : la prévisualisation médiathèque ne doit pas
+ * empiéter sur la colonne latérale (Publié, auteur, accordéons).
+ */
+
+.layout-node-form .layout-region--main,
+.layout-node-form .layout-region__content,
+.node-form .layout-region--main,
+.node-form .layout-region__content,
+form.node-article-form .layout-region--main,
+.gin--edit-form .layout-region--main {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* clean_class sur le nom de champ : field_couverture → field-couverture */
+.field--name-field-couverture,
+.field--name-field-cover-media,
+.field--widget-media-library-widget {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.field--name-field-couverture .media-library-widget,
+.field--name-field-couverture .media-library-selection,
+.field--name-field-couverture .js-media-library-item,
+.field--name-field-couverture .media-library-item__preview,
+.field--name-field-couverture .media-library-item__content,
+.field--name-field-cover-media .media-library-widget,
+.field--name-field-cover-media .media-library-selection,
+.field--widget-media-library-widget .media-library-selection,
+.field--widget-media-library-widget .media-library-item__preview {
+  max-width: 100% !important;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.field--name-field-couverture .media-library-item__preview img,
+.field--name-field-couverture .media-library-item__preview video,
+.field--name-field-couverture .media-library-selection img,
+.field--name-field-couverture .media-library-selection video,
+.field--name-field-couverture img,
+.field--name-field-couverture video,
+.field--name-field-cover-media .media-library-item__preview img,
+.field--name-field-cover-media .media-library-item__preview video,
+.field--widget-media-library-widget .media-library-item__preview img,
+.field--widget-media-library-widget .media-library-item__preview video,
+.field--widget-media-library-widget .media-library-selection img,
+.field--widget-media-library-widget .media-library-selection video {
+  max-width: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  display: block;
+  box-sizing: border-box;
+  object-fit: contain;
+}

@@ -1,0 +1,15 @@
+{#
+/**
+ * @file
+ * Grille « Tendances » : articles les plus lus (même carte que l’accueil).
+ */
+#}
+{% if is_empty %}
+  <p class="trending-page-empty">{{ 'Aucun article pour le moment.'|t }}</p>
+{% else %}
+  <div class="trending-page-grid">
+    {% for row in rows %}
+      <div class="article-gallery-item">{{ row }}</div>
+    {% endfor %}
+  </div>
+{% endif %}

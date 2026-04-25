@@ -1,0 +1,22 @@
+uuid: poll-desc-field-uuid-001
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_poll_description
+    - node.type.poll
+  module:
+    - text
+id: node.poll.field_poll_description
+field_name: field_poll_description
+entity_type: node
+bundle: poll
+label: Description
+description: 'Description du sondage'
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  text_processing: 1
+field_type: text_long

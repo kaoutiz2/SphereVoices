@@ -94,6 +94,10 @@
             if (formItem.classList.contains('description') || formItem.closest('.description') || formItem.tagName === 'DETAILS') {
               return;
             }
+            // user_pass : clé « mail » = texte d'aide (#markup), pas un champ — ne pas injecter d'input mail.
+            if (name === 'mail' && formItem.closest('form#user-pass')) {
+              return;
+            }
             
             const inputId = 'edit-' + name;
             // Vérifier si l'input existe déjà dans le form-item
@@ -186,6 +190,7 @@
           // Si le formulaire n'existe pas, le créer
           let form = document.querySelector('form#user-login-form, form#user-register-form, form#user-pass');
           const currentPath = window.location.pathname;
+          const isPasswordRequestPage = currentPath.includes('/user/password');
           
           // Vérifier si on est vraiment sur une page de formulaire utilisateur
           const isUserFormPage = currentPath.includes('/user/login') || 
@@ -469,7 +474,8 @@
               injectInputInFormItem(formItem, 'pass', 'password', 'current-password');
             }
             
-            if ((classes.includes('form-item-mail') || classes.includes('js-form-item-mail')) && 
+            if (!isPasswordRequestPage &&
+                (classes.includes('form-item-mail') || classes.includes('js-form-item-mail')) && 
                 !formItem.querySelector('#edit-mail') && 
                 !formItem.querySelector('input[name="mail"]')) {
               injectInputInFormItem(formItem, 'mail', 'email', 'email');
@@ -496,7 +502,8 @@
                          !formItem.querySelector('input[type="file"]') &&
                          !formItem.querySelector('input[type="checkbox"]')) {
                 injectInputInFormItem(formItem, 'pass', 'password', 'current-password');
-              } else if ((text.includes('email') || text.includes('e-mail') || text.includes('courriel')) && 
+              } else if (!isPasswordRequestPage &&
+                         (text.includes('email') || text.includes('e-mail') || text.includes('courriel')) && 
                          !formItem.querySelector('#edit-mail') && 
                          !formItem.querySelector('input[name="mail"]') &&
                          !formItem.querySelector('input[type="file"]') &&

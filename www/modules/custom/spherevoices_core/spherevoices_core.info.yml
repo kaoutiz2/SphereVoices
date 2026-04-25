@@ -4,3 +4,9 @@ description: 'Module principal pour les fonctionnalités spécifiques à SphereV
 core_version_requirement: ^10 || ^11
 package: Custom
 
+dependencies:
+  - drupal:media
+  - drupal:node
+  - drupal:user
+  - drupal:statistics
+

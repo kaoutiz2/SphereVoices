@@ -59,6 +59,7 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: 2rem var(--spacing-unit);
+  padding-top: 0;
 }
 
 /* Breaking News Section - S'adapte au container */
@@ -71,6 +72,8 @@
 
 .article-breaking-news {
   position: relative;
+  display: flex;
+  flex-direction: column;
   min-height: 500px;
   background-color: var(--color-bg-light);
   border: none;
@@ -81,8 +84,10 @@
 }
 
 .article-breaking-news-link {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: row;
+  align-items: stretch;
   text-decoration: none;
   color: inherit;
   transition: transform 0.2s ease;
@@ -100,38 +105,48 @@
   flex: 0 0 70%;
   width: 70%;
   min-height: 320px;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
 }
 
+/* flex-basis 0 : les médias en position absolute ne donnent pas de hauteur ; il faut
+   consommer toute la hauteur du wrapper pour éviter une bande vide sous la vidéo/image. */
 .article-breaking-news-image {
+  position: relative;
+  flex: 1 1 0;
   width: 100%;
-  height: 100%;
   min-height: 320px;
   overflow: hidden;
-  position: relative;
   display: block;
 }
 
-.article-breaking-news-image .field,
-.article-breaking-news-image .field__items,
-.article-breaking-news-image .field__item,
-.article-breaking-news-image .media,
-.article-breaking-news-image .field--name-field-media-image,
-.article-breaking-news-image [class*="field--"],
-.article-breaking-news-image div {
-  width: 100% !important;
-  height: 100% !important;
-  min-height: 100% !important;
+/* Wrappers Drupal / médiathèque : calque plein cadre sous le badge */
+.article-breaking-news .article-breaking-news-image .field,
+.article-breaking-news .article-breaking-news-image .field__items,
+.article-breaking-news .article-breaking-news-image .field__item,
+.article-breaking-news .article-breaking-news-image .media,
+.article-breaking-news .article-breaking-news-image .field--name-field-media-image,
+.article-breaking-news .article-breaking-news-image [class*="field--"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
   display: block;
 }
 
-.article-breaking-news-image img,
-.article-breaking-news-image .article-teaser-img-cover,
-.article-breaking-news-image .field__item img {
-  width: 100% !important;
-  height: 100% !important;
-  min-height: 100% !important;
-  max-height: none !important;
-  object-fit: cover !important;
+.article-breaking-news .article-breaking-news-image video,
+.article-breaking-news .article-breaking-news-image img,
+.article-breaking-news .article-breaking-news-image .article-teaser-img-cover,
+.article-breaking-news .article-breaking-news-image .field__item img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: cover;
   object-position: center;
   display: block;
 }
@@ -180,7 +195,7 @@
 }
 
 .article-breaking-news-title {
-  font-size: 2rem;
+  font-size: 2.75rem;
   font-weight: 700;
   color: var(--color-secondary);
   margin: 0 0 1rem 0;
@@ -554,14 +569,7 @@
 .article-teaser-image .media,
 .article-teaser-image .field--name-field-media-image,
 .article-teaser-image [class*="field--"],
-.article-teaser-image div,
-.article-breaking-news-image .field,
-.article-breaking-news-image .field__items,
-.article-breaking-news-image .field__item,
-.article-breaking-news-image .media,
-.article-breaking-news-image .field--name-field-media-image,
-.article-breaking-news-image [class*="field--"],
-.article-breaking-news-image div {
+.article-teaser-image div {
   width: 100% !important;
   height: 100% !important;
   min-height: 100% !important;
@@ -612,6 +620,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.article-teaser-sponsored-label {
+  background-color: rgba(184, 134, 11, 0.95);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
 }
 
 .article-teaser-content {
@@ -767,7 +781,7 @@
   }
   
   .article-breaking-news-title {
-    font-size: 1.75rem;
+    font-size: 2.15rem;
   }
   
   .article-breaking-news-summary {

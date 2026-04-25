@@ -5,16 +5,478 @@
  * Module file for SphereVoices Core.
  */
 
+use Drupal\Component\Utility\Html;
+use Drupal\Component\Utility\Xss;
+use Drupal\Core\Cache\Cache;
+use Drupal\Core\Entity\Display\EntityFormDisplayInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Url;
+use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
 use Drupal\Core\Render\Markup;
-use Drupal\filter\Element\ProcessedText;
+use Drupal\Core\Template\Attribute;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\file\FileInterface;
+use Drupal\media\MediaInterface;
+use Drupal\media\Plugin\Filter\MediaEmbed;
+use Drupal\node\NodeInterface;
+use Drupal\spherevoices_core\Render\ArticleBodyPostRender;
+
+/**
+ * Implements hook_theme_registry_alter().
+ *
+ * Exécute nos preprocess en dernier (node + field) pour que le corps article /
+ * le champ body ne soient pas écrasés ensuite.
+ */
+function spherevoices_core_theme_registry_alter(&$theme_registry): void {
+  foreach ($theme_registry as $hook => &$info) {
+    $base = $info['base hook'] ?? '';
+    $callback = NULL;
+    if ($hook === 'node' || $base === 'node') {
+      $callback = 'spherevoices_core_preprocess_node';
+    }
+    elseif ($hook === 'field' || $base === 'field') {
+      $callback = 'spherevoices_core_preprocess_field';
+    }
+    if ($callback === NULL) {
+      continue;
+    }
+    if (empty($info['preprocess functions']) || !is_array($info['preprocess functions'])) {
+      continue;
+    }
+    $funcs = &$info['preprocess functions'];
+    $funcs = array_values(array_diff($funcs, [$callback]));
+    $funcs[] = $callback;
+  }
+  unset($info);
+}
+
+/**
+ * Implements hook_page_attachments().
+ *
+ * CSS formulaire nœud : le thème front n’est pas actif en admin (Claro/Gin), il faut
+ * attacher les correctifs ici pour la médiathèque (prévisualisation qui déborde).
+ */
+function spherevoices_core_page_attachments(array &$attachments): void {
+  $route = \Drupal::routeMatch()->getRouteName();
+  if ($route === 'entity.node.edit_form' || $route === 'entity.node.add_form') {
+    $attachments['#attached']['library'][] = 'spherevoices_core/admin_node_form';
+  }
+}
+
+/**
+ * Texte brut du champ body : tous les deltas non vides concaténés (getValue + items).
+ *
+ * Évite de ne lire que le premier delta si le média est dans un autre fragment.
+ */
+function _spherevoices_core_body_field_concat_raw_html($field): string {
+  if ($field === NULL || !method_exists($field, 'getValue')) {
+    return '';
+  }
+  $parts = [];
+  foreach ($field->getValue() as $row) {
+    $v = isset($row['value']) && is_string($row['value']) ? $row['value'] : '';
+    if ($v !== '') {
+      $parts[] = $v;
+    }
+  }
+  if ($parts !== []) {
+    return implode("\n", $parts);
+  }
+  foreach ($field as $item) {
+    if ($item === NULL) {
+      continue;
+    }
+    $v = $item->value ?? '';
+    if (is_string($v) && $v !== '') {
+      $parts[] = $v;
+    }
+  }
+  return $parts !== [] ? implode("\n", $parts) : '';
+}
+
+/**
+ * HTML brut du champ body (premier delta non vide), sans se fier à isEmpty().
+ *
+ * Utilise la traduction contextuelle et getValue() pour éviter un corps vide
+ * alors que le HTML source contient bien &lt;drupal-media&gt;.
+ *
+ * Si la traduction courante a un body vide en base mais l’entité affiche quand
+ * même du contenu (repli i18n), on lit la langue par défaut.
+ */
+function _spherevoices_core_node_body_raw_html(NodeInterface $node): string {
+  if (!$node->hasField('body')) {
+    return '';
+  }
+  $repository = \Drupal::service('entity.repository');
+  $default_langcode = \Drupal::languageManager()->getDefaultLanguage()->getId();
+  $current = $repository->getTranslationFromContext($node);
+  $html = _spherevoices_core_body_field_concat_raw_html($current->get('body'));
+  if ($html !== '') {
+    return _spherevoices_core_strip_utf8_bom($html);
+  }
+  if ($current->language()->getId() !== $default_langcode && $node->hasTranslation($default_langcode)) {
+    $fallback = _spherevoices_core_body_field_concat_raw_html($node->getTranslation($default_langcode)->get('body'));
+    if ($fallback !== '') {
+      return _spherevoices_core_strip_utf8_bom($fallback);
+    }
+  }
+  return '';
+}
+
+/**
+ * Indique si la chaîne contient probablement un embed média (balise ou attributs).
+ */
+function _spherevoices_core_body_raw_has_strong_media_embed_hint(string $html): bool {
+  if ($html === '') {
+    return FALSE;
+  }
+  return (bool) (stripos($html, 'drupal-media') !== FALSE
+    || (preg_match('/data-entity-uuid\s*=\s*["\'][^"\']+["\']/i', $html)
+      && preg_match('/data-entity-type\s*=\s*["\']media["\']/i', $html)));
+}
+
+/**
+ * HTML brut du corps pour reconstruction : nœud + #items du render array field (si fourni).
+ *
+ * Le formatter utilise parfois une liste de champs différente de getTranslationFromContext()->body
+ * (repli i18n, révision, etc.) : #items reflète ce qui est réellement rendu.
+ */
+function _spherevoices_core_article_body_raw_for_processing(NodeInterface $node, ?array $field_build = NULL): string {
+  $from_node = _spherevoices_core_strip_utf8_bom(_spherevoices_core_node_body_raw_html($node));
+  $from_items = '';
+  if (is_array($field_build) && isset($field_build['#items']) && $field_build['#items'] instanceof FieldItemListInterface) {
+    $from_items = _spherevoices_core_strip_utf8_bom(_spherevoices_core_body_field_concat_raw_html($field_build['#items']));
+  }
+  $hint_items = _spherevoices_core_body_raw_has_strong_media_embed_hint($from_items);
+  $hint_node = _spherevoices_core_body_raw_has_strong_media_embed_hint($from_node);
+  if ($hint_items && !$hint_node) {
+    return $from_items;
+  }
+  if ($hint_node && !$hint_items) {
+    return $from_node;
+  }
+  if (strlen($from_items) > strlen($from_node)) {
+    return $from_items !== '' ? $from_items : $from_node;
+  }
+  return $from_node !== '' ? $from_node : $from_items;
+}
+
+/**
+ * Removes a UTF-8 BOM prefix so embed detection matches the first tag.
+ */
+function _spherevoices_core_strip_utf8_bom(string $html): string {
+  if ($html !== '' && str_starts_with($html, "\xEF\xBB\xBF")) {
+    return substr($html, 3);
+  }
+  return $html;
+}
+
+/**
+ * Tag list if the renderer ever treats #markup as unsafe (plain string).
+ *
+ * Core's admin XSS list has no video/iframe; embed markup would lose <video>.
+ */
+function _spherevoices_core_embed_markup_allowed_tags(): array {
+  return array_values(array_unique(array_merge(
+    Xss::getAdminTagList(),
+    ['video', 'source', 'track', 'iframe', 'object', 'embed']
+  )));
+}
+
+/**
+ * URL absolue vers le contrôleur qui stream le MP4.
+ *
+ * Contourne les 404 quand Apache renvoie tout vers index.php (réécriture) ou
+ * quand les chemins avec espaces ne sont pas résolus comme fichiers statiques.
+ */
+function _spherevoices_core_public_video_stream_url(FileInterface $file): string {
+  return Url::fromRoute('spherevoices_core.inline_public_video', ['file' => (string) $file->id()], ['absolute' => TRUE])->toString();
+}
+
+/**
+ * Indique si le fichier est référencé par un média « video » consultable.
+ */
+function _spherevoices_core_file_linked_to_viewable_video_media(FileInterface $file, AccountInterface $account): bool {
+  if (!str_starts_with($file->getFileUri(), 'public://')) {
+    return FALSE;
+  }
+  $storage = \Drupal::entityTypeManager()->getStorage('media');
+  $ids = $storage->getQuery()
+    ->condition('bundle', 'video')
+    ->condition('field_media_video_file.target_id', $file->id())
+    ->accessCheck(TRUE)
+    ->range(0, 20)
+    ->execute();
+  if (!$ids) {
+    return FALSE;
+  }
+  foreach ($ids as $mid) {
+    $media = $storage->load($mid);
+    if ($media instanceof MediaInterface && $media->access('view', $account)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Champ référence média « couverture » (priorité au nom utilisé sur le site).
+ *
+ * @return string|null
+ *   Nom machine du champ (ex. field_couverture, field_cover_media).
+ */
+function _spherevoices_core_article_cover_field_name(NodeInterface $node): ?string {
+  if ($node->bundle() !== 'article') {
+    return NULL;
+  }
+  foreach (['field_couverture', 'field_cover_media'] as $field_name) {
+    if ($node->hasField($field_name) && !$node->get($field_name)->isEmpty()) {
+      return $field_name;
+    }
+  }
+  return NULL;
+}
+
+/**
+ * Couverture article : field_couverture ou field_cover_media (URL vidéo /sv-video/{fid}).
+ *
+ * @return array{video_src: string|null, image: array{uri: string, alt: string}|null}
+ */
+function spherevoices_core_article_cover_data(NodeInterface $node): array {
+  $empty = ['video_src' => NULL, 'image' => NULL];
+  $field_name = _spherevoices_core_article_cover_field_name($node);
+  if ($field_name === NULL) {
+    return $empty;
+  }
+  $media = $node->get($field_name)->entity;
+  if (!$media instanceof MediaInterface) {
+    return $empty;
+  }
+  $media = \Drupal::service('entity.repository')->getTranslationFromContext($media);
+  $account = \Drupal::currentUser();
+  if (!$media->access('view', $account)) {
+    return $empty;
+  }
+  if ($media->bundle() === 'video' && $media->hasField('field_media_video_file')) {
+    $file = _spherevoices_core_media_video_file_from_any_translation($media);
+    if (!$file instanceof FileInterface) {
+      return $empty;
+    }
+    $uri = $file->getFileUri();
+    $is_public = is_string($uri) && str_starts_with($uri, 'public:');
+    if ($media->access('view', $account) && ($is_public || $file->access('view', $account))) {
+      return [
+        'video_src' => _spherevoices_core_public_video_stream_url($file),
+        'image' => NULL,
+      ];
+    }
+    return $empty;
+  }
+  if ($media->bundle() === 'image' && $media->hasField('field_media_image')) {
+    $resolved = _spherevoices_core_media_image_file_and_alt_from_any_translation($media);
+    if ($resolved === NULL) {
+      return $empty;
+    }
+    ['file' => $file, 'alt' => $alt] = $resolved;
+    if (!$file instanceof FileInterface || !$file->access('view', $account)) {
+      return $empty;
+    }
+    return [
+      'video_src' => NULL,
+      'image' => [
+        'uri' => $file->getFileUri(),
+        'alt' => $alt,
+      ],
+    ];
+  }
+  return $empty;
+}
+
+/**
+ * Fichier vidéo du média : toutes les traductions (souvent le fichier n’est que sur la langue par défaut).
+ */
+function _spherevoices_core_media_video_file_from_any_translation(MediaInterface $media): ?FileInterface {
+  $storage = \Drupal::entityTypeManager()->getStorage('file');
+  foreach (_spherevoices_core_media_translation_candidates($media) as $m) {
+    if (!$m->hasField('field_media_video_file') || $m->get('field_media_video_file')->isEmpty()) {
+      continue;
+    }
+    $file = $m->get('field_media_video_file')->entity;
+    if (!$file instanceof FileInterface) {
+      $item = $m->get('field_media_video_file')->first();
+      if ($item && !empty($item->target_id)) {
+        $file = $storage->load($item->target_id);
+      }
+    }
+    if ($file instanceof FileInterface) {
+      return $file;
+    }
+  }
+  return NULL;
+}
+
+/**
+ * Fichier image + texte alternatif depuis une traduction qui porte réellement le fichier.
+ *
+ * @return array{file: \Drupal\file\FileInterface, alt: string}|null
+ */
+function _spherevoices_core_media_image_file_and_alt_from_any_translation(MediaInterface $media): ?array {
+  foreach (_spherevoices_core_media_translation_candidates($media) as $m) {
+    if (!$m->hasField('field_media_image') || $m->get('field_media_image')->isEmpty()) {
+      continue;
+    }
+    $file = $m->get('field_media_image')->entity;
+    if (!$file instanceof FileInterface) {
+      continue;
+    }
+    $item = $m->get('field_media_image')->first();
+    $alt = '';
+    if ($item) {
+      $values = $item->getValue();
+      $alt = (string) ($values['alt'] ?? '');
+    }
+    return ['file' => $file, 'alt' => $alt];
+  }
+  return NULL;
+}
+
+/**
+ * @return list<\Drupal\media\MediaInterface>
+ */
+function _spherevoices_core_media_translation_candidates(MediaInterface $media): array {
+  $out = [];
+  $seen = [];
+  foreach ($media->getTranslationLanguages(TRUE) as $langcode => $language) {
+    if (!$media->hasTranslation($langcode)) {
+      continue;
+    }
+    $t = $media->getTranslation($langcode);
+    $key = $t->id() . ':' . $langcode;
+    if (isset($seen[$key])) {
+      continue;
+    }
+    $seen[$key] = TRUE;
+    $out[] = $t;
+  }
+  return $out;
+}
+
+/**
+ * Corps d’article (full/default) : remplace body + segments Twig (appelable depuis le thème).
+ */
+function spherevoices_core_apply_article_body_display(array &$variables): void {
+  if (empty($variables['node'])) {
+    return;
+  }
+  $node = $variables['node'];
+  if ($node->bundle() !== 'article' || !in_array($variables['view_mode'], ['full', 'default'], TRUE)) {
+    return;
+  }
+  spherevoices_core_apply_article_body_embedded_media($variables);
+  _spherevoices_core_finalize_article_body_for_display($variables);
+}
+
+/**
+ * Implements hook_preprocess_node().
+ *
+ * Corps d’article (full/default) : médias + rendu final (ne dépend plus du thème).
+ */
+function spherevoices_core_preprocess_node(&$variables): void {
+  spherevoices_core_apply_article_body_display($variables);
+  _spherevoices_core_preprocess_node_article_cover($variables);
+  _spherevoices_core_preprocess_node_trending_standard_teaser($variables);
+}
+
+/**
+ * Page Tendances : cartes comme les articles classiques (Twig node--article--teaser).
+ *
+ * Le choix du template a lieu avant preprocess ; seul le flag Twig compte. Ce hook
+ * s’exécute en dernier (theme_registry_alter) pour garantir la variable.
+ */
+function _spherevoices_core_preprocess_node_trending_standard_teaser(array &$variables): void {
+  if (($variables['view_mode'] ?? '') !== 'teaser') {
+    return;
+  }
+  $request = \Drupal::request();
+  $route = \Drupal::routeMatch()->getRouteName();
+  $path = $request->getPathInfo();
+  $on_trending = $route === 'spherevoices_core.trending'
+    || $request->attributes->get('spherevoices_trending_page')
+    || (bool) preg_match('#/tendances/?$#', $path);
+  if ($on_trending || !empty($variables['elements']['#force_standard_teaser'])) {
+    $variables['force_standard_teaser'] = TRUE;
+  }
+}
+
+/**
+ * Variables Twig article_cover_* (exécuté en dernier via theme_registry_alter).
+ */
+function _spherevoices_core_preprocess_node_article_cover(array &$variables): void {
+  if (empty($variables['node'])) {
+    return;
+  }
+  $node = $variables['node'];
+  if ($node->bundle() !== 'article') {
+    return;
+  }
+  if (!in_array($variables['view_mode'], ['full', 'default', 'teaser', 'featured'], TRUE)) {
+    return;
+  }
+  $cover = spherevoices_core_article_cover_data($node);
+  if (!empty($cover['video_src'])) {
+    $variables['article_cover_video_src'] = $cover['video_src'];
+  }
+  if (!empty($cover['image']['uri'])) {
+    $variables['article_cover_image'] = $cover['image'];
+  }
+}
+
+/**
+ * Implements hook_preprocess_field().
+ *
+ * Remplace le rendu du champ body des articles (full/default) par le HTML unifié,
+ * même si le preprocess du nœud n’a pas modifié content.body (autre chemin de thème).
+ */
+function spherevoices_core_preprocess_field(&$variables): void {
+  $element = $variables['element'];
+  if (($element['#field_name'] ?? '') !== 'body' || ($element['#entity_type'] ?? '') !== 'node') {
+    return;
+  }
+  $entity = $element['#object'] ?? NULL;
+  if (!$entity instanceof NodeInterface || $entity->bundle() !== 'article') {
+    return;
+  }
+  $view_mode = $element['#view_mode'] ?? '';
+  if (!in_array($view_mode, ['full', 'default'], TRUE)) {
+    return;
+  }
+  $text = _spherevoices_core_article_body_raw_for_processing($entity, $element);
+  if ($text === '' || !_spherevoices_core_body_raw_contains_media_markup($text)) {
+    return;
+  }
+  $cache = [
+    'tags' => $entity->getCacheTags(),
+    'contexts' => Cache::mergeContexts($entity->getCacheContexts(), ['url.site']),
+    'max-age' => 0,
+  ];
+  $build = _spherevoices_core_article_body_build_from_raw($text, $cache);
+  _spherevoices_core_attach_article_body_post_render($build);
+  $variables['items'] = [
+    [
+      'content' => $build,
+      'attributes' => new Attribute(),
+    ],
+  ];
+}
 
 /**
  * Implements hook_entity_view_alter().
  *
- * - For media video: force video tag (no "Video file" label), including in body.
- * - For node article full: ensure body drupal-media tags are processed (fallback if filter/cache skips).
+ * - media video : balise <video> dans l'affichage du média.
+ * - node article : corps remplacé depuis la valeur brute (contourne les filtres).
  */
 function spherevoices_core_entity_view_alter(array &$build, $entity, $display) {
   if ($entity->getEntityTypeId() === 'media' && $entity->bundle() === 'video') {
@@ -24,12 +486,126 @@ function spherevoices_core_entity_view_alter(array &$build, $entity, $display) {
 
   if ($entity->getEntityTypeId() === 'node' && $entity->bundle() === 'article') {
     $mode = $display->getMode() ?? 'full';
-    if (in_array($mode, ['full', 'default'], TRUE) && !empty($build['content']['body']) && _spherevoices_core_body_contains_drupal_media($entity)) {
-      $build['#pre_render'] = array_merge(['spherevoices_core_node_article_body_media_pre_render'], $build['#pre_render'] ?? []);
-      // Forcer le recalcul à chaque requête pour que le remplacement vidéo soit toujours appliqué.
-      $build['#cache']['max-age'] = 0;
+    if (!in_array($mode, ['full', 'default'], TRUE)) {
+      return;
+    }
+    $body_renderable = isset($build['body']) && (!array_key_exists('#access', $build['body']) || $build['body']['#access'] !== FALSE);
+
+    $text = _spherevoices_core_article_body_raw_for_processing($entity, $build['body'] ?? NULL);
+    if ($text === '' || !_spherevoices_core_body_raw_contains_media_markup($text)) {
+      if ($body_renderable) {
+        _spherevoices_core_attach_article_body_post_render($build['body']);
+      }
+      return;
+    }
+
+    $weight = ($display->getComponent('body') ?? [])['weight'] ?? 0;
+    $build['body'] = _spherevoices_core_article_body_build_from_raw($text, [
+      'tags' => $entity->getCacheTags(),
+      'contexts' => Cache::mergeContexts($entity->getCacheContexts(), ['url.site']),
+      'max-age' => 0,
+    ]);
+    $build['body']['#weight'] = $weight;
+    _spherevoices_core_attach_article_body_post_render($build['body']);
+    // Évite un cache de rendu entité qui figerait l'ancien corps (formatter).
+    $build['#cache']['max-age'] = 0;
+  }
+}
+
+/**
+ * Remplace le corps des articles (full/default) par le HTML média depuis le champ brut.
+ *
+ * @see spherevoices_core_preprocess_node()
+ */
+function spherevoices_core_apply_article_body_embedded_media(array &$variables) {
+  $node = $variables['node'];
+  if ($node->bundle() !== 'article') {
+    return;
+  }
+  if (!in_array($variables['view_mode'], ['full', 'default'], TRUE)) {
+    return;
+  }
+  $body_el = $variables['elements']['body'] ?? NULL;
+  $text = _spherevoices_core_article_body_raw_for_processing($node, is_array($body_el) ? $body_el : NULL);
+  if ($text === '' || !_spherevoices_core_body_raw_contains_media_markup($text)) {
+    return;
+  }
+  $variables['content']['body'] = _spherevoices_core_article_body_build_from_raw($text, [
+    'tags' => $node->getCacheTags(),
+    'contexts' => Cache::mergeContexts($node->getCacheContexts(), ['url.site']),
+    'max-age' => 0,
+  ]);
+  _spherevoices_core_attach_article_body_post_render($variables['content']['body']);
+}
+
+/**
+ * Rend le champ body puis applique le nettoyage (contourne cache / #post_render field).
+ */
+function _spherevoices_core_finalize_article_body_for_display(array &$variables): void {
+  $node = $variables['node'];
+  if ($node->bundle() !== 'article' || !in_array($variables['view_mode'], ['full', 'default'], TRUE)) {
+    return;
+  }
+  unset($variables['article_body_segments']);
+  $body_el = $variables['elements']['body'] ?? NULL;
+  $raw = _spherevoices_core_article_body_raw_for_processing($node, is_array($body_el) ? $body_el : NULL);
+  if ($raw === '') {
+    return;
+  }
+
+  $renderer = \Drupal::service('renderer');
+  $cache = [
+    'tags' => $node->getCacheTags(),
+    'contexts' => Cache::mergeContexts($node->getCacheContexts(), ['url.site']),
+    'max-age' => 0,
+  ];
+
+  // Reconstruire depuis la valeur brute dès qu’un média est présent : évite le cache du
+  // formatter et les filtres qui laissent un <div class="media-video-embed"> vide.
+  if (_spherevoices_core_body_raw_contains_media_markup($raw)) {
+    // Un seul #markup (HTML complet) : évite les pertes d’enfants dans le renderer
+    // et ne dépend plus des segments Twig.
+    $html = _spherevoices_core_cleanup_empty_media_video_embeds(_spherevoices_core_article_body_unified_html($raw));
+    $variables['article_body_final'] = Markup::create($html);
+    unset($variables['article_body_segments']);
+    $variables['content']['body'] = _spherevoices_core_article_body_build_from_raw($raw, $cache);
+    _spherevoices_core_attach_article_body_post_render($variables['content']['body']);
+    return;
+  }
+  elseif (empty($variables['content']['body']) || !is_array($variables['content']['body'])) {
+    return;
+  }
+  else {
+    $variables['content']['body']['#cache']['max-age'] = 0;
+    unset($variables['content']['body']['#cache']['keys']);
+  }
+
+  $build = &$variables['content']['body'];
+  if (is_array($build)) {
+    unset($build['#printed'], $build['#cache']['keys']);
+  }
+  $html = (string) $renderer->render($variables['content']['body']);
+  if ($html === '') {
+    return;
+  }
+  $variables['article_body_final'] = Markup::create(_spherevoices_core_cleanup_empty_media_video_embeds($html));
+}
+
+/**
+ * Returns the machine name of the breaking news label field on articles, if any.
+ */
+function _spherevoices_core_article_breaking_label_field_name(): ?string {
+  $candidates = [
+    'field_breaking_news_label',
+    'field_field_breaking_news_label',
+  ];
+  $definitions = \Drupal::service('entity_field.manager')->getFieldDefinitions('node', 'article');
+  foreach ($candidates as $candidate) {
+    if (isset($definitions[$candidate])) {
+      return $candidate;
     }
   }
+  return NULL;
 }
 
 /**
@@ -39,152 +615,620 @@ function _spherevoices_core_alter_media_video_build(array &$build, $entity) {
   if (!$entity->hasField('field_media_video_file') || $entity->get('field_media_video_file')->isEmpty()) {
     return;
   }
-  $file = $entity->get('field_media_video_file')->entity;
+  $view_mode = $build['#view_mode'] ?? 'default';
+  $media = \Drupal::service('entity.repository')->getTranslationFromContext($entity);
+  $account = \Drupal::currentUser();
+  $file = $media->get('field_media_video_file')->entity;
   if (!$file) {
-    return;
+    $item = $media->get('field_media_video_file')->first();
+    if ($item && !empty($item->target_id)) {
+      $file = \Drupal::entityTypeManager()->getStorage('file')->load($item->target_id);
+    }
   }
-  $url = \Drupal::service('file_url_generator')->generateAbsoluteString($file->getFileUri());
-  $mime = $file->getMimeType() ?: 'video/mp4';
-  $url_attr = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
-  $mime_attr = htmlspecialchars($mime, ENT_QUOTES, 'UTF-8');
-
-  $html = '<div class="media-video-embed"><video controls preload="metadata" style="max-width:100%;height:auto;display:block;"><source src="' . $url_attr . '" type="' . $mime_attr . '"></video></div>';
-
-  $build['#spherevoices_video_html'] = $html;
-
+  $uri = $file ? $file->getFileUri() : '';
+  $is_public = is_string($uri) && str_starts_with($uri, 'public:');
+  $fragment = NULL;
+  if ($file && $media->access('view', $account) && ($is_public || $file->access('view', $account))) {
+    $fragment = _spherevoices_core_media_file_video_player_build($file);
+  }
+  else {
+    $html = _spherevoices_core_media_embed_markup($media, $view_mode);
+    if ($html === '') {
+      return;
+    }
+    $fragment = [
+      '#markup' => Markup::create($html),
+      '#allowed_tags' => _spherevoices_core_embed_markup_allowed_tags(),
+    ];
+  }
   foreach (Element::children($build) as $key) {
     unset($build[$key]);
   }
-  $build['content'] = [
-    '#markup' => Markup::create($html),
-  ];
-
-  $build['#pre_render'][] = 'spherevoices_core_media_video_pre_render';
-  $build['#cache']['max-age'] = 0;
-}
-
-/**
- * Checks if the node body (raw value) contains a drupal-media tag.
- */
-function _spherevoices_core_body_contains_drupal_media($node) {
-  if (!$node->hasField('body') || $node->get('body')->isEmpty()) {
-    return FALSE;
-  }
-  $value = $node->get('body')->value;
-  return is_string($value) && stripos($value, '<drupal-media') !== FALSE;
-}
-
-/**
- * Pre-render callback: force body with embedded media (article full/default).
- * Sans passer par les filtres du format : remplacement direct drupal-media → vidéo/image,
- * puis affichage du HTML (évite que les filtres suppriment <video> ou le placeholder).
- */
-function spherevoices_core_node_article_body_media_pre_render(array $build) {
-  $node = $build['#node'] ?? NULL;
-  if (!$node || !$node->hasField('body') || $node->get('body')->isEmpty()) {
-    return $build;
-  }
-  $body_item = $node->get('body')->first();
-  $text = $body_item->value;
-
-  if (!is_string($text) || stripos($text, '<drupal-media') === FALSE) {
-    return $build;
-  }
-
-  // Remplacement direct drupal-media → HTML vidéo/image, sans ProcessedText (les filtres suppriment <video>).
-  $markup = _spherevoices_core_replace_drupal_media_tags($text);
-
-  $build['content']['body'] = [
-    0 => [
-      '#markup' => Markup::create($markup),
-      '#cache' => [
-        'tags' => $node->getCacheTags(),
-        'contexts' => ['url.path'],
-      ],
+  // Le template media.html.twig attend des enfants nommés comme les champs (ex. field_media_video_file).
+  $build['field_media_video_file'] = $fragment + [
+    '#cache' => [
+      'tags' => $entity->getCacheTags(),
+      'max-age' => 0,
     ],
   ];
-
-  return $build;
 }
 
 /**
- * Remplace les balises <drupal-media> par le HTML vidéo ou image (corps d'article).
- * Supprime aussi la div vidéo vide si le corps a été enregistré sans la balise drupal-media.
+ * Whether the article body raw value needs forced media markup rendering.
+ */
+function _spherevoices_core_body_raw_contains_media_markup(string $value): bool {
+  if ($value === '') {
+    return FALSE;
+  }
+  if (stripos($value, '<drupal-media') !== FALSE || stripos($value, 'drupal-media') !== FALSE) {
+    return TRUE;
+  }
+  if (preg_match('/data-entity-uuid\s*=\s*["\'][^"\']+["\']/', $value) && preg_match('/data-entity-type\s*=\s*["\']media["\']/', $value)) {
+    return TRUE;
+  }
+  if (preg_match('/data-entity-type\s*=\s*["\']media["\']/i', $value)) {
+    return TRUE;
+  }
+  if (preg_match('/\bmedia-video-embed\b/i', $value)) {
+    return TRUE;
+  }
+  if (preg_match('/<figure[^>]*class\s*=\s*["\'][^"\']*drupal-media[^"\']*["\']/i', $value)) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Whether the article body raw value needs forced media markup rendering.
+ */
+function _spherevoices_core_body_contains_drupal_media($node) {
+  return _spherevoices_core_body_raw_contains_media_markup(_spherevoices_core_node_body_raw_html($node));
+}
+
+/**
+ * Adds a #post_render pass so empty .media-video-embed is fixed in final HTML.
+ */
+function _spherevoices_core_attach_article_body_post_render(array &$body_build): void {
+  $body_build['#post_render'] = $body_build['#post_render'] ?? [];
+  foreach ($body_build['#post_render'] as $callback) {
+    if (is_array($callback)
+      && ($callback[0] ?? '') === ArticleBodyPostRender::class
+      && ($callback[1] ?? '') === 'postRender') {
+      return;
+    }
+  }
+  $body_build['#post_render'][] = [ArticleBodyPostRender::class, 'postRender'];
+}
+
+/**
+ * Extrait UUID + view mode depuis les attributs d’une balise drupal-media.
+ *
+ * @return array{uuid: string, view_mode: string}|null
+ */
+function _spherevoices_core_parse_media_uuid_from_attributes(string $attrs): ?array {
+  if (!preg_match('/data-entity-uuid\s*=\s*([\'"])([^\'"]*)\1/', $attrs, $um)) {
+    if (!preg_match('/data-entity-uuid\s*=\s*([^\s>]+)/', $attrs, $um)) {
+      return NULL;
+    }
+    $uuid = html_entity_decode(trim($um[1], '"\''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+  }
+  else {
+    $uuid = html_entity_decode($um[2], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+  }
+  $uuid = trim($uuid);
+  if ($uuid === '') {
+    return NULL;
+  }
+  $view_mode = 'default';
+  if (preg_match('/data-view-mode\s*=\s*([\'"])([^\'"]*)\1/', $attrs, $vm)) {
+    $view_mode = $vm[2] !== '' ? $vm[2] : 'default';
+  }
+  return ['uuid' => $uuid, 'view_mode' => $view_mode];
+}
+
+/**
+ * Lecteur vidéo fichier : un seul #markup sûr (évite conteneur + enfant vidé).
+ *
+ * Un #type container + #html_tag video peut se retrouver avec un wrapper vide si
+ * l’enfant est filtré ou non rendu dans certains contextes de champ.
+ */
+function _spherevoices_core_media_file_video_player_build(FileInterface $file): array {
+  $url = _spherevoices_core_public_video_stream_url($file);
+  $url_attr = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+  $html = '<div class="media-video-embed">'
+    . '<video class="media-video-embed__video" src="' . $url_attr . '" controls preload="metadata" playsinline></video>'
+    . '</div>';
+  return [
+    '#markup' => Markup::create($html),
+  ];
+}
+
+/**
+ * Rendu d’un bloc drupal-media (attributs) en render array.
+ */
+function _spherevoices_core_drupal_media_attributes_to_embed_build(string $attrs): array {
+  $missing = ['#markup' => Markup::create(_spherevoices_core_media_embed_missing_markup())];
+  $parsed = _spherevoices_core_parse_media_uuid_from_attributes($attrs);
+  if ($parsed === NULL) {
+    return $missing;
+  }
+  $media = \Drupal::service('entity.repository')->loadEntityByUuid('media', $parsed['uuid']);
+  if (!$media instanceof MediaInterface) {
+    return $missing;
+  }
+  $view_mode = $parsed['view_mode'];
+  $account = \Drupal::currentUser();
+  $media = \Drupal::service('entity.repository')->getTranslationFromContext($media);
+
+  if ($media->bundle() === 'video' && $media->hasField('field_media_video_file') && !$media->get('field_media_video_file')->isEmpty()) {
+    $file = $media->get('field_media_video_file')->entity;
+    if (!$file) {
+      $item = $media->get('field_media_video_file')->first();
+      if ($item && !empty($item->target_id)) {
+        $file = \Drupal::entityTypeManager()->getStorage('file')->load($item->target_id);
+      }
+    }
+    $uri = $file ? $file->getFileUri() : '';
+    $is_public = is_string($uri) && str_starts_with($uri, 'public:');
+    if ($file && $media->access('view', $account) && ($is_public || $file->access('view', $account))) {
+      return _spherevoices_core_media_file_video_player_build($file);
+    }
+    return $missing;
+  }
+
+  $html = _spherevoices_core_media_embed_markup($media, $view_mode);
+  return ['#markup' => Markup::create($html !== '' ? $html : _spherevoices_core_media_embed_missing_markup())];
+}
+
+/**
+ * Attributs de la balise ouvrante <drupal-media …> (fragment HTML complet).
+ */
+function _spherevoices_core_drupal_media_tag_to_attributes(string $tag): string {
+  if (preg_match('#<drupal-media\b([^>]*)\s*/>#i', $tag, $m)) {
+    return trim($m[1]);
+  }
+  if (preg_match('#<drupal-media\b([^>]*)>#i', $tag, $m)) {
+    return trim($m[1]);
+  }
+  return '';
+}
+
+/**
+ * Découpe le HTML du corps en blocs html / attributs média (même logique Twig + render).
+ *
+ * @return list<array{type: 'html', text: string}|array{type: 'media', attrs: string}>|null
+ *   null si aucun motif média structuré : utiliser le remplacement global sur la chaîne.
+ */
+function _spherevoices_core_article_body_media_parts(string $raw): ?array {
+  if ($raw === '') {
+    return [];
+  }
+  $from_dm = _spherevoices_core_article_body_split_drupal_media_parts($raw);
+  if ($from_dm !== NULL) {
+    return $from_dm;
+  }
+  $from_img = _spherevoices_core_article_body_split_img_media_parts($raw);
+  if ($from_img !== NULL) {
+    return $from_img;
+  }
+  $from_uuid = _spherevoices_core_article_body_split_uuid_media_tag_parts($raw);
+  if ($from_uuid !== NULL) {
+    return $from_uuid;
+  }
+  return NULL;
+}
+
+/**
+ * @return list<array{type: 'html', text: string}|array{type: 'media', attrs: string}>|null
+ */
+function _spherevoices_core_article_body_split_drupal_media_parts(string $raw): ?array {
+  if (!preg_match('/<drupal-media\b/i', $raw)) {
+    return NULL;
+  }
+  $pattern = '/(<drupal-media\b[^>]*\s*\/>|<drupal-media\b[^>]*>[\s\S]*?<\/drupal-media>)/iu';
+  $parts = preg_split($pattern, $raw, -1, PREG_SPLIT_DELIM_CAPTURE);
+  if ($parts === FALSE) {
+    return NULL;
+  }
+  $out = [];
+  foreach ($parts as $part) {
+    if ($part === '') {
+      continue;
+    }
+    if (stripos($part, '<drupal-media') === 0) {
+      $out[] = [
+        'type' => 'media',
+        'attrs' => _spherevoices_core_drupal_media_tag_to_attributes($part),
+      ];
+    }
+    else {
+      $out[] = ['type' => 'html', 'text' => $part];
+    }
+  }
+  return $out === [] ? NULL : $out;
+}
+
+/**
+ * CKEditor / filtre : parfois &lt;img data-entity-type="media" …&gt; sans balise drupal-media.
+ *
+ * @return list<array{type: 'html', text: string}|array{type: 'media', attrs: string}>|null
+ */
+function _spherevoices_core_article_body_split_img_media_parts(string $raw): ?array {
+  if (!preg_match('/<img\b[^>]*\bdata-entity-type\s*=\s*["\']media["\']/i', $raw)) {
+    return NULL;
+  }
+  $pattern = '/(<img\b[^>]*\bdata-entity-type\s*=\s*["\']media["\'][^>]*\/?>)/iu';
+  $parts = preg_split($pattern, $raw, -1, PREG_SPLIT_DELIM_CAPTURE);
+  if ($parts === FALSE) {
+    return NULL;
+  }
+  $out = [];
+  foreach ($parts as $part) {
+    if ($part === '') {
+      continue;
+    }
+    if (preg_match('/^<img\b/i', $part) && preg_match('/\bdata-entity-type\s*=\s*["\']media["\']/i', $part)) {
+      if (preg_match('/^<img\b(.*)\/?>/is', $part, $m)) {
+        $out[] = ['type' => 'media', 'attrs' => trim($m[1])];
+      }
+    }
+    else {
+      $out[] = ['type' => 'html', 'text' => $part];
+    }
+  }
+  return $out === [] ? NULL : $out;
+}
+
+/**
+ * Repère les balises drupal-media ou img courtes contenant type média + UUID (secours).
+ *
+ * @return list<array{type: 'html', text: string}|array{type: 'media', attrs: string}>|null
+ */
+function _spherevoices_core_article_body_split_uuid_media_tag_parts(string $raw): ?array {
+  if (!preg_match('/data-entity-type\s*=\s*["\']media["\']/i', $raw)) {
+    return NULL;
+  }
+  if (!preg_match('/data-entity-uuid\s*=\s*["\'][^"\']+["\']/i', $raw)) {
+    return NULL;
+  }
+  $pos = 0;
+  $out = [];
+  $len = strlen($raw);
+  while ($pos < $len && preg_match('/data-entity-uuid\s*=\s*["\']([^"\']+)["\']/i', $raw, $m, PREG_OFFSET_CAPTURE, $pos)) {
+    $full_match = $m[0][0];
+    $uuid_off = (int) $m[0][1];
+    $lt = strrpos(substr($raw, 0, $uuid_off), '<');
+    if ($lt === FALSE) {
+      $pos = $uuid_off + strlen($full_match);
+      continue;
+    }
+    $gt = strpos($raw, '>', $uuid_off);
+    if ($gt === FALSE) {
+      break;
+    }
+    $tag = substr($raw, $lt, $gt - $lt + 1);
+    if (!preg_match('/data-entity-type\s*=\s*["\']media["\']/i', $tag)) {
+      $pos = $uuid_off + strlen($full_match);
+      continue;
+    }
+    if (!preg_match('/^<\s*(drupal-media|img)\b/i', $tag)) {
+      $pos = $uuid_off + strlen($full_match);
+      continue;
+    }
+    $inner = '';
+    if (preg_match('/^<drupal-media\b(.*)\/>/is', $tag, $tm)) {
+      $inner = trim($tm[1]);
+    }
+    elseif (preg_match('/^<drupal-media\b(.*)>/is', $tag, $tm)) {
+      $inner = trim($tm[1]);
+    }
+    elseif (preg_match('/^<img\b(.*)\/?>/is', $tag, $tm)) {
+      $inner = trim($tm[1]);
+    }
+    else {
+      $pos = $gt + 1;
+      continue;
+    }
+    if ($lt > $pos) {
+      $out[] = ['type' => 'html', 'text' => substr($raw, $pos, $lt - $pos)];
+    }
+    $out[] = ['type' => 'media', 'attrs' => $inner];
+    $pos = $gt + 1;
+  }
+  if ($out === []) {
+    return NULL;
+  }
+  if ($pos < $len) {
+    $out[] = ['type' => 'html', 'text' => substr($raw, $pos)];
+  }
+  return $out;
+}
+
+/**
+ * Assemble le corps en une seule chaîne HTML (texte + blocs vidéo / médias).
+ */
+function _spherevoices_core_article_body_unified_html(string $raw): string {
+  if ($raw === '') {
+    return '';
+  }
+  $parts = _spherevoices_core_article_body_media_parts($raw);
+  if ($parts === NULL) {
+    return _spherevoices_core_replace_drupal_media_tags($raw);
+  }
+  $out = '';
+  foreach ($parts as $part) {
+    if ($part['type'] === 'html') {
+      $out .= $part['text'];
+      continue;
+    }
+    $seg = _spherevoices_core_drupal_media_attributes_to_twig_segment($part['attrs']);
+    if (($seg['kind'] ?? '') === 'video_stream' && !empty($seg['src'])) {
+      $url = htmlspecialchars($seg['src'], ENT_QUOTES, 'UTF-8');
+      $out .= '<div class="media-video-embed"><video class="media-video-embed__video" src="'
+        . $url . '" controls preload="metadata" playsinline></video></div>';
+    }
+    elseif (($seg['kind'] ?? '') === 'html' && isset($seg['html'])) {
+      $out .= (string) $seg['html'];
+    }
+  }
+  return $out;
+}
+
+/**
+ * Corps d’article : un seul #markup (fiabilité maximale pour &lt;video&gt; / sv-video).
+ */
+function _spherevoices_core_article_body_build_from_raw(string $raw, array $cache): array {
+  if ($raw === '') {
+    return [
+      '#markup' => Markup::create(''),
+      '#cache' => $cache,
+    ];
+  }
+  $html = _spherevoices_core_cleanup_empty_media_video_embeds(_spherevoices_core_article_body_unified_html($raw));
+  return [
+    '#markup' => Markup::create($html),
+    '#cache' => $cache,
+  ];
+}
+
+/**
+ * Segment pour le thème : vidéo fichier = URL seule (balise &lt;video&gt; dans le .twig).
+ *
+ * Évite toute perte de &lt;video&gt; dans le pipeline de rendu PHP.
+ */
+function _spherevoices_core_drupal_media_attributes_to_twig_segment(string $attrs): array {
+  $missing_html = Markup::create(_spherevoices_core_media_embed_missing_markup());
+  $parsed = _spherevoices_core_parse_media_uuid_from_attributes($attrs);
+  if ($parsed === NULL) {
+    return ['kind' => 'html', 'html' => $missing_html];
+  }
+  $media = \Drupal::service('entity.repository')->loadEntityByUuid('media', $parsed['uuid']);
+  if (!$media instanceof MediaInterface) {
+    return ['kind' => 'html', 'html' => $missing_html];
+  }
+  $view_mode = $parsed['view_mode'];
+  $account = \Drupal::currentUser();
+  $media = \Drupal::service('entity.repository')->getTranslationFromContext($media);
+
+  if ($media->bundle() === 'video' && $media->hasField('field_media_video_file') && !$media->get('field_media_video_file')->isEmpty()) {
+    $file = $media->get('field_media_video_file')->entity;
+    if (!$file) {
+      $item = $media->get('field_media_video_file')->first();
+      if ($item && !empty($item->target_id)) {
+        $file = \Drupal::entityTypeManager()->getStorage('file')->load($item->target_id);
+      }
+    }
+    $uri = $file ? $file->getFileUri() : '';
+    $is_public = is_string($uri) && str_starts_with($uri, 'public:');
+    if ($file && $media->access('view', $account) && ($is_public || $file->access('view', $account))) {
+      return [
+        'kind' => 'video_stream',
+        'src' => _spherevoices_core_public_video_stream_url($file),
+      ];
+    }
+    return ['kind' => 'html', 'html' => $missing_html];
+  }
+
+  $html = _spherevoices_core_media_embed_markup($media, $view_mode);
+  return [
+    'kind' => 'html',
+    'html' => Markup::create($html !== '' ? $html : _spherevoices_core_media_embed_missing_markup()),
+  ];
+}
+
+/**
+ * Découpe le corps pour affichage Twig (HTML + URL vidéo séparées).
+ *
+ * @return list<array{kind: string, html?: \Drupal\Component\Render\MarkupInterface, src?: string}>
+ */
+function _spherevoices_core_article_body_segments_for_twig(string $raw): array {
+  if ($raw === '') {
+    return [];
+  }
+  $parts = _spherevoices_core_article_body_media_parts($raw);
+  if ($parts === NULL) {
+    return [
+      [
+        'kind' => 'html',
+        'html' => Markup::create(_spherevoices_core_replace_drupal_media_tags($raw)),
+      ],
+    ];
+  }
+  $segments = [];
+  foreach ($parts as $part) {
+    if ($part['type'] === 'media') {
+      $segments[] = _spherevoices_core_drupal_media_attributes_to_twig_segment($part['attrs']);
+    }
+    else {
+      $segments[] = [
+        'kind' => 'html',
+        'html' => Markup::create($part['text']),
+      ];
+    }
+  }
+  return $segments;
+}
+
+/**
+ * Remplace les balises <drupal-media> par le rendu du média (corps d'article).
+ *
+ * S'aligne sur le filtre MediaEmbed : remote_video (oEmbed), vidéo fichier, image,
+ * etc. Parse le DOM pour accepter les balises auto-fermantes de CKEditor 5.
  */
 function _spherevoices_core_replace_drupal_media_tags($html) {
   if (!is_string($html)) {
     return $html;
   }
+
+  $out = $html;
+  $missing = _spherevoices_core_media_embed_missing_markup();
+
+  // Remplacement par regex uniquement (évite Html::serialize qui peut altérer le fragment).
   if (stripos($html, 'drupal-media') !== FALSE) {
-    $pattern = '/<drupal-media\s[^>]*\bdata-entity-uuid="([^"]+)"[^>]*>.*?<\/drupal-media>/si';
-    $html = preg_replace_callback($pattern, function ($m) {
-      $uuid = trim($m[1]);
-      if ($uuid === '') {
-        return '';
-      }
-      try {
-        $media = \Drupal::service('entity.repository')->loadEntityByUuid('media', $uuid);
-      } catch (\Throwable $e) {
-        return '';
-      }
-      if (!$media) {
-        return '';
-      }
-      $media = \Drupal::service('entity.repository')->getTranslationFromContext($media);
-
-      if ($media->hasField('field_media_video_file') && !$media->get('field_media_video_file')->isEmpty()) {
-        $file = $media->get('field_media_video_file')->entity;
-        if (!$file) {
-          $item = $media->get('field_media_video_file')->first();
-          if ($item && !empty($item->target_id)) {
-            $file = \Drupal::entityTypeManager()->getStorage('file')->load($item->target_id);
-          }
+    $out = preg_replace_callback(
+      '/<drupal-media\b([^>]*)\s*\/>|<drupal-media\b([^>]*)>([\s\S]*?)<\/drupal-media>/is',
+      function (array $m) use ($missing) {
+        $attrs = $m[1] !== '' ? $m[1] : $m[2];
+        $parsed = _spherevoices_core_parse_media_uuid_from_attributes($attrs);
+        if ($parsed === NULL) {
+          return $missing;
         }
-        if ($file) {
-          $url = \Drupal::service('file_url_generator')->generateAbsoluteString($file->getFileUri());
-          $mime = $file->getMimeType() ?: 'video/mp4';
-          $url_attr = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
-          $mime_attr = htmlspecialchars($mime, ENT_QUOTES, 'UTF-8');
-          return '<div class="media-video-embed"><video controls preload="metadata" style="max-width:100%;height:auto;display:block;"><source src="' . $url_attr . '" type="' . $mime_attr . '"></video></div>';
+        $media = \Drupal::service('entity.repository')->loadEntityByUuid('media', $parsed['uuid']);
+        if (!$media instanceof MediaInterface) {
+          return $missing;
         }
-      }
-
-      if ($media->bundle() === 'image' && $media->hasField('field_media_image') && !$media->get('field_media_image')->isEmpty()) {
-        $item = $media->get('field_media_image')->first();
-        if ($item && $item->entity) {
-          $url = \Drupal::service('file_url_generator')->generateAbsoluteString($item->entity->getFileUri());
-          $alt = $item->get('alt')->value ?? '';
-          $url_attr = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
-          $alt_attr = htmlspecialchars($alt, ENT_QUOTES, 'UTF-8');
-          return '<div class="media-image-embed"><img src="' . $url_attr . '" alt="' . $alt_attr . '" loading="lazy" style="max-width:100%;height:auto;display:block;" /></div>';
-        }
-      }
-
-      return '';
-    }, $html);
+        $fragment = _spherevoices_core_media_embed_markup($media, $parsed['view_mode']);
+        return $fragment !== '' ? $fragment : $missing;
+      },
+      $html
+    );
   }
 
-  $empty_video_div = '/<div\s+class="[^"]*media-video-embed[^"]*"\s*>\s*<\/div>/i';
-  if (preg_match($empty_video_div, $html)) {
-    $html = preg_replace($empty_video_div, '<p class="media-video-missing">' . t('Video: re-save the article after re-inserting the video via the Media button in the body.') . '</p>', $html);
-  }
-
-  return $html;
+  return _spherevoices_core_cleanup_empty_media_video_embeds($out);
 }
 
 /**
- * Pre-render callback: force video HTML into media build (runs at render time).
+ * Markup shown when an embedded media tag cannot be rendered.
  */
-function spherevoices_core_media_video_pre_render(array $element) {
-  if (!empty($element['#spherevoices_video_html'])) {
-    foreach (Element::children($element) as $key) {
-      unset($element[$key]);
-    }
-    $element['content'] = [
-      '#markup' => Markup::create($element['#spherevoices_video_html']),
-    ];
+function _spherevoices_core_media_embed_missing_markup(): string {
+  return '<p class="media-video-missing">' . t('Ré-enregistrez l’article après avoir ré-inséré la vidéo via le bouton Média dans le corps.') . '</p>';
+}
+
+/**
+ * Replaces empty .media-video-embed wrappers (incl. &nbsp;, br, unicode spaces).
+ */
+function _spherevoices_core_cleanup_empty_media_video_embeds(string $html): string {
+  $missing = _spherevoices_core_media_embed_missing_markup();
+  // Sous-chaîne « media-video-embed » dans la balise ouvrante.
+  $out = preg_replace_callback(
+    '/<div\b[^>]*media-video-embed[^>]*>([\s\S]*?)<\/div>/iu',
+    function (array $m) use ($missing) {
+      $inner = $m[1];
+      if (preg_match('/<(?:video|iframe|object|embed)\b/i', $inner)) {
+        return $m[0];
+      }
+      // Lien de secours seul (ex. &lt;video&gt; supprimé en aval) : garder le bloc.
+      if (preg_match('/class\s*=\s*["\'][^"\']*media-video-fallback/i', $inner)) {
+        return $m[0];
+      }
+      $decoded = html_entity_decode($inner, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+      $decoded = str_replace(["\xc2\xa0", "\xe2\x80\x8b", "\xef\xbb\xbf"], ' ', $decoded);
+      $plain = trim(strip_tags($decoded, '<br>'));
+      // Espaces, NBSP et caractères « fantômes » (ZWSP, BOM logique) : sinon le bloc
+      // semble vide visuellement mais $plain !== '' et le message d’erreur ne s’affiche pas.
+      $plain = preg_replace('/[\s\x{00A0}\x{200B}-\x{200D}\x{FEFF}]+/u', '', $plain);
+      if ($plain === '') {
+        return $missing;
+      }
+      return $m[0];
+    },
+    $html
+  );
+  if (!is_string($out)) {
+    $out = $html;
   }
-  return $element;
+  // Secours si PCRE ou structure HTML atypique : motifs exacts fréquents.
+  $patterns = [
+    '<div class="media-video-embed"></div>',
+    "<div class='media-video-embed'></div>",
+    '<div class="media-video-embed"/>',
+    '<div class="media-video-embed" />',
+  ];
+  foreach ($patterns as $pattern) {
+    $out = str_replace($pattern, $missing, $out);
+  }
+  // Balise ouvrante + fermeture immédiate (aucun enfant), toutes variantes d’espaces.
+  $out = preg_replace('/<div\b[^>]*media-video-embed[^>]*>\s*<\/div>/iu', $missing, $out) ?? $out;
+  // Encore une passe au cas où le HTML serait minifié différemment.
+  $prev = '';
+  while ($prev !== $out) {
+    $prev = $out;
+    $out = preg_replace('/<div\b[^>]*media-video-embed[^>]*>\s*<\/div>/iu', $missing, $out) ?? $out;
+  }
+  return $out;
+}
+
+/**
+ * HTML d'un média intégré (corps d'article ou filtre).
+ *
+ * Vidéo fichier : balise <video> directe (fiable). Autres types : rendu entité.
+ * Respecte les droits « view » sur le média et le fichier.
+ */
+function _spherevoices_core_media_embed_markup(MediaInterface $media, string $view_mode): string {
+  $account = \Drupal::currentUser();
+  $media = \Drupal::service('entity.repository')->getTranslationFromContext($media);
+
+  if ($media->bundle() === 'video' && $media->hasField('field_media_video_file') && !$media->get('field_media_video_file')->isEmpty()) {
+    $file = $media->get('field_media_video_file')->entity;
+    if (!$file) {
+      $item = $media->get('field_media_video_file')->first();
+      if ($item && !empty($item->target_id)) {
+        $file = \Drupal::entityTypeManager()->getStorage('file')->load($item->target_id);
+      }
+    }
+    $uri = $file ? $file->getFileUri() : '';
+    $is_public = is_string($uri) && str_starts_with($uri, 'public:');
+    // Un seul chemin : droit de voir le média + fichier lisible (public:// ou droit fichier).
+    if ($file && $media->access('view', $account) && ($is_public || $file->access('view', $account))) {
+      $url = _spherevoices_core_public_video_stream_url($file);
+      $url_attr = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+      // Lecteur HTML5 : pas d'attribut style (filtres / XSS admin) ; styles via le thème (.media-video-embed__video).
+      return '<div class="media-video-embed">'
+        . '<video class="media-video-embed__video" src="' . $url_attr . '" controls preload="metadata" playsinline></video>'
+        . '</div>';
+    }
+    return '';
+  }
+
+  // remote_video (YouTube, etc.) : rendu oEmbed ; média publié visible sans bloquer sur des cas limites d’accès fichier.
+  if ($media->bundle() === 'remote_video'
+    && $media->hasField('field_media_oembed_video')
+    && !$media->get('field_media_oembed_video')->isEmpty()
+    && ($media->isPublished() || $media->access('view', $account))) {
+    return _spherevoices_core_render_media_entity_embed($media, $view_mode);
+  }
+
+  if (!$media->access('view', $account)) {
+    return '';
+  }
+
+  return _spherevoices_core_render_media_entity_embed($media, $view_mode);
+}
+
+/**
+ * Renders a media entity for inline body embed (no contextual links).
+ */
+function _spherevoices_core_render_media_entity_embed(MediaInterface $media, string $view_mode): string {
+  $display_storage = \Drupal::entityTypeManager()->getStorage('entity_view_display');
+  $display_id = sprintf('media.%s.%s', $media->bundle(), $view_mode);
+  if (!$display_storage->load($display_id)) {
+    $view_mode = 'default';
+  }
+
+  $view_builder = \Drupal::entityTypeManager()->getViewBuilder('media');
+  $build = $view_builder->view($media, $view_mode);
+  $build = MediaEmbed::disableContextualLinks($build);
+  return (string) \Drupal::service('renderer')->renderPlain($build);
 }
 
 /**
@@ -199,6 +1243,26 @@ function spherevoices_core_theme($existing, $type, $theme, $path) {
         'count' => 0,
       ],
       'template' => 'agenda-page',
+    ],
+    'facebook_live_page' => [
+      'variables' => [
+        'embed_src' => NULL,
+        'show_player' => FALSE,
+        'on_air_heading' => '',
+        'empty_message' => '',
+      ],
+      'template' => 'facebook-live-page',
+    ],
+    'trending_page' => [
+      'variables' => [
+        'rows' => [],
+        'is_empty' => FALSE,
+      ],
+      'template' => 'trending-page',
+    ],
+    'bourse_ticker' => [
+      'variables' => [],
+      'template' => 'bourse-ticker',
     ],
   ];
 }
@@ -236,29 +1300,38 @@ function spherevoices_core_form_node_form_alter(&$form, FormStateInterface $form
     }
   }
 
-  // Article : afficher le champ "texte de breaking news" uniquement si l'article est épinglé.
+  // Article : afficher « Breaking news label » seulement si « Épinglé » est coché.
   if ($node->bundle() === 'article') {
-    // Le champ doit exister dans le formulaire (créé via l'UI avec ce machine name).
-    // Nom machine actuel: field_field_breaking_news_label.
-    if (isset($form['field_field_breaking_news_label'])) {
-      // Le champ "épingler en haut" est le sticky core.
-      // On utilise un #states pour afficher le champ seulement quand sticky est coché.
-      // Le nom exact de l'input est généralement sticky[value].
-      if (isset($form['sticky'])) {
-        $form['field_field_breaking_news_label']['#states']['visible'] = [
-          ':input[name="sticky[value]"]' => ['checked' => TRUE],
-        ];
-      }
+    $fname = _spherevoices_core_article_breaking_label_field_name();
+    if ($fname && isset($form[$fname], $form['sticky'])) {
+      $form[$fname]['#states']['visible'] = [
+        ':input[name="sticky[value]"]' => ['checked' => TRUE],
+      ];
     }
   }
 }
 
 /**
  * Implements hook_entity_form_display_alter().
- * 
- * S'assure que third_party_settings est toujours présent dans la configuration des widgets.
+ *
+ * - Article : si « Breaking news label » est dans les champs désactivés, il n’est
+ *   pas rendu ; on le replace dans la région content pour que les #states fonctionnent.
+ * - Normalise third_party_settings sur les widgets.
  */
 function spherevoices_core_entity_form_display_alter(&$display, $context) {
+  if ($display instanceof EntityFormDisplayInterface
+    && ($context['entity_type'] ?? '') === 'node'
+    && ($context['bundle'] ?? '') === 'article'
+    && ($context['form_mode'] ?? '') === 'default') {
+    $fname = _spherevoices_core_article_breaking_label_field_name();
+    if ($fname && !$display->getComponent($fname)) {
+      $display->setComponent($fname, [
+        'weight' => 18,
+        'settings' => [],
+      ]);
+    }
+  }
+
   // Normaliser tous les composants pour s'assurer que third_party_settings est présent
   $components = $display->getComponents();
   foreach ($components as $field_name => $configuration) {
@@ -326,5 +1399,154 @@ function spherevoices_core_preprocess_image_widget(&$variables) {
       }
     }
   }
+}
+
+/**
+ * Implements hook_cache_flush().
+ *
+ * Certains raccourcis « vider le cache » n’invoquent pas hook_rebuild() ; on s’assure
+ * quand même que le champ existe après un flush.
+ */
+function spherevoices_core_cache_flush() {
+  spherevoices_core_ensure_article_sponsored_field();
+  spherevoices_core_ensure_bourse_ticker_block();
+}
+
+/**
+ * Implements hook_rebuild().
+ *
+ * Crée le champ « Article sponsorisé » si la base n’a pas reçu la mise à jour 8018
+ * (les mises à jour de base ne tournent pas lors d’un simple vidage de cache).
+ */
+function spherevoices_core_rebuild() {
+  spherevoices_core_ensure_article_sponsored_field();
+  spherevoices_core_ensure_bourse_ticker_block();
+}
+
+/**
+ * Crée field_sponsored sur Article, le widget de formulaire et masque l’affichage public.
+ *
+ * Idempotent : sans effet si déjà en place.
+ */
+function spherevoices_core_ensure_article_sponsored_field(): void {
+  if (!\Drupal::moduleHandler()->moduleExists('node')) {
+    return;
+  }
+  $node_type = \Drupal::entityTypeManager()->getStorage('node_type')->load('article');
+  if (!$node_type) {
+    return;
+  }
+
+  // Cas courant après installation : ne pas refaire des lectures à chaque flush.
+  if (FieldConfig::load('node.article.field_sponsored')) {
+    $form_display = \Drupal::entityTypeManager()->getStorage('entity_form_display')->load('node.article.default');
+    if ($form_display && $form_display->getComponent('field_sponsored')) {
+      return;
+    }
+  }
+
+  $changed = FALSE;
+
+  $field_storage = FieldStorageConfig::load('node.field_sponsored');
+  if (!$field_storage) {
+    FieldStorageConfig::create([
+      'field_name' => 'field_sponsored',
+      'entity_type' => 'node',
+      'type' => 'boolean',
+      'settings' => [
+        'on_label' => 'Article sponsorisé',
+        'off_label' => '',
+      ],
+      'cardinality' => 1,
+      'translatable' => FALSE,
+    ])->save();
+    $changed = TRUE;
+  }
+
+  if (!FieldConfig::load('node.article.field_sponsored')) {
+    FieldConfig::create([
+      'field_storage' => FieldStorageConfig::load('node.field_sponsored'),
+      'bundle' => 'article',
+      'label' => 'Article sponsorisé',
+      'description' => 'Met l’article en tête de la grille d’accueil et affiche le label « Article sponsorisé » sur la miniature.',
+      'required' => FALSE,
+      'settings' => [
+        'on_label' => 'Article sponsorisé',
+        'off_label' => '',
+      ],
+      'default_value' => [['value' => 0]],
+    ])->save();
+    $changed = TRUE;
+  }
+
+  $form_display = \Drupal::entityTypeManager()->getStorage('entity_form_display')->load('node.article.default');
+  if ($form_display) {
+    $component = $form_display->getComponent('field_sponsored');
+    if (!$component) {
+      $form_display->setComponent('field_sponsored', [
+        'type' => 'boolean_checkbox',
+        'weight' => 17,
+        'settings' => ['display_label' => TRUE],
+      ]);
+      $form_display->save();
+      $changed = TRUE;
+    }
+  }
+
+  $view_display_storage = \Drupal::entityTypeManager()->getStorage('entity_view_display');
+  foreach (['teaser', 'default', 'full'] as $mode) {
+    $view_display = $view_display_storage->load('node.article.' . $mode);
+    if ($view_display && $view_display->getComponent('field_sponsored')) {
+      $view_display->removeComponent('field_sponsored');
+      $view_display->save();
+      $changed = TRUE;
+    }
+  }
+
+  if ($changed) {
+    \Drupal::entityTypeManager()->clearCachedDefinitions();
+    \Drupal::service('entity_field.manager')->clearCachedFieldDefinitions();
+  }
+}
+
+/**
+ * Place le bloc bandeau bourse dans header_subnav si absent (sans import de config).
+ */
+function spherevoices_core_ensure_bourse_ticker_block(): void {
+  if (!\Drupal::moduleHandler()->moduleExists('block')) {
+    return;
+  }
+  $theme = \Drupal::config('system.theme')->get('default');
+  if ($theme !== 'spherevoices_theme') {
+    return;
+  }
+  $storage = \Drupal::entityTypeManager()->getStorage('block');
+  $block = $storage->load('spherevoices_core_bourse_ticker');
+  if ($block) {
+    $dirty = FALSE;
+    if ($block->getRegion() !== 'header_subnav') {
+      $block->setRegion('header_subnav');
+      $block->setWeight(10);
+      $dirty = TRUE;
+    }
+    if (!$block->status()) {
+      $block->setStatus(TRUE);
+      $dirty = TRUE;
+    }
+    if ($dirty) {
+      $block->save();
+    }
+    return;
+  }
+  $block = \Drupal\block\Entity\Block::create([
+    'id' => 'spherevoices_core_bourse_ticker',
+    'theme' => 'spherevoices_theme',
+    'plugin' => 'spherevoices_bourse_ticker',
+    'region' => 'header_subnav',
+    'weight' => 10,
+    'settings' => [],
+    'visibility' => [],
+  ]);
+  $block->save();
 }
 

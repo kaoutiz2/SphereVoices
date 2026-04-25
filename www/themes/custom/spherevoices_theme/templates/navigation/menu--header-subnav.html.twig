@@ -1,0 +1,39 @@
+{#
+/**
+ * @file
+ * Menu sous-barre blanche (Tendances, etc.) — liens noirs, hors du menu principal.
+ */
+#}
+{% import _self as menus %}
+
+{{ menus.menu_links(items, attributes, 0) }}
+
+{% macro menu_links(items, attributes, menu_level) %}
+  {% import _self as menus %}
+  {% if items %}
+    {% if menu_level == 0 %}
+      <ul{{ attributes.addClass('menu', 'menu--header-subnav') }}>
+    {% else %}
+      <ul class="menu menu--submenu">
+    {% endif %}
+    {% for item in items %}
+      {%
+        set classes = [
+          'menu-item',
+          item.is_expanded ? 'menu-item--expanded',
+          item.is_collapsed ? 'menu-item--collapsed',
+          item.in_active_trail ? 'menu-item--active-trail',
+          item.is_active ? 'menu-item--active',
+        ]
+      %}
+      <li{{ item.attributes.addClass(classes) }}>
+        {# link() comme le core : génère l’URL correcte (langue, routes, pas d’objet Url mal affiché). #}
+        {{ link(item.title, item.url, { 'class': ['menu-link'] }) }}
+        {% if item.below %}
+          {{ menus.menu_links(item.below, attributes, menu_level + 1) }}
+        {% endif %}
+      </li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endmacro %}

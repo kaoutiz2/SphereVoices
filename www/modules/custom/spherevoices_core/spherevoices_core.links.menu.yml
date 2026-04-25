@@ -1,0 +1,21 @@
+spherevoices_core.trending:
+  title: 'Tendances'
+  description: 'Les articles les plus lus'
+  route_name: spherevoices_core.trending
+  menu_name: header_subnav
+  weight: 0
+
+# Same route appears in two sections so it is easy to find (Media + System).
+spherevoices_core.facebook_live_settings:
+  title: 'Live Facebook'
+  description: 'URL du flux Facebook et statut du direct.'
+  parent: system.admin_config_media
+  route_name: spherevoices_core.facebook_live_settings
+  weight: 50
+
+spherevoices_core.facebook_live_settings_system:
+  title: 'Live Facebook'
+  description: 'URL du flux Facebook et statut du direct.'
+  parent: system.admin_config_system
+  route_name: spherevoices_core.facebook_live_settings
+  weight: -18

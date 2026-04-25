@@ -1,0 +1,30 @@
+uuid: e5f9a1b2-3c4d-5e6f-0a1b-23456789abcd
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_cover_media
+    - media.type.image
+    - media.type.video
+    - node.type.article
+id: node.article.field_cover_media
+field_name: field_cover_media
+entity_type: node
+bundle: article
+label: 'Couverture (image ou vidéo)'
+description: 'Média affiché en bandeau sur l’article et en miniature dans les listes. Choisir un média Image ou Vidéo (fichier), comme dans le corps du texte.'
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:media'
+  handler_settings:
+    target_bundles:
+      image: image
+      video: video
+    sort:
+      field: _none
+    auto_create: false
+    auto_create_bundle: image
+field_type: entity_reference

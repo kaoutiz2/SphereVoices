@@ -1,3 +1,12 @@
+# Stream vidéo fichier (MP4) : contourne les 404 Apache sur public:// avec espaces dans le nom.
+spherevoices_core.inline_public_video:
+  path: '/sv-video/{file}'
+  defaults:
+    _controller: '\Drupal\spherevoices_core\Controller\InlinePublicVideoController::deliver'
+  requirements:
+    file: \d+
+    _custom_access: '\Drupal\spherevoices_core\Controller\InlinePublicVideoController::access'
+
 spherevoices_core.breaking_news:
   path: '/api/breaking-news'
   defaults:
@@ -5,6 +14,15 @@ spherevoices_core.breaking_news:
   methods: [GET]
   requirements:
     _access: 'TRUE'
+
+# Liste des brèves (simple liste à puces) — remplace la vue page sur /breves.
+spherevoices_core.breves:
+  path: '/breves'
+  defaults:
+    _controller: '\Drupal\spherevoices_core\Controller\BrevesController::page'
+    _title_callback: '\Drupal\spherevoices_core\Controller\BrevesController::title'
+  requirements:
+    _permission: 'access content'
 
 spherevoices_core.agenda:
   path: '/agenda'
@@ -21,6 +39,43 @@ spherevoices_core.poll_vote:
   methods: [POST]
   requirements:
     _access: 'TRUE'
+
+spherevoices_core.facebook_live_settings:
+  path: '/admin/config/spherevoices/facebook-live'
+  defaults:
+    _form: '\Drupal\spherevoices_core\Form\FacebookLiveSettingsForm'
+    _title: 'Live Facebook'
+  requirements:
+    _custom_access: '\Drupal\spherevoices_core\Form\FacebookLiveSettingsForm::access'
+  options:
+    _admin_route: TRUE
+
+spherevoices_core.live:
+  # Use /en-direct so /live can remain a path alias → /en-direct (see admin form help).
+  # A content page alias on /live would otherwise override this route.
+  path: '/en-direct'
+  defaults:
+    _controller: '\Drupal\spherevoices_core\Controller\LiveController::page'
+    _title: 'Live'
+  requirements:
+    _permission: 'access content'
+
+# URL canonique FR pour la page « Tendances » (grille des articles les plus lus).
+spherevoices_core.trending:
+  path: '/tendances'
+  defaults:
+    _controller: '\Drupal\spherevoices_core\Controller\TrendingController::page'
+    _title_callback: '\Drupal\spherevoices_core\Controller\TrendingController::title'
+  requirements:
+    _permission: 'access content'
+
+# Ancien chemin /trending → redirection 301 vers /tendances (signets, anciens liens).
+spherevoices_core.trending_legacy:
+  path: '/trending'
+  defaults:
+    _controller: '\Drupal\spherevoices_core\Controller\TrendingController::legacyRedirect'
+  requirements:
+    _permission: 'access content'
 
 # spherevoices_core.agenda_mois:
 #   path: '/agenda-mois'

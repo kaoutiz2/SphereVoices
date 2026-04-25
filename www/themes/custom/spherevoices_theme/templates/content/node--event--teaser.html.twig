@@ -9,10 +9,10 @@
     {% if content.field_event_date|render %}
       <div class="event-date">
         <div class="event-date-day">
-          {{ node.field_event_date.value|date('d') }}
+          {{ event_date_day }}
         </div>
         <div class="event-date-month">
-          {{ node.field_event_date.value|date('M') }}
+          {{ event_date_month_fr }}
         </div>
       </div>
     {% endif %}

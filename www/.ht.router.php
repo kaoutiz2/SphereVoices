@@ -31,7 +31,10 @@ if (PHP_SAPI !== 'cli-server') {
 }
 
 $url = parse_url($_SERVER['REQUEST_URI']);
-if (file_exists(__DIR__ . $url['path'])) {
+// Decode %20 etc. so file_exists matches real filenames (e.g. video uploads with spaces).
+$path = $url['path'] ?? '/';
+$local_file = __DIR__ . rawurldecode($path);
+if ($path !== '/' && is_file($local_file)) {
   // Serve the requested resource as-is.
   return FALSE;
 }

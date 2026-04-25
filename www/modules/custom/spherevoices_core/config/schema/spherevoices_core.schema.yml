@@ -1,0 +1,10 @@
+spherevoices_core.facebook_live:
+  type: config_object
+  label: 'Facebook Live'
+  mapping:
+    facebook_video_url:
+      type: string
+      label: 'Facebook video URL'
+    live_is_active:
+      type: boolean
+      label: 'Live is currently on air'

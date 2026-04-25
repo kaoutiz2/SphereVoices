@@ -1,0 +1,7 @@
+langcode: fr
+status: true
+dependencies: {  }
+id: header_subnav
+label: 'Sous-barre header'
+description: 'Liens affichés sous le bandeau rouge (ex. Tendances).'
+locked: false

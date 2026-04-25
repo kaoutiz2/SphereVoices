@@ -7,7 +7,9 @@ dependencies:
     - core.entity_view_mode.node.full
     - field.field.node.article.body
     - field.field.node.article.comment
+    - field.field.node.article.field_cover_media
     - field.field.node.article.field_image
+    - field.field.node.article.field_sponsored
     - field.field.node.article.field_tags
     - field.field.node.article.field_tweet
     - image.style.wide
@@ -28,15 +30,6 @@ content:
     settings: {  }
     third_party_settings: {  }
     weight: 0
-    region: content
-  comment:
-    type: comment_default
-    label: above
-    settings:
-      view_mode: default
-      pager_id: 0
-    third_party_settings: {  }
-    weight: 110
     region: content
   field_image:
     type: image
@@ -66,10 +59,9 @@ content:
     third_party_settings: {  }
     weight: 111
     region: content
-  links:
-    settings: {  }
-    third_party_settings: {  }
-    weight: 100
-    region: content
 hidden:
+  comment: true
+  field_cover_media: true
+  field_sponsored: true
   langcode: true
+  links: true

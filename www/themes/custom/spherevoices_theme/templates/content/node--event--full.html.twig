@@ -14,9 +14,14 @@
   {{ title_suffix }}
   
   <div{{ content_attributes.addClass('node__content', 'event-full') }}>
-    {% if content.field_event_date|render %}
+    {% if event_date_long_fr %}
       <div class="event-full-date">
-        <span class="event-date-label">Date :</span>
+        <span class="event-date-label">{{ 'Date'|t }} :</span>
+        {{ event_date_long_fr }}
+      </div>
+    {% elseif content.field_event_date|render %}
+      <div class="event-full-date">
+        <span class="event-date-label">{{ 'Date'|t }} :</span>
         {{ content.field_event_date }}
       </div>
     {% endif %}
