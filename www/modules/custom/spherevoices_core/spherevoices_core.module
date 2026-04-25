@@ -480,12 +480,6 @@ function spherevoices_core_preprocess_field(&$variables): void {
  */
 function spherevoices_core_entity_view_alter(array &$build, $entity, $display) {
   if ($entity->getEntityTypeId() === 'media' && $entity->bundle() === 'video') {
-    // Keep Media Library rendering untouched; custom video rendering is for
-    // frontend article contexts and can interfere with AJAX media dialogs.
-    $mode = $build['#view_mode'] ?? ($display ? $display->getMode() : 'default');
-    if ($mode === 'media_library') {
-      return;
-    }
     _spherevoices_core_alter_media_video_build($build, $entity);
     return;
   }
