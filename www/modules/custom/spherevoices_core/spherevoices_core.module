@@ -1330,6 +1330,32 @@ function spherevoices_core_entity_form_display_alter(&$display, $context) {
         'settings' => [],
       ]);
     }
+
+    // Support both legacy and new cover field names in article form displays.
+    foreach (['field_couverture', 'field_cover_media'] as $cover_field) {
+      $component = $display->getComponent($cover_field);
+      if (empty($component)) {
+        continue;
+      }
+      $settings = $component['settings'] ?? [];
+      $media_types = $settings['media_types'] ?? [];
+      sort($media_types);
+      $expected = ['image', 'video'];
+      $needs_update = ($component['type'] ?? '') !== 'media_library_widget'
+        || ($component['region'] ?? '') !== 'content'
+        || $media_types !== $expected;
+      if ($needs_update) {
+        $display->setComponent($cover_field, [
+          'type' => 'media_library_widget',
+          'weight' => $component['weight'] ?? 1,
+          'region' => 'content',
+          'settings' => [
+            'media_types' => ['image', 'video'],
+          ],
+          'third_party_settings' => $component['third_party_settings'] ?? [],
+        ]);
+      }
+    }
   }
 
   // Normaliser tous les composants pour s'assurer que third_party_settings est présent
@@ -1339,6 +1365,27 @@ function spherevoices_core_entity_form_display_alter(&$display, $context) {
       // Ajouter third_party_settings s'il n'est pas présent
       $configuration['third_party_settings'] = [];
       $display->setComponent($field_name, $configuration);
+    }
+  }
+
+  // Guardrail for production: media_library "video" form mode must expose the
+  // required source field, otherwise selecting "video" in media library can 500.
+  if ($display instanceof EntityFormDisplayInterface
+    && ($context['entity_type'] ?? '') === 'media'
+    && ($context['bundle'] ?? '') === 'video'
+    && ($context['form_mode'] ?? '') === 'media_library') {
+    $component = $display->getComponent('field_media_video_file') ?? [];
+    $needs_update = empty($component) || (($component['region'] ?? 'hidden') === 'hidden');
+    if ($needs_update) {
+      $display->setComponent('field_media_video_file', [
+        'type' => 'file_generic',
+        'weight' => 0,
+        'region' => 'content',
+        'settings' => [
+          'progress_indicator' => 'throbber',
+        ],
+        'third_party_settings' => [],
+      ]);
     }
   }
 }
