@@ -57,5 +57,12 @@ echo -e "${GREEN}✓ Serveur démarré sur http://$HOST:$PORT${NC}"
 echo -e "${BLUE}  Appuyez sur Ctrl+C pour arrêter le serveur${NC}"
 echo ""
 
-# Démarrer le serveur PHP
-php -S "$HOST:$PORT" .ht.router.php
+# Démarrer le serveur PHP (limites upload : vidéos > 8 Mo / médiathèque AJAX)
+# Sans cela : post_max_size / upload_max_filesize trop bas → erreur AJAX même en HTTP 200.
+exec php \
+  -d upload_max_filesize=128M \
+  -d post_max_size=128M \
+  -d max_execution_time=300 \
+  -d max_input_time=300 \
+  -d memory_limit=512M \
+  -S "$HOST:$PORT" .ht.router.php

@@ -2,16 +2,16 @@
 
 namespace Drupal\spherevoices_core\Form;
 
-use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
+use Drupal\spherevoices_core\LiveStreamEmbed;
 
 /**
- * Admin settings for Facebook Live embed (public route /en-direct).
+ * Admin settings for social live embeds (Facebook, Instagram, YouTube).
  */
 class FacebookLiveSettingsForm extends ConfigFormBase {
 
@@ -56,7 +56,12 @@ class FacebookLiveSettingsForm extends ConfigFormBase {
       ]) . '</p>',
     ];
 
-    $form['facebook_video_url'] = [
+    $form['facebook'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Facebook Live'),
+      '#open' => TRUE,
+    ];
+    $form['facebook']['facebook_video_url'] = [
       '#type' => 'textfield',
       '#title' => $this->t('URL de la vidéo Facebook'),
       '#default_value' => $config->get('facebook_video_url'),
@@ -64,12 +69,51 @@ class FacebookLiveSettingsForm extends ConfigFormBase {
       '#size' => 80,
       '#maxlength' => 2048,
     ];
-
-    $form['live_is_active'] = [
+    $form['facebook']['live_is_active'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Direct en cours'),
-      '#description' => $this->t('Cochez pendant l’émission pour afficher le lecteur sur la page Live. Décochez quand le direct est terminé.'),
+      '#title' => $this->t('Direct Facebook en cours'),
+      '#description' => $this->t('Affiche le lecteur Facebook sur la page Live.'),
       '#default_value' => $config->get('live_is_active'),
+    ];
+
+    $form['instagram'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Instagram Live'),
+      '#open' => TRUE,
+    ];
+    $form['instagram']['instagram_live_url'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('URL du live Instagram'),
+      '#default_value' => $config->get('instagram_live_url'),
+      '#description' => $this->t('URL de la page ou du live Instagram (instagram.com).'),
+      '#size' => 80,
+      '#maxlength' => 2048,
+    ];
+    $form['instagram']['instagram_live_is_active'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Direct Instagram en cours'),
+      '#description' => $this->t('Affiche le lecteur Instagram sur la page Live.'),
+      '#default_value' => $config->get('instagram_live_is_active'),
+    ];
+
+    $form['youtube'] = [
+      '#type' => 'details',
+      '#title' => $this->t('YouTube Live'),
+      '#open' => TRUE,
+    ];
+    $form['youtube']['youtube_video_url'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('URL de la vidéo YouTube'),
+      '#default_value' => $config->get('youtube_video_url'),
+      '#description' => $this->t('URL du direct ou de la vidéo (youtube.com ou youtu.be).'),
+      '#size' => 80,
+      '#maxlength' => 2048,
+    ];
+    $form['youtube']['youtube_live_is_active'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Direct YouTube en cours'),
+      '#description' => $this->t('Affiche le lecteur YouTube sur la page Live.'),
+      '#default_value' => $config->get('youtube_live_is_active'),
     ];
 
     return parent::buildForm($form, $form_state);
@@ -79,20 +123,47 @@ class FacebookLiveSettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    $url = self::normalizeFacebookUrl((string) $form_state->getValue('facebook_video_url'));
-    $form_state->setValue('facebook_video_url', $url);
+    $this->validatePlatform($form_state, 'facebook_video_url', 'live_is_active', [
+      LiveStreamEmbed::class,
+      'isAllowedFacebookUrl',
+    ], $this->t('L’URL doit pointer vers une page Facebook ou fb.watch.'));
 
-    $active = (bool) $form_state->getValue('live_is_active');
+    $this->validatePlatform($form_state, 'instagram_live_url', 'instagram_live_is_active', [
+      LiveStreamEmbed::class,
+      'isAllowedInstagramUrl',
+    ], $this->t('L’URL doit pointer vers instagram.com.'));
 
-    if ($active && $url === '') {
-      $form_state->setErrorByName('facebook_video_url', $this->t('Une URL est requise lorsque le direct est marqué comme en cours.'));
-    }
-
-    if ($url !== '' && !self::isAllowedFacebookUrl($url)) {
-      $form_state->setErrorByName('facebook_video_url', $this->t('L’URL doit pointer vers une page Facebook ou fb.watch.'));
-    }
+    $this->validatePlatform($form_state, 'youtube_video_url', 'youtube_live_is_active', [
+      LiveStreamEmbed::class,
+      'isAllowedYoutubeUrl',
+    ], $this->t('L’URL doit pointer vers YouTube (youtube.com ou youtu.be).'));
 
     parent::validateForm($form, $form_state);
+  }
+
+  /**
+   * Normalizes and validates one platform field group.
+   */
+  protected function validatePlatform(
+    FormStateInterface $form_state,
+    string $url_key,
+    string $active_key,
+    callable $validator,
+    string $invalid_message,
+  ): void {
+    $url = LiveStreamEmbed::normalizeUrl((string) $form_state->getValue($url_key));
+    $form_state->setValue($url_key, $url);
+    $active = (bool) $form_state->getValue($active_key);
+
+    if ($active && $url === '') {
+      $form_state->setErrorByName($url_key, $this->t('Une URL est requise lorsque le direct est marqué comme en cours.'));
+    }
+    if ($url !== '' && !$validator($url)) {
+      $form_state->setErrorByName($url_key, $invalid_message);
+    }
+    if ($active_key === 'youtube_live_is_active' && $active && $url !== '' && LiveStreamEmbed::getYoutubeVideoId($url) === '') {
+      $form_state->setErrorByName($url_key, $this->t('Impossible d’extraire l’identifiant de la vidéo YouTube depuis cette URL.'));
+    }
   }
 
   /**
@@ -100,53 +171,29 @@ class FacebookLiveSettingsForm extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $this->config('spherevoices_core.facebook_live')
-      ->set('facebook_video_url', self::normalizeFacebookUrl((string) $form_state->getValue('facebook_video_url')))
+      ->set('facebook_video_url', LiveStreamEmbed::normalizeUrl((string) $form_state->getValue('facebook_video_url')))
       ->set('live_is_active', (bool) $form_state->getValue('live_is_active'))
+      ->set('instagram_live_url', LiveStreamEmbed::normalizeUrl((string) $form_state->getValue('instagram_live_url')))
+      ->set('instagram_live_is_active', (bool) $form_state->getValue('instagram_live_is_active'))
+      ->set('youtube_video_url', LiveStreamEmbed::normalizeUrl((string) $form_state->getValue('youtube_video_url')))
+      ->set('youtube_live_is_active', (bool) $form_state->getValue('youtube_live_is_active'))
       ->save();
 
     parent::submitForm($form, $form_state);
   }
 
   /**
-   * Trims and adds https:// when the scheme is missing.
-   *
-   * @param string $url
-   *   Raw input.
-   *
-   * @return string
-   *   Normalized URL or empty string.
+   * @deprecated Use LiveStreamEmbed::normalizeUrl().
    */
   public static function normalizeFacebookUrl($url) {
-    $url = trim($url);
-    if ($url === '') {
-      return '';
-    }
-    if (!preg_match('#^https?://#i', $url)) {
-      $url = 'https://' . $url;
-    }
-    return $url;
+    return LiveStreamEmbed::normalizeUrl((string) $url);
   }
 
   /**
-   * Validates URL host for Facebook embed safety.
-   *
-   * @param string $url
-   *   Raw URL string.
-   *
-   * @return bool
-   *   TRUE if the URL is a plausible Facebook video URL.
+   * @deprecated Use LiveStreamEmbed::isAllowedFacebookUrl().
    */
   public static function isAllowedFacebookUrl($url) {
-    if (!UrlHelper::isValid($url, TRUE)) {
-      return FALSE;
-    }
-    $parts = parse_url($url);
-    $host = strtolower($parts['host'] ?? '');
-    if ($host === '') {
-      return FALSE;
-    }
-    return (bool) preg_match('/(^|\.)facebook\.com$/', $host)
-      || (bool) preg_match('/(^|\.)fb\.watch$/', $host);
+    return LiveStreamEmbed::isAllowedFacebookUrl((string) $url);
   }
 
 }

@@ -1,0 +1,43 @@
+{#
+/**
+ * @file
+ * Page Live : lecteurs Facebook, Instagram et YouTube si actifs.
+ */
+#}
+<div class="live-streams-page">
+  {% if has_streams %}
+    {% for stream in streams %}
+      <section class="live-stream-block live-stream-block--{{ stream.platform }}" role="region" aria-label="{{ stream.label }}">
+        <p class="live-stream-badge">{{ on_air_heading }} — {{ stream.label }}</p>
+
+        {% if stream.platform == 'instagram' %}
+          <div class="live-stream-embed live-stream-embed--instagram">
+            <blockquote
+              class="instagram-media"
+              data-instgrm-captioned
+              data-instgrm-permalink="{{ stream.permalink }}"
+              data-instgrm-version="14"
+            ></blockquote>
+          </div>
+        {% else %}
+          <div class="live-stream-embed">
+            <iframe
+              src="{{ stream.embed_src }}"
+              width="1280"
+              height="720"
+              scrolling="no"
+              frameborder="0"
+              allowfullscreen="true"
+              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+              title="{{ 'Lecteur'|t }} {{ stream.label }}"
+            ></iframe>
+          </div>
+        {% endif %}
+      </section>
+    {% endfor %}
+  {% else %}
+    <div class="live-stream-off-air" role="status" aria-live="polite">
+      <p class="live-stream-empty">{{ empty_message }}</p>
+    </div>
+  {% endif %}
+</div>

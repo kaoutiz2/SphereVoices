@@ -1,10 +1,22 @@
 spherevoices_core.facebook_live:
   type: config_object
-  label: 'Facebook Live'
+  label: 'Social live streams'
   mapping:
     facebook_video_url:
       type: string
       label: 'Facebook video URL'
     live_is_active:
       type: boolean
-      label: 'Live is currently on air'
+      label: 'Facebook live is currently on air'
+    instagram_live_url:
+      type: string
+      label: 'Instagram live URL'
+    instagram_live_is_active:
+      type: boolean
+      label: 'Instagram live is currently on air'
+    youtube_video_url:
+      type: string
+      label: 'YouTube video URL'
+    youtube_live_is_active:
+      type: boolean
+      label: 'YouTube live is currently on air'

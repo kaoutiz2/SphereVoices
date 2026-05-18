@@ -7,7 +7,7 @@
 <article class="breve-item">
   <div class="breve-content">
     <h3 class="breve-title">
-      <a href="{{ url }}" rel="bookmark">{{ label }}</a>
+      <a href="{{ url }}" rel="bookmark">{% include '@spherevoices_theme/includes/node-title-truncated.html.twig' with { title_render: label } only %}</a>
     </h3>
     
     <div class="breve-meta">

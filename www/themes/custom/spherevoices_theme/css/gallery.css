@@ -3,25 +3,19 @@
  * Styles pour le layout galerie de la page d'accueil.
  */
 
-/* Layout principal : Flexbox pour le breaking news et la grille */
+/* Layout principal */
 .homepage-main-layout {
   display: flex;
   flex-direction: column;
-  gap: 0; /* Pas d'espace entre breaking news et grille */
+  gap: 0;
   width: 100%;
   position: relative;
 }
 
-/* Breaking News dans la grille - prend 3 colonnes */
-.breaking-news-section.breaking-news-in-grid {
-  grid-column: 1 / span 3; /* Prend les colonnes 1, 2 et 3 */
-  grid-row: 1; /* Première ligne */
-  width: 100% !important;
-  max-width: 100% !important;
-  margin-bottom: 0;
-}
-
-/* Gallery Layout - Grille de 4 colonnes avec articles et sidebar */
+/*
+ * Accueil : grille 4 colonnes ; le JS place breaking, sidebar et articles.
+ * Pas de bande séparée (évite le vide blanc sous la sidebar).
+ */
 .homepage-gallery-layout {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -29,33 +23,37 @@
   width: 100%;
   max-width: 100%;
   margin-top: 0;
-  padding-top: 0; /* Pas de padding en haut */
+  padding-top: 0;
   box-sizing: border-box;
-  align-items: start; /* Aligne les éléments en haut de leur cellule */
-  grid-auto-rows: auto; /* Hauteur automatique par ligne */
+  align-items: start;
 }
 
-/* Articles par défaut : occupent les 3 premières colonnes */
-.article-gallery-item {
-  grid-column: span 1;
-  height: auto !important; /* Hauteur automatique selon le contenu, force avec !important */
-  min-height: 420px; /* Hauteur minimale */
-  max-height: 550px; /* Hauteur maximale fixe */
-  align-self: start; /* Aligne l'article en haut de sa cellule */
-  overflow: hidden; /* Cache le contenu qui dépasse */
+.breaking-news-section.breaking-news-in-grid {
+  grid-column: 1 / 4;
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 0;
 }
 
-/* Sidebar dans la 4ème colonne - positionnée au début */
 .homepage-sidebar {
   grid-column: 4;
   grid-row: 1;
   width: 100%;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  align-self: stretch; /* Prend toute la hauteur de la ligne pour correspondre au breaking news */
-  margin-top: 0 !important; /* Pas de marge en haut */
-  padding-top: 0 !important; /* Pas de padding en haut */
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  align-self: start;
+}
+
+.homepage-gallery-layout > .article-gallery-item {
+  height: auto !important;
+  min-height: 420px;
+  max-height: 550px;
+  align-self: start;
+  overflow: hidden;
 }
 
 /* Articles supplémentaires dans la sidebar (sous l'agenda) */
@@ -75,18 +73,13 @@
   margin-top: 0 !important; /* Pas de marge en haut */
   margin-bottom: 0;
   padding-top: 0 !important; /* Pas de padding en haut */
-  /* Retirer le sticky pour éviter que les brèves suivent le scroll */
-  /* Hauteur pour correspondre au breaking news */
-  height: 100%;
   display: flex;
   flex-direction: column;
 }
 
 .homepage-sidebar .sidebar-breves-widget .breves-block {
-  height: 100%;
   display: flex;
   flex-direction: column;
-  flex: 1;
 }
 
 .homepage-sidebar .sidebar-agenda-widget {
@@ -100,6 +93,8 @@
 
 .homepage-sidebar .sidebar-poll-widget .poll-block {
   margin-bottom: 0;
+  min-height: 420px;
+  max-height: 420px;
 }
 
 /* Article Gallery Item - Base */
@@ -123,44 +118,52 @@
   border-color: var(--color-primary);
 }
 
-/* Breaking News Section */
+/* Breaking News (hors accueil / anciens gabarits) */
 .breaking-news-section {
   margin-bottom: 2rem;
   max-width: 500px;
 }
 
+.breaking-news-section.breaking-news-in-grid {
+  max-width: 100%;
+}
+
 /* Responsive - Tablette */
 @media (min-width: 768px) and (max-width: 1199px) {
-  .homepage-main-layout {
-    grid-template-columns: 1fr 280px;
-    gap: 1.5rem;
-  }
-  
   .homepage-gallery-layout {
     grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem;
+  }
+
+  .breaking-news-section.breaking-news-in-grid {
+    grid-column: 1 / -1;
+  }
+
+  .homepage-sidebar {
+    grid-column: 1 / -1;
+    grid-row: auto;
   }
 }
 
 /* Responsive - Mobile */
 @media (max-width: 767px) {
-  .homepage-main-layout {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-  
   .homepage-gallery-layout {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
-  
-  .article-gallery-item {
-    min-height: 380px;
+
+  .breaking-news-section.breaking-news-in-grid {
+    grid-column: 1;
   }
-  
+
   .homepage-sidebar {
-    position: static;
+    grid-column: 1;
+    grid-row: auto;
     order: -1;
+  }
+
+  .homepage-gallery-layout > .article-gallery-item {
+    min-height: 380px;
   }
 }
 

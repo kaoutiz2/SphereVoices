@@ -78,30 +78,5 @@
     </div>
   </main>
 
-  <footer class="site-footer" role="contentinfo">
-    {% if page.footer_first or page.footer_second or page.footer_third %}
-      <div class="footer-content">
-        {% if page.footer_first %}
-          <div class="footer-column footer-first">
-            {{ page.footer_first }}
-          </div>
-        {% endif %}
-        {% if page.footer_second %}
-          <div class="footer-column footer-second">
-            {{ page.footer_second }}
-          </div>
-        {% endif %}
-        {% if page.footer_third %}
-          <div class="footer-column footer-third">
-            {{ page.footer_third }}
-          </div>
-        {% endif %}
-      </div>
-    {% endif %}
-    {% if page.footer %}
-      <div class="footer-bottom">
-        {{ page.footer }}
-      </div>
-    {% endif %}
-  </footer>
+  {% include '@spherevoices_theme/layout/footer-site.html.twig' %}
 </div>

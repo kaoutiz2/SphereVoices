@@ -1,0 +1,11 @@
+/**
+ * @file
+ * Police locale : fichier WOFF2 dans ../fonts/foxnewsfont (sans extension).
+ */
+@font-face {
+  font-family: 'SphereVoicesDisplay';
+  src: url('../fonts/foxnewsfont') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}

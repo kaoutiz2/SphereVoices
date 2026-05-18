@@ -86,21 +86,38 @@
       <div class="homepage-main-layout">
         {# Grille principale : 4 colonnes avec breaking news, articles et sidebar #}
         <div class="homepage-gallery-layout">
-          {# Breaking News - prend 3 colonnes (1-3) #}
           {% if breaking_news %}
             <div class="breaking-news-section breaking-news-in-grid">
               {{ breaking_news }}
             </div>
           {% endif %}
 
-          {# Article principal (featured) #}
+          <aside class="homepage-sidebar">
+            {% if breves_block %}
+              <div class="sidebar-breves-widget">
+                {{ breves_block }}
+              </div>
+            {% endif %}
+
+            {% if agenda_block %}
+              <div class="sidebar-agenda-widget">
+                {{ agenda_block }}
+              </div>
+            {% endif %}
+
+            {% if poll_block %}
+              <div class="sidebar-poll-widget">
+                {{ poll_block }}
+              </div>
+            {% endif %}
+          </aside>
+
           {% if featured_article %}
             <div class="article-gallery-item">
               {{ featured_article }}
             </div>
           {% endif %}
 
-          {# Tous les autres articles en grille #}
           {% if all_articles %}
             {% for article in all_articles %}
               <div class="article-gallery-item">
@@ -108,27 +125,6 @@
               </div>
             {% endfor %}
           {% endif %}
-
-          {# Sidebar dans la 4ème colonne #}
-          <aside class="homepage-sidebar">
-            {% if breves_block %}
-              <div class="sidebar-breves-widget">
-                {{ breves_block }}
-              </div>
-            {% endif %}
-            
-            {% if agenda_block %}
-              <div class="sidebar-agenda-widget">
-                {{ agenda_block }}
-              </div>
-            {% endif %}
-            
-            {% if poll_block %}
-              <div class="sidebar-poll-widget">
-                {{ poll_block }}
-              </div>
-            {% endif %}
-          </aside>
         </div>
       </div>
 
@@ -141,31 +137,6 @@
     </div>
   </main>
 
-  <footer class="site-footer" role="contentinfo">
-    {% if page.footer_first or page.footer_second or page.footer_third %}
-      <div class="footer-content">
-        {% if page.footer_first %}
-          <div class="footer-column footer-first">
-            {{ page.footer_first }}
-          </div>
-        {% endif %}
-        {% if page.footer_second %}
-          <div class="footer-column footer-second">
-            {{ page.footer_second }}
-          </div>
-        {% endif %}
-        {% if page.footer_third %}
-          <div class="footer-column footer-third">
-            {{ page.footer_third }}
-          </div>
-        {% endif %}
-      </div>
-    {% endif %}
-    {% if page.footer %}
-      <div class="footer-bottom">
-        {{ page.footer }}
-      </div>
-    {% endif %}
-  </footer>
+  {% include '@spherevoices_theme/layout/footer-site.html.twig' %}
 </div>
 

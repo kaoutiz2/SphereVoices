@@ -44,7 +44,7 @@ spherevoices_core.facebook_live_settings:
   path: '/admin/config/spherevoices/facebook-live'
   defaults:
     _form: '\Drupal\spherevoices_core\Form\FacebookLiveSettingsForm'
-    _title: 'Live Facebook'
+    _title: 'Lives (Facebook, Instagram, YouTube)'
   requirements:
     _custom_access: '\Drupal\spherevoices_core\Form\FacebookLiveSettingsForm::access'
   options:

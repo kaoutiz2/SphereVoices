@@ -593,12 +593,14 @@ function spherevoices_theme_preprocess_page(&$variables) {
       return $node->hasField('field_sponsored') && (bool) $node->get('field_sponsored')->value;
     };
 
+    // Au plus 100 articles promus (hors breaking) : 1 en « featured » + le reste en grille.
     $pool_query = \Drupal::entityQuery('node')
       ->condition('type', 'article')
       ->condition('status', 1)
       ->condition('promote', 1)
       ->condition('sticky', 0)
       ->sort('created', 'DESC')
+      ->range(0, 100)
       ->accessCheck(TRUE);
 
     if (!empty($breaking_news_nids)) {
@@ -651,12 +653,12 @@ function spherevoices_theme_preprocess_page(&$variables) {
       $node_storage = \Drupal::entityTypeManager()->getStorage('node');
       $view_builder = \Drupal::entityTypeManager()->getViewBuilder('node');
       
-      // Récupérer les brèves publiées (limité à 3)
+      // Récupérer les brèves publiées (limité à 2 pour le widget accueil)
       $breves_query = \Drupal::entityQuery('node')
         ->condition('type', 'breve')
         ->condition('status', 1)
         ->sort('created', 'DESC')
-        ->range(0, 3)
+        ->range(0, 2)
         ->accessCheck(TRUE);
       
       $breves_nids = $breves_query->execute();

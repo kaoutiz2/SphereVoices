@@ -1,3 +1,8 @@
+site-fonts:
+  css:
+    base:
+      css/fonts.css: {}
+
 global-styling:
   css:
     base:
@@ -13,6 +18,7 @@ global-styling:
     js/gallery-layout.js: {}
     js/breves-height.js: {}
   dependencies:
+    - spherevoices_theme/site-fonts
     - core/drupal
     - core/jquery
     - core/drupal.once
@@ -46,5 +52,6 @@ maintenance:
     theme:
       css/maintenance.css: {}
   dependencies:
+    - spherevoices_theme/site-fonts
     - core/drupal
 

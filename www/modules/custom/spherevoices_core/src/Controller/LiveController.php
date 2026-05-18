@@ -3,10 +3,10 @@
 namespace Drupal\spherevoices_core\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\spherevoices_core\Form\FacebookLiveSettingsForm;
+use Drupal\spherevoices_core\LiveStreamEmbed;
 
 /**
- * Public Live page with Facebook embed.
+ * Public Live page with Facebook, Instagram and YouTube embeds.
  */
 class LiveController extends ControllerBase {
 
@@ -18,33 +18,76 @@ class LiveController extends ControllerBase {
    */
   public function page() {
     $config = $this->config('spherevoices_core.facebook_live');
-    $video_url = FacebookLiveSettingsForm::normalizeFacebookUrl((string) $config->get('facebook_video_url'));
-    $active = (bool) $config->get('live_is_active');
+    $streams = [];
 
-    $show_player = $active && $video_url !== ''
-      && FacebookLiveSettingsForm::isAllowedFacebookUrl($video_url);
-
-    $embed_src = NULL;
-    if ($show_player) {
-      $embed_src = 'https://www.facebook.com/plugins/video.php?href='
-        . rawurlencode($video_url)
-        . '&show_text=0&width=1280&height=720';
+    $facebook_url = LiveStreamEmbed::normalizeUrl((string) $config->get('facebook_video_url'));
+    if ($config->get('live_is_active') && $facebook_url !== '') {
+      $embed_src = LiveStreamEmbed::getFacebookEmbedSrc($facebook_url);
+      if ($embed_src) {
+        $streams[] = [
+          'platform' => 'facebook',
+          'label' => $this->t('Facebook'),
+          'embed_src' => $embed_src,
+        ];
+      }
     }
 
-    return [
-      '#theme' => 'facebook_live_page',
-      '#embed_src' => $embed_src,
-      '#show_player' => $show_player,
+    $instagram_url = LiveStreamEmbed::normalizeUrl((string) $config->get('instagram_live_url'));
+    if ($config->get('instagram_live_is_active') && $instagram_url !== ''
+      && LiveStreamEmbed::isAllowedInstagramUrl($instagram_url)) {
+      $streams[] = [
+        'platform' => 'instagram',
+        'label' => $this->t('Instagram'),
+        'permalink' => $instagram_url,
+      ];
+    }
+
+    $youtube_url = LiveStreamEmbed::normalizeUrl((string) $config->get('youtube_video_url'));
+    if ($config->get('youtube_live_is_active') && $youtube_url !== '') {
+      $embed_src = LiveStreamEmbed::getYoutubeEmbedSrc($youtube_url);
+      if ($embed_src) {
+        $streams[] = [
+          'platform' => 'youtube',
+          'label' => $this->t('YouTube'),
+          'embed_src' => $embed_src,
+        ];
+      }
+    }
+
+    $has_streams = count($streams) > 0;
+    $build = [
+      '#theme' => 'live_streams_page',
+      '#streams' => $streams,
+      '#has_streams' => $has_streams,
       '#on_air_heading' => $this->t('Direct en cours'),
       '#empty_message' => $this->t('Pas de live en cours pour le moment.'),
       '#attached' => [
-        'library' => ['spherevoices_core/facebook_live'],
+        'library' => ['spherevoices_core/live_streams'],
       ],
       '#cache' => [
         'tags' => $config->getCacheTags(),
         'contexts' => ['languages:language_interface'],
       ],
     ];
+
+    if ($has_streams && $this->hasInstagramStream($streams)) {
+      $build['#attached']['library'][] = 'spherevoices_core/instagram_embed';
+    }
+
+    return $build;
+  }
+
+  /**
+   * @param array $streams
+   *   Stream render data.
+   */
+  protected function hasInstagramStream(array $streams): bool {
+    foreach ($streams as $stream) {
+      if (($stream['platform'] ?? '') === 'instagram') {
+        return TRUE;
+      }
+    }
+    return FALSE;
   }
 
 }

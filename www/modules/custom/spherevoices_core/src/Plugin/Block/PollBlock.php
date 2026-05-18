@@ -3,9 +3,9 @@
 namespace Drupal\spherevoices_core\Plugin\Block;
 
 use Drupal\Core\Block\BlockBase;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 
 /**
  * Provides a 'Poll' block.
@@ -112,8 +112,14 @@ class PollBlock extends BlockBase implements ContainerFactoryPluginInterface {
       'title' => [
         '#type' => 'html_tag',
         '#tag' => 'h2',
-        '#value' => $node->getTitle(),
+        '#value' => $this->t('Sondage'),
         '#attributes' => ['class' => ['poll-title']],
+      ],
+      'question' => [
+        '#type' => 'html_tag',
+        '#tag' => 'p',
+        '#value' => $node->getTitle(),
+        '#attributes' => ['class' => ['poll-question']],
       ],
       'description' => [],
       'choices' => [

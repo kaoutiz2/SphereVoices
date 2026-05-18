@@ -388,6 +388,7 @@ function spherevoices_core_preprocess_node(&$variables): void {
   spherevoices_core_apply_article_body_display($variables);
   _spherevoices_core_preprocess_node_article_cover($variables);
   _spherevoices_core_preprocess_node_trending_standard_teaser($variables);
+  _spherevoices_core_preprocess_node_related_articles($variables);
 }
 
 /**
@@ -431,6 +432,84 @@ function _spherevoices_core_preprocess_node_article_cover(array &$variables): vo
   }
   if (!empty($cover['image']['uri'])) {
     $variables['article_cover_image'] = $cover['image'];
+  }
+}
+
+/**
+ * Articles similaires par étiquette (affichés en bas des articles full).
+ *
+ * @param array $variables
+ *   Variables de template.
+ */
+function _spherevoices_core_preprocess_node_related_articles(array &$variables): void {
+  if (empty($variables['node'])) {
+    return;
+  }
+  $node = $variables['node'];
+  if ($node->bundle() !== 'article') {
+    return;
+  }
+  if (($variables['view_mode'] ?? '') !== 'full') {
+    return;
+  }
+  if (!$node->hasField('field_tags') || $node->get('field_tags')->isEmpty()) {
+    return;
+  }
+
+  $tag_ids = [];
+  foreach ($node->get('field_tags')->referencedEntities() as $term) {
+    $tag_ids[] = $term->id();
+  }
+  if (empty($tag_ids)) {
+    return;
+  }
+
+  $storage = \Drupal::entityTypeManager()->getStorage('node');
+  $view_builder = \Drupal::entityTypeManager()->getViewBuilder('node');
+  $langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
+
+  $query = $storage->getQuery()
+    ->condition('type', 'article')
+    ->condition('status', NodeInterface::PUBLISHED)
+    ->condition('nid', $node->id(), '<>')
+    ->condition('field_tags.target_id', $tag_ids, 'IN')
+    ->condition('langcode', $langcode)
+    ->sort('created', 'DESC')
+    ->range(0, 6)
+    ->accessCheck(TRUE);
+
+  $nids = $query->execute();
+  if (empty($nids)) {
+    return;
+  }
+
+  $related = [];
+  $cache_tags = ['node_list'];
+  $nodes = $storage->loadMultiple($nids);
+  foreach ($nids as $nid) {
+    if (!isset($nodes[$nid])) {
+      continue;
+    }
+    $related_node = $nodes[$nid];
+    if (!$related_node->access('view')) {
+      continue;
+    }
+    $related_node = \Drupal::service('entity.repository')->getTranslationFromContext($related_node);
+    $build = $view_builder->view($related_node, 'teaser');
+    $build['#force_standard_teaser'] = TRUE;
+    if (!isset($build['#cache'])) {
+      $build['#cache'] = [];
+    }
+    $build['#cache']['tags'] = $related_node->getCacheTags();
+    $build['#cache']['contexts'][] = 'route';
+    $build['#cache']['contexts'][] = 'url.path';
+    $related[] = $build;
+    $cache_tags = array_merge($cache_tags, $related_node->getCacheTags());
+  }
+
+  if (!empty($related)) {
+    $variables['related_articles'] = $related;
+    $variables['related_articles_cache_tags'] = array_unique($cache_tags);
   }
 }
 
@@ -1252,6 +1331,15 @@ function spherevoices_core_theme($existing, $type, $theme, $path) {
         'empty_message' => '',
       ],
       'template' => 'facebook-live-page',
+    ],
+    'live_streams_page' => [
+      'variables' => [
+        'streams' => [],
+        'has_streams' => FALSE,
+        'on_air_heading' => '',
+        'empty_message' => '',
+      ],
+      'template' => 'live-streams-page',
     ],
     'trending_page' => [
       'variables' => [

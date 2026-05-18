@@ -73,7 +73,16 @@
     {{ content|without('field_couverture', 'field_cover_media', 'field_image', 'field_media_thumbnail', 'media_thumbnail', 'body', 'comment', 'links') }}
   </div>
 
+  {# Articles similaires par étiquette #}
+  {% if related_articles is defined and related_articles|length > 0 %}
+    <aside class="article-related-section">
+      <h2 class="article-related-title">{{ 'À lire aussi'|t }}</h2>
+      <div class="article-related-grid">
+        {% for article in related_articles %}
+          {{ article }}
+        {% endfor %}
+      </div>
+    </aside>
+  {% endif %}
+
 </article>
-
-
-

@@ -7,15 +7,15 @@ spherevoices_core.trending:
 
 # Same route appears in two sections so it is easy to find (Media + System).
 spherevoices_core.facebook_live_settings:
-  title: 'Live Facebook'
-  description: 'URL du flux Facebook et statut du direct.'
+  title: 'Lives (Facebook, Instagram, YouTube)'
+  description: 'URLs des directs et statut à l’antenne pour chaque plateforme.'
   parent: system.admin_config_media
   route_name: spherevoices_core.facebook_live_settings
   weight: 50
 
 spherevoices_core.facebook_live_settings_system:
-  title: 'Live Facebook'
-  description: 'URL du flux Facebook et statut du direct.'
+  title: 'Lives (Facebook, Instagram, YouTube)'
+  description: 'URLs des directs et statut à l’antenne pour chaque plateforme.'
   parent: system.admin_config_system
   route_name: spherevoices_core.facebook_live_settings
   weight: -18

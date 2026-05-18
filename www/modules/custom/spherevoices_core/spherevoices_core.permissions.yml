@@ -1,3 +1,3 @@
 administer spherevoices facebook live:
-  title: 'Configurer le live Facebook'
-  description: 'Définir l’URL du flux Facebook et indiquer quand le direct est à l’antenne sur le site.'
+  title: 'Configurer les lives (Facebook, Instagram, YouTube)'
+  description: 'Définir les URLs des directs et indiquer quand chaque plateforme est à l’antenne sur la page /en-direct.'

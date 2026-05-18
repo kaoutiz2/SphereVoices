@@ -20,7 +20,7 @@
     <div class="event-content">
       {{ title_prefix }}
       <h3{{ title_attributes.addClass('event-title') }}>
-        <a href="{{ url }}" rel="bookmark">{{ label }}</a>
+        <a href="{{ url }}" rel="bookmark">{% include '@spherevoices_theme/includes/node-title-truncated.html.twig' with { title_render: label } only %}</a>
       </h3>
       {{ title_suffix }}
       

@@ -62,24 +62,24 @@
   padding-top: 0;
 }
 
-/* Breaking News Section - S'adapte au container */
+/* Breaking news : largeur gérée par gallery.css (.breaking-news-in-grid = 100 % de la colonne). */
 .breaking-news-section {
   margin-bottom: 0;
-  width: calc(75% - 1rem) !important; /* Largeur de 3 colonnes sur 4 */
-  max-width: 1200px !important;
-  flex-shrink: 0; /* Ne pas rétrécir */
+  width: 100%;
+  max-width: 1200px;
+  flex-shrink: 0;
 }
 
 .article-breaking-news {
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 500px;
-  background-color: var(--color-bg-light);
+  min-height: 0;
+  background-color: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: 0;
   overflow: visible;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
   width: 100% !important;
 }
 
@@ -87,36 +87,44 @@
   flex: 1 1 auto;
   display: flex;
   flex-direction: row;
-  align-items: stretch;
+  align-items: flex-start;
+  gap: 1.5rem;
   text-decoration: none;
   color: inherit;
   transition: transform 0.2s ease;
-  min-height: 320px;
+  min-height: 0;
   width: 100%;
 }
 
-.article-breaking-news-link:hover {
+.article-breaking-news-link:hover,
+.article-breaking-news-link:focus {
   transform: translateY(-2px);
+  /* Annule a:hover { text-decoration: underline } (style.css). */
+  text-decoration: none;
 }
 
+/* Zone média 16:9 — largeur fixe ~520px pour libérer la place au texte */
 .article-breaking-news-image-wrapper {
   position: relative;
   overflow: hidden;
-  flex: 0 0 70%;
-  width: 70%;
-  min-height: 320px;
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
+  flex: 0 0 auto;
+  width: min(520px, 100%);
+  max-width: min(520px, 100%);
+  aspect-ratio: 16 / 9;
+  align-self: flex-start;
+  display: block;
+  min-height: 0;
+  background-color: #0a0a0a;
+  border-radius: 4px;
 }
 
-/* flex-basis 0 : les médias en position absolute ne donnent pas de hauteur ; il faut
-   consommer toute la hauteur du wrapper pour éviter une bande vide sous la vidéo/image. */
+/* Calque média plein cadre dans le rectangle 16:9 */
 .article-breaking-news-image {
-  position: relative;
-  flex: 1 1 0;
+  position: absolute;
+  inset: 0;
   width: 100%;
-  min-height: 320px;
+  height: 100%;
+  min-height: 0;
   overflow: hidden;
   display: block;
 }
@@ -146,9 +154,14 @@
   width: 100%;
   height: 100%;
   max-height: none;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
   display: block;
+}
+
+/* Les templates mettent object-fit:cover en inline sur .js-teaser-video : forcer le 16:9 « lettre » */
+.article-breaking-news .article-breaking-news-image .js-teaser-video {
+  object-fit: contain !important;
 }
 
 .article-breaking-news-label {
@@ -185,9 +198,10 @@
 }
 
 .article-breaking-news-content {
-  padding: 2rem;
-  flex: 0 0 30%;
-  max-width: 30%;
+  padding: 0.5rem 0 0.5rem 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: none;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -205,8 +219,10 @@
   word-wrap: break-word;
 }
 
-.article-breaking-news-title:hover {
+.article-breaking-news-title:hover,
+.article-breaking-news-title:focus {
   color: var(--color-primary);
+  text-decoration: none;
 }
 
 .article-breaking-news-summary {
@@ -237,13 +253,7 @@
   content: '📅';
 }
 
-/* Gallery Layout - Grille d'articles de taille égale */
-.homepage-gallery-layout {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 2rem;
-  margin-top: 2rem;
-}
+/* Grille accueil : voir gallery.css (.homepage-gallery-layout en grille 4 colonnes). */
 
 /* Article gallery item - Taille égale pour tous */
 .article-gallery-item {
@@ -745,16 +755,6 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  /* Gallery Layout Responsive - 2 colonnes sur tablette */
-  .homepage-gallery-layout {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-  }
-
-  .article-gallery-featured {
-    grid-column: span 2;
-  }
-
   .breaking-news-section {
     margin-bottom: 1.5rem;
   }
@@ -767,17 +767,23 @@
   .article-breaking-news-image-wrapper {
     flex: 0 0 auto;
     width: 100%;
-    height: 300px;
-    min-height: 300px;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    min-height: 0;
+    height: auto;
   }
-  
+
   .article-breaking-news-image {
-    min-height: 300px;
-    height: 300px;
+    min-height: 0;
+    height: 100%;
   }
   
   .article-breaking-news-content {
-    padding: 1.5rem;
+    padding: 1rem 0 0;
+    width: 100%;
+    max-width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
   }
   
   .article-breaking-news-title {
@@ -794,17 +800,6 @@
   .layout-grid-3,
   .layout-grid-4 {
     grid-template-columns: 1fr;
-  }
-
-  /* Gallery Layout Mobile - 1 colonne */
-  .homepage-gallery-layout {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-
-  .article-gallery-featured {
-    grid-column: span 1;
-    min-height: 400px;
   }
 
   .article-gallery-item {

@@ -993,13 +993,17 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  /* Aligné sur .poll-block / .poll-description (poll_block.css) */
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--color-text, #333);
 }
 
 .breve-title {
-  font-size: 1rem;
+  font-size: inherit;
   font-weight: 600;
   margin: 0 0 0.5rem 0;
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 .breve-title a {
@@ -1013,15 +1017,29 @@
 }
 
 .breve-body {
-  font-size: 0.9rem;
-  color: var(--color-text);
-  line-height: 1.6;
+  font-size: inherit;
+  color: var(--color-text, #333);
+  line-height: 1.45;
   margin-bottom: 0.5rem;
 }
 
 .breve-body p {
   margin: 0 0 0.5rem 0;
   padding: 0;
+  font-size: inherit;
+}
+
+/* Corps rendu par Drupal (teaser / vue) sans wrapper .breve-body */
+.breve-item .field--name-body,
+.breves-block .field--name-body {
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--color-text, #333);
+}
+
+.breve-item .field--name-body p,
+.breves-block .field--name-body p {
+  font-size: inherit;
 }
 
 .breve-body p:last-child {
@@ -1029,7 +1047,7 @@
 }
 
 .breve-meta {
-  font-size: 0.75rem;
+  font-size: inherit;
   color: var(--color-text-light);
   font-style: italic;
 }
@@ -1083,11 +1101,17 @@
   padding: 1rem 1.1rem;
 }
 
+/* Même taille / style de titre que « Brèves » (.breves-title = 1.5rem) */
 .homepage-sidebar .agenda-block h2,
 .homepage-sidebar .agenda-title {
-  font-size: 1.15rem;
-  margin: 0 0 0.65rem 0;
-  padding-bottom: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin: 0 0 0.75rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--color-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .homepage-sidebar .agenda-content {

@@ -409,6 +409,29 @@
   }
 
   /* Footer mobile */
+  .site-footer-main {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    padding-bottom: 1.25rem;
+  }
+
+  .site-footer-brand {
+    grid-column: 1;
+    justify-self: center;
+  }
+
+  .site-footer-social,
+  .site-footer-legal {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: center;
+  }
+
+  .site-footer-legal {
+    justify-content: center;
+  }
+
   .footer-content {
     grid-template-columns: 1fr;
     gap: 2rem;

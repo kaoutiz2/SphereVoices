@@ -1,2 +1,6 @@
 facebook_video_url: ''
 live_is_active: false
+instagram_live_url: ''
+instagram_live_is_active: false
+youtube_video_url: ''
+youtube_live_is_active: false

@@ -22,6 +22,18 @@ facebook_live:
     theme:
       css/facebook_live.css: {}
 
+live_streams:
+  css:
+    theme:
+      css/live_streams.css: {}
+
+instagram_embed:
+  js:
+    https://www.instagram.com/embed.js:
+      type: external
+      attributes:
+        async: true
+
 trending_page:
   css:
     theme:
