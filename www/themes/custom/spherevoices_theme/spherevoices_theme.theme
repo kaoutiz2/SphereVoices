@@ -476,13 +476,24 @@ function _spherevoices_theme_agenda_month_select_options(): array {
   return $options;
 }
 
+/**
+ * Returns the ad slot manager when the service is registered (container rebuilt).
+ */
+function _spherevoices_theme_ad_slot_manager(): ?\Drupal\spherevoices_core\Service\AdSlotManager {
+  if (!\Drupal::hasService('spherevoices_core.ad_slot_manager')) {
+    return NULL;
+  }
+  return \Drupal::service('spherevoices_core.ad_slot_manager');
+}
+
 function spherevoices_theme_preprocess_page(&$variables) {
   // Ajouter la variable is_front pour vérifier si c'est la page d'accueil
   $variables['is_front'] = \Drupal::service('path.matcher')->isFrontPage();
 
-  /** @var \Drupal\spherevoices_core\Service\AdSlotManager $ad_slots */
-  $ad_slots = \Drupal::service('spherevoices_core.ad_slot_manager');
-  $variables['ad_header'] = $ad_slots->build(\Drupal\spherevoices_core\Service\AdSlotManager::PLACEMENT_HEADER);
+  $ad_slots = _spherevoices_theme_ad_slot_manager();
+  $variables['ad_header'] = $ad_slots
+    ? $ad_slots->build(\Drupal\spherevoices_core\Service\AdSlotManager::PLACEMENT_HEADER)
+    : [];
   
   // Vérifier si c'est la page agenda
   $route_name = \Drupal::routeMatch()->getRouteName();
@@ -646,12 +657,20 @@ function spherevoices_theme_preprocess_page(&$variables) {
         $variables['all_articles'][] = $view_builder->view($node, 'teaser');
       }
 
-      $variables['homepage_gallery_items'] = $ad_slots->interleaveGridAds($variables['all_articles'], 5);
-      $variables['ad_sidebar'] = $ad_slots->build(\Drupal\spherevoices_core\Service\AdSlotManager::PLACEMENT_SIDEBAR);
+      $variables['homepage_gallery_items'] = $ad_slots
+        ? $ad_slots->interleaveGridAds($variables['all_articles'], 5)
+        : array_map(static function ($article) {
+          return ['type' => 'article', 'render' => $article];
+        }, $variables['all_articles']);
+      $variables['ad_sidebar'] = $ad_slots
+        ? $ad_slots->build(\Drupal\spherevoices_core\Service\AdSlotManager::PLACEMENT_SIDEBAR)
+        : [];
     }
     else {
       $variables['homepage_gallery_items'] = [];
-      $variables['ad_sidebar'] = $ad_slots->build(\Drupal\spherevoices_core\Service\AdSlotManager::PLACEMENT_SIDEBAR);
+      $variables['ad_sidebar'] = $ad_slots
+        ? $ad_slots->build(\Drupal\spherevoices_core\Service\AdSlotManager::PLACEMENT_SIDEBAR)
+        : [];
     }
     
     // Garder les anciennes variables pour compatibilité (mais vides)

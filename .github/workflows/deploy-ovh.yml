@@ -222,8 +222,6 @@ jobs:
             **/example.*
             **/*.example.*
             **/*.json
-            **/*.yml
-            **/*.yaml
           dangerous-clean-slate: false
 
       - name: Deploy www/themes (Step 5/5)
@@ -257,6 +255,4 @@ jobs:
             **/example.*
             **/*.example.*
             **/*.json
-            **/*.yml
-            **/*.yaml
           dangerous-clean-slate: false
