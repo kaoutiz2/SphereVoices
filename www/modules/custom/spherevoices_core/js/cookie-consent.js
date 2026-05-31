@@ -86,6 +86,9 @@
   };
 
   function maybeLoadAdsense() {
+    if (drupalSettings.spherevoicesAds && drupalSettings.spherevoicesAds.previewOnly) {
+      return;
+    }
     if (!isInformationalMode() && getConsent() !== 'accepted') {
       return;
     }

@@ -185,28 +185,35 @@ class AdSlotManager {
       ],
     ];
 
-    // Full AdSense unit when client + slot are configured.
-    if ($client !== '' && $slot !== '') {
+    // Real AdSense unit only for a live publisher ID + slot. Dummy IDs and missing
+    // slots stay in preview mode so prod does not load an empty iframe over the text.
+    if ($client !== '' && $slot !== '' && !AdSenseHelper::shouldUsePreviewPlaceholders($client, $slot)) {
       $build = $base + [
         '#theme' => 'spherevoices_ad_slot',
         '#mode' => self::TYPE_ADSENSE,
         '#ad_client' => $client,
         '#ad_slot' => $slot,
         '#ad_format' => $format,
+        '#preview_only' => FALSE,
         '#placeholder_message' => (string) t('Google AdSense — en attente de diffusion (compte ou slot à valider).'),
       ];
       $build['#attached']['library'][] = 'spherevoices_core/adsense';
+      AdSenseHelper::attachLoaderScript($build, $client);
       return $build;
     }
 
-    // Visible test placeholder (no Google script) — layout preview without an account.
+    $preview_message = AdSenseHelper::isKnownTestClient($client)
+      ? (string) t('Mode aperçu AdSense (identifiant de test) — le texte reste visible sans script Google.')
+      : (string) t('Emplacement publicitaire (test) — renseignez le client et le slot AdSense réels, ou utilisez une image.');
+
     return $base + [
       '#theme' => 'spherevoices_ad_slot',
       '#mode' => 'placeholder',
       '#ad_client' => $client,
       '#ad_slot' => $slot,
       '#ad_format' => $format,
-      '#placeholder_message' => (string) t('Emplacement publicitaire (test) — configurez le slot AdSense ou utilisez une image.'),
+      '#preview_only' => TRUE,
+      '#placeholder_message' => $preview_message,
     ];
   }
 

@@ -21,6 +21,9 @@
 
   Drupal.behaviors.spherevoicesAdsense = {
     attach: function (context) {
+      if (drupalSettings.spherevoicesAds && drupalSettings.spherevoicesAds.previewOnly) {
+        return;
+      }
       if (!canLoadAdsense()) {
         return;
       }

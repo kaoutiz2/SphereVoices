@@ -33,11 +33,36 @@ final class AdSenseHelper {
   }
 
   /**
+   * Example publisher ID shown in the admin form (no real AdSense account).
+   */
+  public const TEST_CLIENT_ID = 'ca-pub-1234567890123456';
+
+  /**
    * Sanitizes a publisher client ID.
    */
   public static function sanitizeClientId(string $value): string {
     $value = self::normalizeClientInput($value);
     return preg_match(self::CLIENT_PATTERN, $value) ? $value : '';
+  }
+
+  /**
+   * Whether the client ID is the documented dummy value for layout tests.
+   */
+  public static function isKnownTestClient(string $client): bool {
+    return $client === self::TEST_CLIENT_ID;
+  }
+
+  /**
+   * Preview placeholders only: no Google script, no empty iframe over the text.
+   *
+   * Real AdSense units are rendered only when both client and slot are set and
+   * the client is not the known test ID.
+   */
+  public static function shouldUsePreviewPlaceholders(string $client, string $slot): bool {
+    if ($client === '' || $slot === '') {
+      return TRUE;
+    }
+    return self::isKnownTestClient($client);
   }
 
   /**

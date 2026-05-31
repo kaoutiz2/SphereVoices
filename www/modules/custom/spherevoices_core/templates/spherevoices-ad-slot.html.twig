@@ -25,7 +25,7 @@
     </div>
   </div>
 {% elseif mode == 'placeholder' %}
-  <div class="ad-slot__inner ad-slot__inner--{{ placement }} ad-slot__inner--placeholder">
+  <div class="ad-slot__inner ad-slot__inner--{{ placement }} ad-slot__inner--placeholder{% if preview_only %} ad-slot__inner--preview{% endif %}">
     <div class="ad-slot__placeholder">
       <span class="ad-slot__placeholder-label">{{ 'Publicité'|t }}</span>
       {% if placeholder_message %}

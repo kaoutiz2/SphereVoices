@@ -73,7 +73,7 @@ class AdsSettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('adsense_client'),
       '#maxlength' => 64,
       '#placeholder' => 'ca-pub-1234567890123456',
-      '#description' => $this->t('Exemple : <code>ca-pub-1234567890123456</code>. Enregistrable sans compte AdSense actif : les encarts s’affichent en mode test tant que le numéro de slot n’est pas renseigné.'),
+      '#description' => $this->t('Exemple : <code>ca-pub-1234567890123456</code>. Avec cet identifiant de test (ou sans slot), les encarts restent en <strong>mode aperçu</strong> : texte visible, sans script Google. Sur la production, un identifiant bidon + slot rempli chargeait un iframe vide par-dessus le texte.'),
     ];
 
     foreach (self::SLOTS as $key => $label) {

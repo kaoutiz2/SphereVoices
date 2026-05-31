@@ -106,8 +106,30 @@ function spherevoices_core_page_attachments(array &$attachments): void {
 
   $ads_config = \Drupal::config('spherevoices_core.ads');
   $client = AdSenseHelper::sanitizeClientId((string) $ads_config->get('adsense_client'));
-  if ($client !== '') {
+  if ($client === '') {
+    return;
+  }
+
+  $loads_real_adsense = FALSE;
+  foreach (['header', 'sidebar', 'grid'] as $placement) {
+    if (!$ads_config->get($placement . '_enabled')) {
+      continue;
+    }
+    if (($ads_config->get($placement . '_type') ?: 'image') !== 'adsense') {
+      continue;
+    }
+    $slot = AdSenseHelper::sanitizeSlotId((string) $ads_config->get($placement . '_ad_slot'));
+    if (!AdSenseHelper::shouldUsePreviewPlaceholders($client, $slot)) {
+      $loads_real_adsense = TRUE;
+      break;
+    }
+  }
+
+  if ($loads_real_adsense) {
     $attachments['#attached']['drupalSettings']['spherevoicesAds']['client'] = $client;
+  }
+  else {
+    $attachments['#attached']['drupalSettings']['spherevoicesAds']['previewOnly'] = TRUE;
   }
 }
 
@@ -1459,6 +1481,7 @@ function spherevoices_core_theme($existing, $type, $theme, $path) {
         'ad_slot' => '',
         'ad_format' => 'auto',
         'placeholder_message' => '',
+        'preview_only' => FALSE,
       ],
       'template' => 'spherevoices-ad-slot',
     ],
