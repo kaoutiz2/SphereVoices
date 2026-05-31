@@ -107,16 +107,23 @@ try {
 
   // Test optionnel du service (ne bloque pas la page si erreur interne).
   $service_build = [];
+  $html_preview = [];
   if ($has_service) {
     try {
+      $renderer = \Drupal::service('renderer');
       $manager = \Drupal::service('spherevoices_core.ad_slot_manager');
       foreach ($placements as $placement) {
         $build = $manager->build($placement);
         $service_build[$placement] = [
           'render_empty' => empty($build),
+          'has_markup' => is_array($build) && isset($build['#markup']),
+          'has_theme' => is_array($build) && isset($build['#theme']),
           'mode' => is_array($build) ? ($build['#mode'] ?? NULL) : NULL,
           'preview_only' => is_array($build) ? ($build['#preview_only'] ?? NULL) : NULL,
         ];
+        if (!empty($build)) {
+          $html_preview[$placement] = (string) $renderer->renderPlain($build);
+        }
       }
     }
     catch (\Throwable $serviceError) {
@@ -139,6 +146,7 @@ try {
     'cookie_consent_js_has_previewOnly' => $cookie_consent_has_preview,
     'placements' => $builds,
     'service_build' => $service_build,
+    'html_preview' => $html_preview ?? [],
   ];
 }
 catch (\Throwable $e) {
@@ -158,6 +166,7 @@ catch (\Throwable $e) {
 <head>
   <meta charset="utf-8">
   <title>Diagnostic publicités — SphereVoices</title>
+  <link rel="stylesheet" href="/modules/custom/spherevoices_core/css/ads.css">
   <style>
     body { font-family: system-ui, sans-serif; max-width: 960px; margin: 2rem auto; padding: 0 1rem; background: #f5f5f5; }
     .card { background: #fff; border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
@@ -169,6 +178,8 @@ catch (\Throwable $e) {
     .bad { color: #c20017; font-weight: 600; }
     pre { background: #f8f9fa; padding: 1rem; overflow: auto; border-radius: 4px; font-size: .85rem; }
     a { color: #003366; }
+    .preview-box { border: 1px solid #ddd; border-radius: 4px; padding: 1rem; margin: .75rem 0; background: #fafafa; }
+    .preview-box h3 { margin: 0 0 .5rem; font-size: 1rem; }
   </style>
 </head>
 <body>
@@ -238,6 +249,23 @@ catch (\Throwable $e) {
     <?php else: ?>
       <pre><?php echo htmlspecialchars(json_encode($report['service_build'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?></pre>
     <?php endif; ?>
+  </div>
+  <?php endif; ?>
+
+  <?php if (!empty($report['html_preview'])): ?>
+  <div class="card">
+    <h2>Aperçu HTML rendu (PHP → renderer)</h2>
+    <p>Si le texte « Publicité » apparaît ici mais pas sur le site, le problème vient des templates Twig du thème ou du cache de page.</p>
+    <?php foreach ($report['html_preview'] as $name => $html): ?>
+      <div class="preview-box">
+        <h3><?php echo htmlspecialchars($name, ENT_QUOTES, 'UTF-8'); ?></h3>
+        <?php echo $html; ?>
+        <details style="margin-top:.75rem;">
+          <summary>Code source</summary>
+          <pre><?php echo htmlspecialchars($html, ENT_QUOTES, 'UTF-8'); ?></pre>
+        </details>
+      </div>
+    <?php endforeach; ?>
   </div>
   <?php endif; ?>
 

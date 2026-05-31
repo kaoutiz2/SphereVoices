@@ -142,20 +142,36 @@ function spherevoices_core_preprocess_page(array &$variables): void {
   }
 
   $cookie = _spherevoices_core_cookie_consent_settings();
-  if (!$cookie['enabled']) {
+  if ($cookie['enabled']) {
+    $variables['cookie_consent_banner'] = [
+      '#theme' => 'spherevoices_cookie_consent',
+      '#privacy_url' => $cookie['privacy_url'],
+      '#cookies_url' => $cookie['cookies_url'],
+      '#mode' => $cookie['mode'],
+      '#cache' => [
+        'tags' => ['config:spherevoices_core.cookie_consent'],
+        'contexts' => ['languages:language_interface'],
+      ],
+    ];
+  }
+
+  if (!\Drupal::hasService('spherevoices_core.ad_slot_manager')) {
     return;
   }
 
-  $variables['cookie_consent_banner'] = [
-    '#theme' => 'spherevoices_cookie_consent',
-    '#privacy_url' => $cookie['privacy_url'],
-    '#cookies_url' => $cookie['cookies_url'],
-    '#mode' => $cookie['mode'],
-    '#cache' => [
-      'tags' => ['config:spherevoices_core.cookie_consent'],
-      'contexts' => ['languages:language_interface'],
-    ],
-  ];
+  $ads_config = \Drupal::config('spherevoices_core.ads');
+  $manager = \Drupal::service('spherevoices_core.ad_slot_manager');
+
+  $variables['show_ad_header'] = (bool) $ads_config->get('header_enabled');
+  $variables['show_ad_sidebar'] = (bool) $ads_config->get('sidebar_enabled');
+
+  if ($variables['show_ad_header'] && empty($variables['ad_header'])) {
+    $variables['ad_header'] = $manager->build(\Drupal\spherevoices_core\Service\AdSlotManager::PLACEMENT_HEADER);
+  }
+
+  if (!empty($variables['is_front']) && $variables['show_ad_sidebar'] && empty($variables['ad_sidebar'])) {
+    $variables['ad_sidebar'] = $manager->build(\Drupal\spherevoices_core\Service\AdSlotManager::PLACEMENT_SIDEBAR);
+  }
 }
 
 /**

@@ -494,6 +494,9 @@ function spherevoices_theme_preprocess_page(&$variables) {
   $variables['ad_header'] = $ad_slots
     ? $ad_slots->build(\Drupal\spherevoices_core\Service\AdSlotManager::PLACEMENT_HEADER)
     : [];
+  $ads_config = \Drupal::config('spherevoices_core.ads');
+  $variables['show_ad_header'] = (bool) $ads_config->get('header_enabled');
+  $variables['show_ad_sidebar'] = (bool) $ads_config->get('sidebar_enabled');
   
   // Vérifier si c'est la page agenda
   $route_name = \Drupal::routeMatch()->getRouteName();

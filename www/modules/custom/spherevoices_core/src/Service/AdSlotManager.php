@@ -2,9 +2,11 @@
 
 namespace Drupal\spherevoices_core\Service;
 
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileUrlGeneratorInterface;
+use Drupal\Core\Render\Markup;
 use Drupal\file\FileInterface;
 
 /**
@@ -90,48 +92,24 @@ class AdSlotManager {
   protected function buildImage(string $placement, $config): array {
     $fid = $config->get($placement . '_image');
     if (empty($fid)) {
-      return [
-        '#theme' => 'spherevoices_ad_slot',
-        '#mode' => 'placeholder',
-        '#placement' => $placement,
-        '#url' => '',
-        '#alt' => '',
-        '#image_url' => '',
-        '#ad_client' => '',
-        '#ad_slot' => '',
-        '#ad_format' => '',
-        '#placeholder_message' => (string) t('Emplacement publicitaire (test) — ajoutez une image dans la configuration.'),
-        '#attached' => [
-          'library' => ['spherevoices_core/ads'],
-        ],
-        '#cache' => [
-          'tags' => $config->getCacheTags(),
-          'contexts' => ['languages:language_interface'],
-        ],
-      ];
+      return $this->buildVisiblePlaceholder(
+        $placement,
+        (string) t('Emplacement publicitaire (test) — ajoutez une image dans la configuration.'),
+        '',
+        '',
+        $config->getCacheTags()
+      );
     }
 
     $file = $this->fileStorage->load($fid);
     if (!$file instanceof FileInterface || !$file->isPermanent()) {
-      return [
-        '#theme' => 'spherevoices_ad_slot',
-        '#mode' => 'placeholder',
-        '#placement' => $placement,
-        '#url' => '',
-        '#alt' => '',
-        '#image_url' => '',
-        '#ad_client' => '',
-        '#ad_slot' => '',
-        '#ad_format' => '',
-        '#placeholder_message' => (string) t('Emplacement publicitaire (test) — image introuvable ou non publiée.'),
-        '#attached' => [
-          'library' => ['spherevoices_core/ads'],
-        ],
-        '#cache' => [
-          'tags' => $config->getCacheTags(),
-          'contexts' => ['languages:language_interface'],
-        ],
-      ];
+      return $this->buildVisiblePlaceholder(
+        $placement,
+        (string) t('Emplacement publicitaire (test) — image introuvable ou non publiée.'),
+        '',
+        '',
+        $config->getCacheTags()
+      );
     }
 
     $image_url = $this->fileUrlGenerator->generateAbsoluteString($file->getFileUri());
@@ -206,14 +184,49 @@ class AdSlotManager {
       ? (string) t('Mode aperçu AdSense (identifiant de test) — le texte reste visible sans script Google.')
       : (string) t('Emplacement publicitaire (test) — renseignez le client et le slot AdSense réels, ou utilisez une image.');
 
-    return $base + [
-      '#theme' => 'spherevoices_ad_slot',
-      '#mode' => 'placeholder',
-      '#ad_client' => $client,
-      '#ad_slot' => $slot,
-      '#ad_format' => $format,
-      '#preview_only' => TRUE,
-      '#placeholder_message' => $preview_message,
+    return $this->buildVisiblePlaceholder(
+      $placement,
+      $preview_message,
+      $client,
+      $slot,
+      $cache_tags
+    );
+  }
+
+  /**
+   * Builds a always-visible placeholder (direct HTML, no Twig theme dependency).
+   */
+  protected function buildVisiblePlaceholder(
+    string $placement,
+    string $message,
+    string $client = '',
+    string $slot = '',
+    array $cache_tags = [],
+  ): array {
+    $label = (string) t('Publicité');
+    $classes = 'ad-slot__inner ad-slot__inner--' . Html::cleanCssIdentifier($placement)
+      . ' ad-slot__inner--placeholder ad-slot__inner--preview';
+    $html = '<div class="' . $classes . '"><div class="ad-slot__placeholder">'
+      . '<span class="ad-slot__placeholder-label">' . Html::escape($label) . '</span>';
+    if ($message !== '') {
+      $html .= '<span class="ad-slot__placeholder-hint">' . Html::escape($message) . '</span>';
+    }
+    if ($client !== '') {
+      $meta = Html::escape($client . ($slot !== '' ? ' · slot ' . $slot : ''));
+      $html .= '<span class="ad-slot__placeholder-meta">' . $meta . '</span>';
+    }
+    $html .= '</div></div>';
+
+    return [
+      '#markup' => Markup::create($html),
+      '#attached' => [
+        'library' => ['spherevoices_core/ads'],
+      ],
+      '#cache' => [
+        'tags' => $cache_tags,
+        'contexts' => ['languages:language_interface'],
+        'max-age' => 0,
+      ],
     ];
   }
 

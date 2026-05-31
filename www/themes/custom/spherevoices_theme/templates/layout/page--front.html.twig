@@ -112,7 +112,7 @@
               </div>
             {% endif %}
 
-            {% if ad_sidebar %}
+            {% if show_ad_sidebar or ad_sidebar %}
               <div class="sidebar-ad-widget">
                 <div class="ad-slot ad-slot--sidebar" role="complementary" aria-label="{{ 'Publicité'|t }}">
                   {{ ad_sidebar }}

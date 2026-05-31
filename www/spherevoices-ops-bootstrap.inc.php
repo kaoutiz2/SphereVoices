@@ -64,15 +64,7 @@ function spherevoices_ops_step(array &$log, string $label, callable $callback): 
 function spherevoices_ops_rebuild_cache(\Drupal\Core\DrupalKernel $kernel): array {
   $log = [];
 
-  if (function_exists('drupal_flush_all_caches')) {
-    spherevoices_ops_step($log, 'drupal_flush_all_caches()', function () use ($kernel) {
-      drupal_flush_all_caches($kernel);
-    });
-    if (end($log)['ok'] ?? FALSE) {
-      return $log;
-    }
-  }
-
+  // Évite l'erreur DRUPAL_OPTIONAL sur certains hébergements OVH : rebuild manuel.
   spherevoices_ops_step($log, 'Cache bins deleteAll()', function () {
     foreach (Cache::getBins() as $cache_backend) {
       $cache_backend->deleteAll();
