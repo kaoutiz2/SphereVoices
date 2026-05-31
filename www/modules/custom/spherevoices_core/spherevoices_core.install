@@ -580,5 +580,26 @@ function spherevoices_core_update_8020() {
   return t('Cookie consent configuration installed.');
 }
 
+/**
+ * Installe la configuration des publicités si absente.
+ */
+function spherevoices_core_update_8021() {
+  $factory = \Drupal::configFactory();
+  if (!$factory->get('spherevoices_core.ads')->isNew()) {
+    return t('Ads configuration already exists.');
+  }
+  $path = \Drupal::service('extension.list.module')->getPath('spherevoices_core')
+    . '/config/install/spherevoices_core.ads.yml';
+  if (!is_readable($path)) {
+    return t('Ads install config file not found.');
+  }
+  $data = \Symfony\Component\Yaml\Yaml::parseFile($path);
+  $data['header_enabled'] = TRUE;
+  $data['sidebar_enabled'] = TRUE;
+  $data['grid_enabled'] = TRUE;
+  $factory->getEditable('spherevoices_core.ads')->setData($data)->save(TRUE);
+  return t('Ads configuration installed with all placements enabled.');
+}
+
 
 

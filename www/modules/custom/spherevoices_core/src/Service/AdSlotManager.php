@@ -113,7 +113,25 @@ class AdSlotManager {
 
     $file = $this->fileStorage->load($fid);
     if (!$file instanceof FileInterface || !$file->isPermanent()) {
-      return [];
+      return [
+        '#theme' => 'spherevoices_ad_slot',
+        '#mode' => 'placeholder',
+        '#placement' => $placement,
+        '#url' => '',
+        '#alt' => '',
+        '#image_url' => '',
+        '#ad_client' => '',
+        '#ad_slot' => '',
+        '#ad_format' => '',
+        '#placeholder_message' => (string) t('Emplacement publicitaire (test) — image introuvable ou non publiée.'),
+        '#attached' => [
+          'library' => ['spherevoices_core/ads'],
+        ],
+        '#cache' => [
+          'tags' => $config->getCacheTags(),
+          'contexts' => ['languages:language_interface'],
+        ],
+      ];
     }
 
     $image_url = $this->fileUrlGenerator->generateAbsoluteString($file->getFileUri());
@@ -175,7 +193,7 @@ class AdSlotManager {
         '#ad_client' => $client,
         '#ad_slot' => $slot,
         '#ad_format' => $format,
-        '#placeholder_message' => '',
+        '#placeholder_message' => (string) t('Google AdSense — en attente de diffusion (compte ou slot à valider).'),
       ];
       $build['#attached']['library'][] = 'spherevoices_core/adsense';
       return $build;

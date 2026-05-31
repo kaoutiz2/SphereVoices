@@ -1,17 +1,20 @@
 {#
 /**
  * @file
- * Single advertising slot (image or Google AdSense).
- *
- * - mode: image|adsense
- * - placement: header|sidebar|grid
- * - url, alt, image_url: image mode
- * - ad_client, ad_slot, ad_format: AdSense mode
+ * Single advertising slot (image, Google AdSense, or test placeholder).
  */
 #}
-{% if mode == 'placeholder' %}
-  <div class="ad-slot__inner ad-slot__inner--{{ placement }} ad-slot__inner--placeholder">
-    <div class="ad-slot__placeholder" aria-hidden="true">
+{% if mode == 'adsense' %}
+  <div class="ad-slot__inner ad-slot__inner--{{ placement }} ad-slot__inner--adsense">
+    {% if ad_client and ad_slot %}
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="{{ ad_client }}"
+           data-ad-slot="{{ ad_slot }}"
+           data-ad-format="{{ ad_format|default('auto') }}"
+           data-full-width-responsive="true"></ins>
+    {% endif %}
+    <div class="ad-slot__placeholder">
       <span class="ad-slot__placeholder-label">{{ 'Publicité'|t }}</span>
       {% if placeholder_message %}
         <span class="ad-slot__placeholder-hint">{{ placeholder_message }}</span>
@@ -21,14 +24,17 @@
       {% endif %}
     </div>
   </div>
-{% elseif mode == 'adsense' and ad_client and ad_slot %}
-  <div class="ad-slot__inner ad-slot__inner--{{ placement }} ad-slot__inner--adsense">
-    <ins class="adsbygoogle"
-         style="display:block"
-         data-ad-client="{{ ad_client }}"
-         data-ad-slot="{{ ad_slot }}"
-         data-ad-format="{{ ad_format|default('auto') }}"
-         data-full-width-responsive="true"></ins>
+{% elseif mode == 'placeholder' %}
+  <div class="ad-slot__inner ad-slot__inner--{{ placement }} ad-slot__inner--placeholder">
+    <div class="ad-slot__placeholder">
+      <span class="ad-slot__placeholder-label">{{ 'Publicité'|t }}</span>
+      {% if placeholder_message %}
+        <span class="ad-slot__placeholder-hint">{{ placeholder_message }}</span>
+      {% endif %}
+      {% if ad_client %}
+        <span class="ad-slot__placeholder-meta">{{ ad_client }}{% if ad_slot %} · slot {{ ad_slot }}{% endif %}</span>
+      {% endif %}
+    </div>
   </div>
 {% elseif image_url %}
   <div class="ad-slot__inner ad-slot__inner--{{ placement }}">
