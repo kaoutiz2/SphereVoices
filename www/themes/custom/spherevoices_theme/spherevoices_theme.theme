@@ -675,6 +675,12 @@ function spherevoices_theme_preprocess_page(&$variables) {
         ? $ad_slots->build(\Drupal\spherevoices_core\Service\AdSlotManager::PLACEMENT_SIDEBAR)
         : [];
     }
+
+    $variables['#cache']['max-age'] = 0;
+    $variables['#cache']['tags'] = \Drupal\Core\Cache\Cache::mergeTags(
+      $variables['#cache']['tags'] ?? [],
+      \Drupal::config('spherevoices_core.ads')->getCacheTags()
+    );
     
     // Garder les anciennes variables pour compatibilité (mais vides)
     $variables['left_articles'] = [];

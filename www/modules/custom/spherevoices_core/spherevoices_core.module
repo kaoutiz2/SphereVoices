@@ -24,6 +24,7 @@ use Drupal\media\Plugin\Filter\MediaEmbed;
 use Drupal\node\NodeInterface;
 use Drupal\spherevoices_core\Render\ArticleBodyPostRender;
 use Drupal\spherevoices_core\Service\AdSenseHelper;
+use Drupal\spherevoices_core\Service\AdSlotManager;
 
 /**
  * Cookie consent settings with defaults when config is not yet imported.
@@ -105,6 +106,17 @@ function spherevoices_core_page_attachments(array &$attachments): void {
   }
 
   $ads_config = \Drupal::config('spherevoices_core.ads');
+  $any_ad_enabled = FALSE;
+  foreach (['header', 'sidebar', 'grid'] as $placement) {
+    if ($ads_config->get($placement . '_enabled')) {
+      $any_ad_enabled = TRUE;
+      break;
+    }
+  }
+  if ($any_ad_enabled) {
+    $attachments['#attached']['library'][] = 'spherevoices_core/ads';
+  }
+
   $client = AdSenseHelper::sanitizeClientId((string) $ads_config->get('adsense_client'));
   if ($client === '') {
     return;
@@ -166,12 +178,60 @@ function spherevoices_core_preprocess_page(array &$variables): void {
   $variables['show_ad_sidebar'] = (bool) $ads_config->get('sidebar_enabled');
 
   if ($variables['show_ad_header'] && empty($variables['ad_header'])) {
-    $variables['ad_header'] = $manager->build(\Drupal\spherevoices_core\Service\AdSlotManager::PLACEMENT_HEADER);
+    $variables['ad_header'] = $manager->build(AdSlotManager::PLACEMENT_HEADER);
   }
 
   if (!empty($variables['is_front']) && $variables['show_ad_sidebar'] && empty($variables['ad_sidebar'])) {
-    $variables['ad_sidebar'] = $manager->build(\Drupal\spherevoices_core\Service\AdSlotManager::PLACEMENT_SIDEBAR);
+    $variables['ad_sidebar'] = $manager->build(AdSlotManager::PLACEMENT_SIDEBAR);
   }
+
+  if ($variables['show_ad_header'] || $variables['show_ad_sidebar']) {
+    $variables['#cache']['max-age'] = 0;
+    $variables['#cache']['tags'] = Cache::mergeTags(
+      $variables['#cache']['tags'] ?? [],
+      $ads_config->getCacheTags()
+    );
+  }
+}
+
+/**
+ * Implements hook_page_top().
+ *
+ * Bandeau header injecté ici (hors templates Twig) pour éviter les écarts prod.
+ */
+function spherevoices_core_page_top(array &$page_top): void {
+  if (\Drupal::service('router.admin_context')->isAdminRoute()) {
+    return;
+  }
+  if (!\Drupal::hasService('spherevoices_core.ad_slot_manager')) {
+    return;
+  }
+
+  $ads_config = \Drupal::config('spherevoices_core.ads');
+  if (!$ads_config->get('header_enabled')) {
+    return;
+  }
+
+  $slot = \Drupal::service('spherevoices_core.ad_slot_manager')->build(AdSlotManager::PLACEMENT_HEADER);
+  if (empty($slot)) {
+    return;
+  }
+
+  $page_top['spherevoices_ad_header'] = [
+    '#type' => 'container',
+    '#attributes' => [
+      'class' => ['ad-slot', 'ad-slot--header'],
+      'role' => 'complementary',
+      'aria-label' => (string) t('Publicité'),
+    ],
+    '#weight' => -1000,
+    'inner' => $slot,
+    '#cache' => [
+      'max-age' => 0,
+      'tags' => $ads_config->getCacheTags(),
+      'contexts' => ['languages:language_interface'],
+    ],
+  ];
 }
 
 /**
