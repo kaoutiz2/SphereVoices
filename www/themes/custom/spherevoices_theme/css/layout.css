@@ -210,11 +210,11 @@
 }
 
 .article-breaking-news-title {
-  font-size: calc(36px + 16 * (100vw - 1280px) / 160);
+  font-size: 30pt;
   font-weight: 700;
   color: #000000;
   margin: 0 0 1rem 0;
-  line-height: calc(42px + 16 * (100vw - 1280px) / 160);
+  line-height: 1.25;
   letter-spacing: -0.5px;
   overflow: visible;
   text-overflow: clip;
