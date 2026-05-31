@@ -83,14 +83,20 @@ $provided_token = $_GET['token'] ?? '';
                 echo '<p class="success">✅ Drupal chargé avec succès</p>';
                 
                 echo '<p class="info">🔄 Vidage des caches en cours...</p>';
-                spherevoices_ops_rebuild_cache($kernel);
-                echo '<p class="success">✅ Tous les caches ont été vidés</p>';
+                $log = spherevoices_ops_rebuild_cache($kernel);
+                echo spherevoices_ops_render_rebuild_log($log);
                 
-                echo '<h2 class="success">🎉 Vidage du cache terminé avec succès!</h2>';
+                $failed = array_filter($log, static fn($entry) => empty($entry['ok']));
+                if (!$failed) {
+                  echo '<h2 class="success">🎉 Vidage du cache terminé avec succès!</h2>';
+                }
+                else {
+                  echo '<p class="warning">⚠️ Terminé avec des avertissements (voir ci-dessus).</p>';
+                }
                 echo '<p>Le site affiche maintenant la dernière version.</p>';
                 echo '<p><a href="/" class="btn">← Retour au site</a></p>';
                 
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 echo '<p class="error">❌ Erreur: ' . htmlspecialchars($e->getMessage()) . '</p>';
                 echo '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
             }

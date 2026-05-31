@@ -89,13 +89,8 @@ try {
     $_SERVER['HTTP_HOST'] = 'www.spherevoices.com';
   }
 
-  require_once __DIR__ . '/autoload.php';
-  $autoloader = require __DIR__ . '/autoload.php';
-  $request = \Symfony\Component\HttpFoundation\Request::createFromGlobals();
-  $kernel = \Drupal\Core\DrupalKernel::createFromRequest($request, $autoloader, 'prod');
-  $kernel->boot();
-  \Drupal::setContainer($kernel->getContainer());
-  $kernel->getContainer()->get('request_stack')->push($request);
+  require_once __DIR__ . '/spherevoices-ops-bootstrap.inc.php';
+  spherevoices_ops_bootstrap_drupal(__DIR__);
 
   $raw = _check_ads_config_array();
   $has_service = \Drupal::hasService('spherevoices_core.ad_slot_manager');
@@ -135,7 +130,8 @@ try {
 
   $report = [
     'generated_at' => date('c'),
-    'maintenance_mode' => (bool) \Drupal::config('system.maintenance')->get('enabled'),
+    'maintenance_mode' => spherevoices_ops_maintenance_enabled(),
+    'maintenance_note' => 'Le mode maintenance utilise system.maintenance_mode (state). Seuls les comptes avec la permission « accéder au site en maintenance » voient le site complet.',
     'theme_default' => (string) \Drupal::config('system.theme')->get('default'),
     'ads_config' => $raw,
     'adsense_client_sanitized' => $client,
@@ -185,7 +181,7 @@ catch (\Throwable $e) {
       </li>
       <li>Mode maintenance Drupal :
         <?php if ($report['maintenance_mode']): ?>
-          <span class="warn">activé</span> (visiteurs anonymes voient la page maintenance)
+          <span class="warn">activé</span> — visiteurs anonymes voient la page maintenance (normal si voulu)
         <?php else: ?>
           <span class="ok">désactivé</span>
         <?php endif; ?>

@@ -20,9 +20,6 @@ try {
     $app_root = dirname(__DIR__);
     
     require_once __DIR__ . '/autoload.php';
-    $autoloader = require __DIR__ . '/autoload.php';
-    
-    $request = \Symfony\Component\HttpFoundation\Request::createFromGlobals();
     require_once __DIR__ . '/spherevoices-ops-bootstrap.inc.php';
     spherevoices_ops_bootstrap_drupal(__DIR__);
     
@@ -70,8 +67,8 @@ try {
     // Vérifier le mode maintenance
     echo "\n\n=== CONFIGURATION SITE ===\n\n";
     
-    $maintenance_mode = \Drupal::state()->get('system.maintenance_mode');
-    echo "Mode maintenance: " . ($maintenance_mode ? "ACTIVÉ ❌" : "Désactivé ✅") . "\n";
+    $maintenance_mode = spherevoices_ops_maintenance_enabled();
+    echo "Mode maintenance (state): " . ($maintenance_mode ? "ACTIVÉ ✅ (normal si voulu)" : "Désactivé") . "\n";
     
     $theme = \Drupal::config('system.theme')->get('default');
     echo "Thème actif: $theme\n";

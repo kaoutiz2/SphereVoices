@@ -1,7 +1,7 @@
 <?php
 /**
  * Vider le cache Drupal COMPLET (comme drush cr)
- * URL: https://www.spherevoices.com/www/drush-cr.php?token=spherevoices2026
+ * URL: https://www.spherevoices.com/drush-cr.php?token=spherevoices2026
  */
 
 $security_token = 'spherevoices2026';
@@ -23,6 +23,7 @@ header('Content-Type: text/html; charset=utf-8');
         .info { color: #0c5460; padding: 10px; background: #d1ecf1; border-radius: 4px; margin: 10px 0; }
         .btn { display: inline-block; padding: 10px 20px; margin: 10px 5px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; border: none; cursor: pointer; }
         pre { background: #f8f9fa; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+        ul { margin: 0; padding-left: 1.2rem; }
     </style>
 </head>
 <body>
@@ -33,95 +34,37 @@ header('Content-Type: text/html; charset=utf-8');
         if ($provided_token === $security_token) {
             echo '<div class="info">🚀 Vidage COMPLET du cache Drupal (équivalent drush cr)...</div>';
             
-            $drupal_root = __DIR__;
-            
-            if (!file_exists($drupal_root . '/autoload.php')) {
+            if (!file_exists(__DIR__ . '/autoload.php')) {
                 echo '<div class="error">❌ Drupal non trouvé</div>';
                 exit;
             }
             
             try {
-                // Forcer l'environnement de prod pour charger .env.production
-                if (!getenv('DRUPAL_ENV')) {
-                    putenv('DRUPAL_ENV=production');
-                    $_ENV['DRUPAL_ENV'] = 'production';
-                    $_SERVER['DRUPAL_ENV'] = 'production';
-                }
-
-                // Définir un HTTP_HOST valide si absent (nécessaire pour settings.php)
-                if (empty($_SERVER['HTTP_HOST'])) {
-                    $_SERVER['HTTP_HOST'] = 'www.spherevoices.com';
-                }
-
-                // Charger Drupal
-                require_once $drupal_root . '/autoload.php';
-                $autoloader = require $drupal_root . '/autoload.php';
-                
-                // Bootstrap Drupal
-                $request = \Symfony\Component\HttpFoundation\Request::createFromGlobals();
-                $kernel = \Drupal\Core\DrupalKernel::createFromRequest($request, $autoloader, 'prod');
-                $kernel->boot();
-                    // Enregistrer la requête dans la stack (Drupal 10+)
-                    \Drupal::setContainer($kernel->getContainer());
-                    $kernel->getContainer()->get('request_stack')->push($request);
-                
+                require_once __DIR__ . '/spherevoices-ops-bootstrap.inc.php';
+                $kernel = spherevoices_ops_bootstrap_drupal(__DIR__);
                 echo '<div class="success">✅ Drupal chargé</div>';
                 
-                // VIDAGE COMPLET DU CACHE (équivalent drush cr)
-                echo '<div class="info">🔄 Exécution de drupal_flush_all_caches()...</div>';
-                drupal_flush_all_caches();
-                echo '<div class="success">✅ Cache complet vidé !</div>';
+                echo '<div class="info">🔄 Rebuild du cache...</div>';
+                $log = spherevoices_ops_rebuild_cache($kernel);
+                echo spherevoices_ops_render_rebuild_log($log);
                 
-                // Invalidations supplémentaires
-                echo '<div class="info">🎨 Invalidation des assets CSS/JS...</div>';
-                \Drupal::service('asset.css.collection_optimizer')->deleteAll();
-                \Drupal::service('asset.js.collection_optimizer')->deleteAll();
-                echo '<div class="success">✅ Assets invalidés</div>';
-                
-                // Rebuild des routes
-                echo '<div class="info">🛣️ Reconstruction des routes...</div>';
-                \Drupal::service('router.builder')->rebuild();
-                echo '<div class="success">✅ Routes reconstruites</div>';
-                
-                // Invalidation des tags de cache
-                echo '<div class="info">🏷️ Invalidation des tags de cache...</div>';
-                \Drupal\Core\Cache\Cache::invalidateTags(['rendered', 'config:core.extension']);
-                echo '<div class="success">✅ Tags invalidés</div>';
-                
-                // Rebuild du container
-                echo '<div class="info">📦 Rebuild du container...</div>';
-                $kernel->invalidateContainer();
-                echo '<div class="success">✅ Container invalidé</div>';
-                
-                echo '<h2 class="success">🎉 CACHE VIDÉ COMPLÈTEMENT !</h2>';
-                echo '<div class="info">';
-                echo '<p><strong>Équivalent de : <code>drush cr</code></strong></p>';
-                echo '<ul>';
-                echo '<li>✅ Tous les caches vidés</li>';
-                echo '<li>✅ Routes reconstruites</li>';
-                echo '<li>✅ Container Drupal invalidé</li>';
-                echo '<li>✅ Assets CSS/JS invalidés</li>';
-                echo '<li>✅ Templates rechargés</li>';
-                echo '</ul>';
-                echo '</div>';
+                $failed = array_filter($log, static fn($entry) => empty($entry['ok']));
+                if ($failed) {
+                    echo '<div class="warning">⚠️ Certaines étapes ont échoué, mais le cache principal a probablement été vidé.</div>';
+                }
+                else {
+                    echo '<h2 class="success">🎉 CACHE VIDÉ COMPLÈTEMENT !</h2>';
+                }
                 
                 echo '<div class="warning">';
-                echo '<p><strong>⚠️ IMPORTANT :</strong></p>';
-                echo '<p>Actualisez maintenant le site avec <strong>Ctrl+Shift+R</strong></p>';
-                echo '<p>Les changements devraient être visibles immédiatement !</p>';
+                echo '<p><strong>⚠️ IMPORTANT :</strong> Actualisez le site avec <strong>Ctrl+Shift+R</strong></p>';
                 echo '</div>';
                 
                 echo '<p><a href="/" class="btn">← Retour au site</a></p>';
                 
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 echo '<div class="error">❌ Erreur : ' . htmlspecialchars($e->getMessage()) . '</div>';
                 echo '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
-                
-                echo '<div class="warning">';
-                echo '<h3>💡 Solution alternative : Drush via SSH</h3>';
-                echo '<p>Si ce script ne fonctionne pas, connectez-vous en SSH et exécutez :</p>';
-                echo '<pre>cd ~/www && ../vendor/bin/drush cr</pre>';
-                echo '</div>';
             }
             
         } else {
@@ -135,22 +78,11 @@ header('Content-Type: text/html; charset=utf-8');
                 <button type="submit" class="btn">Vider le cache</button>
             </form>
             
-            <h3>📝 Ce script fait :</h3>
-            <ol>
-                <li>✅ drupal_flush_all_caches()</li>
-                <li>✅ Invalidation CSS/JS</li>
-                <li>✅ Rebuild des routes</li>
-                <li>✅ Invalidation du container</li>
-                <li>✅ Équivalent de <code>drush cr</code></li>
-            </ol>
-            
             <h3>🔗 URL directe :</h3>
-            <pre>https://www.spherevoices.com/www/drush-cr.php?token=spherevoices2026</pre>
+            <pre>https://www.spherevoices.com/drush-cr.php?token=spherevoices2026</pre>
             <?php
         }
         ?>
     </div>
 </body>
 </html>
-
-

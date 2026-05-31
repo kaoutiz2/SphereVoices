@@ -33,57 +33,42 @@ header('Content-Type: text/html; charset=utf-8');
         <?php
         if ($provided_token === $security_token) {
             require_once __DIR__ . '/spherevoices-ops-bootstrap.inc.php';
+            $paths = spherevoices_ops_paths(__DIR__);
+            
             echo '<div class="info">🚀 Exécution de drush cr via ligne de commande...</div>';
             echo '<hr>';
             
-            $paths = spherevoices_ops_paths(__DIR__);
-            $drush_path = $paths['drush'];
-            $working_dir = $paths['drupal_root'];
-            
-            if (!$drush_path) {
-                echo '<div class="error">❌ Drush introuvable — bascule sur vidage cache natif PHP...</div>';
+            if ($paths['drush']) {
+                echo "<div class='success'>✅ Drush trouvé : " . htmlspecialchars($paths['drush']) . "</div>";
             }
-            else {
-                echo "<div class='success'>✅ Drush trouvé : " . htmlspecialchars($drush_path) . "</div>";
-            }
-            
-            echo "<div class='info'>📁 Répertoire Drupal : " . htmlspecialchars($working_dir) . "</div>";
+            echo "<div class='info'>📁 Drupal root : " . htmlspecialchars($paths['drupal_root']) . "</div>";
+            echo "<div class='info'>📁 Project root : " . htmlspecialchars($paths['project_root']) . "</div>";
             echo '<hr>';
             
-            $php_path = spherevoices_ops_resolve_cli_php();
-            if ($php_path) {
-                echo "<div class='success'>✅ PHP CLI trouvé : " . htmlspecialchars($php_path) . "</div>";
+            $drush_result = spherevoices_ops_run_drush_cr(__DIR__);
+            if ($drush_result['command']) {
+                echo '<div class="info">⚡ Commande exécutée :</div><pre>' . htmlspecialchars($drush_result['command']) . '</pre>';
             }
-            else {
-                echo "<div class='warning'>⚠️ PHP CLI introuvable dans PATH (normal sur OVH mutualisé)</div>";
+            if ($drush_result['output'] !== '') {
+                echo '<div class="info">🔄 Sortie Drush :</div><pre>' . htmlspecialchars($drush_result['output']) . '</pre>';
             }
+            echo '<hr>';
             
-            $return_var = 127;
-            $output = [];
+            $return_var = $drush_result['ok'] ? 0 : $drush_result['code'];
             
-            if ($drush_path && $php_path) {
-                $command = 'cd ' . escapeshellarg($working_dir) . ' && '
-                  . escapeshellarg($php_path) . ' ' . escapeshellarg($drush_path) . ' cr 2>&1';
-                echo '<div class="info">⚡ Commande exécutée :</div><pre>' . htmlspecialchars($command) . '</pre><hr>';
-                echo '<div class="info">🔄 Sortie de drush cr :</div><pre>';
-                exec($command, $output, $return_var);
-                foreach ($output as $line) {
-                    echo htmlspecialchars($line) . "\n";
-                }
-                echo '</pre><hr>';
-            }
-            
-            if ($return_var !== 0) {
+            if (!$drush_result['ok']) {
                 echo '<div class="warning">⚠️ Drush indisponible — vidage cache via PHP (équivalent drush cr)...</div>';
                 try {
                     $kernel = spherevoices_ops_bootstrap_drupal(__DIR__);
-                    spherevoices_ops_rebuild_cache($kernel);
-                    echo '<div class="success">✅ Cache vidé via PHP (sans Drush CLI)</div>';
-                    $return_var = 0;
+                    $log = spherevoices_ops_rebuild_cache($kernel);
+                    echo spherevoices_ops_render_rebuild_log($log);
+                    $failed = array_filter($log, static fn($entry) => empty($entry['ok']));
+                    $return_var = $failed ? 1 : 0;
                 }
                 catch (\Throwable $e) {
                     echo '<div class="error">❌ Erreur fallback : ' . htmlspecialchars($e->getMessage()) . '</div>';
                     echo '<p class="info">Utilisez plutôt : <a href="/drush-cr.php?token=spherevoices2026">drush-cr.php</a></p>';
+                    $return_var = 1;
                 }
             }
             
