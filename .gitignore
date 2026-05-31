@@ -53,3 +53,4 @@ yarn-error.log
 deploy-ftp/
 
 
+www/sites/default/files/**/*.mp4
