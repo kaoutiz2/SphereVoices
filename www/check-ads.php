@@ -19,7 +19,76 @@ if (!hash_equals($security_token, $provided_token)) {
 
 header('Content-Type: text/html; charset=utf-8');
 
+/**
+ * Lit spherevoices_core.ads sans getRawData() (compatibilité maximale).
+ */
+function _check_ads_config_array(): array {
+  $config = \Drupal::config('spherevoices_core.ads');
+  $keys = [
+    'adsense_client',
+    'header_enabled', 'header_type', 'header_ad_slot', 'header_ad_format',
+    'sidebar_enabled', 'sidebar_type', 'sidebar_ad_slot', 'sidebar_ad_format',
+    'grid_enabled', 'grid_type', 'grid_ad_slot', 'grid_ad_format',
+  ];
+  $raw = ['_config_exists' => !$config->isNew()];
+  foreach ($keys as $key) {
+    $raw[$key] = $config->get($key);
+  }
+  return $raw;
+}
+
+/**
+ * Résumé du rendu attendu sans appeler AdSlotManager (évite les écarts de déploiement).
+ */
+function _check_ads_placement_summary(string $placement, array $raw, string $client): array {
+  $enabled = !empty($raw[$placement . '_enabled']);
+  $type = $raw[$placement . '_type'] ?: 'image';
+  $slot_raw = (string) ($raw[$placement . '_ad_slot'] ?? '');
+  $slot = '';
+  $preview_mode = TRUE;
+  $expected_mode = 'disabled';
+  $expected_empty = TRUE;
+
+  if (class_exists(\Drupal\spherevoices_core\Service\AdSenseHelper::class)) {
+    $slot = \Drupal\spherevoices_core\Service\AdSenseHelper::sanitizeSlotId($slot_raw);
+    $preview_mode = \Drupal\spherevoices_core\Service\AdSenseHelper::shouldUsePreviewPlaceholders($client, $slot);
+  }
+
+  if ($enabled) {
+    $expected_empty = FALSE;
+    if ($type === 'adsense') {
+      if ($client !== '' && $slot !== '' && !$preview_mode) {
+        $expected_mode = 'adsense';
+      }
+      else {
+        $expected_mode = 'placeholder (aperçu)';
+      }
+    }
+    elseif ($type === 'image') {
+      $fid = $raw[$placement . '_image'] ?? NULL;
+      $expected_mode = empty($fid) ? 'placeholder (image manquante)' : 'image';
+    }
+    else {
+      $expected_mode = $type;
+    }
+  }
+
+  return [
+    'enabled' => $enabled,
+    'type' => $type,
+    'slot' => $slot_raw,
+    'slot_sanitized' => $slot,
+    'preview_mode' => $preview_mode,
+    'expected_mode' => $expected_mode,
+    'expected_empty' => $expected_empty,
+  ];
+}
+
 try {
+  if (empty($_SERVER['HTTP_HOST'])) {
+    $_SERVER['HTTP_HOST'] = 'www.spherevoices.com';
+  }
+
   require_once __DIR__ . '/autoload.php';
   $autoloader = require __DIR__ . '/autoload.php';
   $request = \Symfony\Component\HttpFoundation\Request::createFromGlobals();
@@ -28,31 +97,35 @@ try {
   \Drupal::setContainer($kernel->getContainer());
   $kernel->getContainer()->get('request_stack')->push($request);
 
-  $config = \Drupal::config('spherevoices_core.ads');
-  $raw = $config->getRawData();
+  $raw = _check_ads_config_array();
   $has_service = \Drupal::hasService('spherevoices_core.ad_slot_manager');
-  $manager = $has_service ? \Drupal::service('spherevoices_core.ad_slot_manager') : NULL;
 
-  $client = \Drupal\spherevoices_core\Service\AdSenseHelper::sanitizeClientId((string) ($raw['adsense_client'] ?? ''));
+  $client = class_exists(\Drupal\spherevoices_core\Service\AdSenseHelper::class)
+    ? \Drupal\spherevoices_core\Service\AdSenseHelper::sanitizeClientId((string) ($raw['adsense_client'] ?? ''))
+    : trim((string) ($raw['adsense_client'] ?? ''));
 
   $placements = ['header', 'sidebar', 'grid'];
   $builds = [];
-  $preview_by_placement = [];
-  if ($manager) {
-    foreach ($placements as $placement) {
-      $slot = \Drupal\spherevoices_core\Service\AdSenseHelper::sanitizeSlotId((string) ($raw[$placement . '_ad_slot'] ?? ''));
-      $preview_by_placement[$placement] = \Drupal\spherevoices_core\Service\AdSenseHelper::shouldUsePreviewPlaceholders($client, $slot);
-      $build = $manager->build($placement);
-      $builds[$placement] = [
-        'enabled' => !empty($raw[$placement . '_enabled']),
-        'type' => $raw[$placement . '_type'] ?? 'image',
-        'slot' => $raw[$placement . '_ad_slot'] ?? '',
-        'preview_mode' => $preview_by_placement[$placement],
-        'render_empty' => empty($build),
-        'mode' => $build['#mode'] ?? NULL,
-        'preview_only' => $build['#preview_only'] ?? NULL,
-        'theme' => $build['#theme'] ?? NULL,
-      ];
+  foreach ($placements as $placement) {
+    $builds[$placement] = _check_ads_placement_summary($placement, $raw, $client);
+  }
+
+  // Test optionnel du service (ne bloque pas la page si erreur interne).
+  $service_build = [];
+  if ($has_service) {
+    try {
+      $manager = \Drupal::service('spherevoices_core.ad_slot_manager');
+      foreach ($placements as $placement) {
+        $build = $manager->build($placement);
+        $service_build[$placement] = [
+          'render_empty' => empty($build),
+          'mode' => is_array($build) ? ($build['#mode'] ?? NULL) : NULL,
+          'preview_only' => is_array($build) ? ($build['#preview_only'] ?? NULL) : NULL,
+        ];
+      }
+    }
+    catch (\Throwable $serviceError) {
+      $service_build['_error'] = $serviceError->getMessage();
     }
   }
 
@@ -63,18 +136,22 @@ try {
   $report = [
     'generated_at' => date('c'),
     'maintenance_mode' => (bool) \Drupal::config('system.maintenance')->get('enabled'),
-    'theme_default' => \Drupal::config('system.theme')->get('default'),
+    'theme_default' => (string) \Drupal::config('system.theme')->get('default'),
     'ads_config' => $raw,
     'adsense_client_sanitized' => $client,
     'ad_slot_manager_service' => $has_service,
     'cookie_consent_js_has_previewOnly' => $cookie_consent_has_preview,
     'placements' => $builds,
+    'service_build' => $service_build,
   ];
 }
 catch (\Throwable $e) {
   http_response_code(500);
-  echo '<!DOCTYPE html><html lang="fr"><body><h1>Erreur</h1><pre>';
-  echo htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
+  echo '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Erreur</title></head><body>';
+  echo '<h1>Erreur</h1><pre>';
+  echo htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . "\n\n";
+  echo htmlspecialchars($e->getFile(), ENT_QUOTES, 'UTF-8') . ':' . (int) $e->getLine() . "\n\n";
+  echo htmlspecialchars($e->getTraceAsString(), ENT_QUOTES, 'UTF-8');
   echo '</pre></body></html>';
   exit;
 }
@@ -103,6 +180,9 @@ catch (\Throwable $e) {
     <h1>Diagnostic publicités</h1>
     <p>Généré le <?php echo htmlspecialchars($report['generated_at'], ENT_QUOTES, 'UTF-8'); ?></p>
     <ul>
+      <li>Config <code>spherevoices_core.ads</code> :
+        <?php echo !empty($report['ads_config']['_config_exists']) ? '<span class="ok">présente</span>' : '<span class="bad">absente (defauts Drupal)</span>'; ?>
+      </li>
       <li>Mode maintenance Drupal :
         <?php if ($report['maintenance_mode']): ?>
           <span class="warn">activé</span> (visiteurs anonymes voient la page maintenance)
@@ -110,7 +190,7 @@ catch (\Throwable $e) {
           <span class="ok">désactivé</span>
         <?php endif; ?>
       </li>
-      <li>Thème actif : <strong><?php echo htmlspecialchars((string) $report['theme_default'], ENT_QUOTES, 'UTF-8'); ?></strong></li>
+      <li>Thème actif : <strong><?php echo htmlspecialchars($report['theme_default'], ENT_QUOTES, 'UTF-8'); ?></strong></li>
       <li>Service <code>ad_slot_manager</code> :
         <?php echo $report['ad_slot_manager_service'] ? '<span class="ok">OK</span>' : '<span class="bad">absent</span>'; ?>
       </li>
@@ -121,7 +201,7 @@ catch (\Throwable $e) {
   </div>
 
   <div class="card">
-    <h2>Emplacements</h2>
+    <h2>Emplacements (config)</h2>
     <table>
       <thead>
         <tr>
@@ -130,7 +210,7 @@ catch (\Throwable $e) {
           <th>Type</th>
           <th>Slot</th>
           <th>Mode aperçu</th>
-          <th>Rendu PHP</th>
+          <th>Rendu attendu</th>
         </tr>
       </thead>
       <tbody>
@@ -142,11 +222,10 @@ catch (\Throwable $e) {
             <td><code><?php echo htmlspecialchars((string) $row['slot'], ENT_QUOTES, 'UTF-8'); ?></code></td>
             <td><?php echo !empty($row['preview_mode']) ? '<span class="ok">oui</span>' : '<span class="warn">non (AdSense réel)</span>'; ?></td>
             <td>
-              <?php if (!empty($row['render_empty'])): ?>
-                <span class="bad">vide</span>
+              <?php if (!empty($row['expected_empty'])): ?>
+                <span class="bad">rien (désactivé)</span>
               <?php else: ?>
-                <span class="ok"><?php echo htmlspecialchars((string) ($row['mode'] ?? '?'), ENT_QUOTES, 'UTF-8'); ?></span>
-                <?php if (!empty($row['preview_only'])): ?> (aperçu)<?php endif; ?>
+                <span class="ok"><?php echo htmlspecialchars((string) $row['expected_mode'], ENT_QUOTES, 'UTF-8'); ?></span>
               <?php endif; ?>
             </td>
           </tr>
@@ -154,6 +233,17 @@ catch (\Throwable $e) {
       </tbody>
     </table>
   </div>
+
+  <?php if (!empty($report['service_build'])): ?>
+  <div class="card">
+    <h2>Test service PHP (optionnel)</h2>
+    <?php if (!empty($report['service_build']['_error'])): ?>
+      <p class="bad">Erreur AdSlotManager : <?php echo htmlspecialchars((string) $report['service_build']['_error'], ENT_QUOTES, 'UTF-8'); ?></p>
+    <?php else: ?>
+      <pre><?php echo htmlspecialchars(json_encode($report['service_build'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?></pre>
+    <?php endif; ?>
+  </div>
+  <?php endif; ?>
 
   <div class="card">
     <h2>Config complète</h2>
