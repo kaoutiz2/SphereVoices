@@ -25,7 +25,8 @@ try {
   $request = \Symfony\Component\HttpFoundation\Request::createFromGlobals();
   $kernel = \Drupal\Core\DrupalKernel::createFromRequest($request, $autoloader, 'prod');
   $kernel->boot();
-  $kernel->prepareLegacyRequest($request);
+  \Drupal::setContainer($kernel->getContainer());
+  $kernel->getContainer()->get('request_stack')->push($request);
 
   $config = \Drupal::config('spherevoices_core.ads');
   $raw = $config->getRawData();
