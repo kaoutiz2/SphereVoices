@@ -54,6 +54,13 @@
       el.removeAttribute('hidden');
       el.classList.add('sv-promo-fallback--visible');
     });
+    scheduleGalleryReflow();
+  }
+
+  function scheduleGalleryReflow() {
+    window.setTimeout(function () {
+      window.dispatchEvent(new Event('resize'));
+    }, 50);
   }
 
   Drupal.behaviors.spherevoicesAdBlockFallback = {
@@ -62,6 +69,9 @@
         window.setTimeout(function () {
           if (isBaitBlocked() || isSlotContentHidden()) {
             revealFallbacks();
+          }
+          else {
+            scheduleGalleryReflow();
           }
         }, 120);
       });

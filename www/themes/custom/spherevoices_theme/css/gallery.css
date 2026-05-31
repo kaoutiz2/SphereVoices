@@ -94,6 +94,7 @@
 .homepage-sidebar .sidebar-ad-widget {
   width: 100%;
   margin-top: 0;
+  flex-shrink: 0;
 }
 
 .homepage-gallery-layout > .ad-gallery-slot {

@@ -53,13 +53,18 @@
 /* Square slot under poll in homepage sidebar */
 .ad-slot--sidebar {
   width: 100%;
+  height: 420px;
+  max-height: 420px;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .ad-slot--sidebar .ad-slot__inner--sidebar {
   width: 100%;
-  aspect-ratio: 1 / 1;
-  min-height: 420px;
+  height: 100%;
   max-height: 420px;
+  aspect-ratio: auto;
+  min-height: 0;
   overflow: hidden;
   background-color: #f4f4f4;
   border: 1px solid var(--color-border, #ddd);
@@ -150,8 +155,10 @@
 
 .ad-slot--sidebar .ad-slot__inner--adsense {
   width: 100%;
-  min-height: 420px;
+  height: 100%;
   max-height: 420px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .ad-slot--grid .ad-slot__inner--adsense {
@@ -212,8 +219,10 @@
 
 .ad-slot--sidebar .ad-slot__inner--placeholder {
   width: 100%;
-  min-height: 420px;
+  height: 100%;
   max-height: 420px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .ad-slot--grid .ad-slot__inner--placeholder {
@@ -223,9 +232,14 @@
 }
 
 @media (max-width: 1199px) {
-  .ad-slot--sidebar .ad-slot__inner--sidebar {
-    min-height: 320px;
-    max-height: none;
+  .ad-slot--sidebar {
+    height: 320px;
+    max-height: 320px;
+  }
+
+  .ad-slot--sidebar .ad-slot__inner--sidebar,
+  .ad-slot--sidebar .ad-slot__inner--placeholder {
+    max-height: 320px;
   }
 
   .ad-gallery-slot {
@@ -240,6 +254,13 @@
 .sv-promo-grid-frame {
   position: relative;
   width: 100%;
+}
+
+.sv-promo-sidebar-frame {
+  height: 420px;
+  max-height: 420px;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .sv-promo-grid-frame {
@@ -298,8 +319,20 @@
 
 .sv-promo-fallback--sidebar {
   width: 100%;
-  min-height: 420px;
+  height: 100%;
+  min-height: 0;
   max-height: 420px;
+}
+
+@media (max-width: 1199px) {
+  .sv-promo-sidebar-frame {
+    height: 320px;
+    max-height: 320px;
+  }
+
+  .sv-promo-fallback--sidebar {
+    max-height: 320px;
+  }
 }
 
 .sv-promo-fallback--grid {
