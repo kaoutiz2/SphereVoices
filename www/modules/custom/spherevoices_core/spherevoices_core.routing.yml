@@ -40,6 +40,16 @@ spherevoices_core.poll_vote:
   requirements:
     _access: 'TRUE'
 
+spherevoices_core.ads_settings:
+  path: '/admin/config/spherevoices/ads'
+  defaults:
+    _form: '\Drupal\spherevoices_core\Form\AdsSettingsForm'
+    _title: 'Publicités'
+  requirements:
+    _custom_access: '\Drupal\spherevoices_core\Form\AdsSettingsForm::access'
+  options:
+    _admin_route: TRUE
+
 spherevoices_core.facebook_live_settings:
   path: '/admin/config/spherevoices/facebook-live'
   defaults:

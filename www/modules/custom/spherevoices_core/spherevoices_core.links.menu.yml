@@ -6,6 +6,20 @@ spherevoices_core.trending:
   weight: 0
 
 # Same route appears in two sections so it is easy to find (Media + System).
+spherevoices_core.ads_settings:
+  title: 'Publicités'
+  description: 'Bandeau header, encart sous le sondage et publicités dans la grille d’accueil.'
+  parent: system.admin_config_media
+  route_name: spherevoices_core.ads_settings
+  weight: 45
+
+spherevoices_core.ads_settings_system:
+  title: 'Publicités'
+  description: 'Bandeau header, encart sous le sondage et publicités dans la grille d’accueil.'
+  parent: system.admin_config_system
+  route_name: spherevoices_core.ads_settings
+  weight: -19
+
 spherevoices_core.facebook_live_settings:
   title: 'Lives (Facebook, Instagram, YouTube)'
   description: 'URLs des directs et statut à l’antenne pour chaque plateforme.'

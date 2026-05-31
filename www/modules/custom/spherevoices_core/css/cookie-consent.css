@@ -1,0 +1,121 @@
+/**
+ * @file
+ * Cookie consent banner.
+ */
+
+html.cookie-consent-visible body {
+  padding-bottom: 7rem;
+}
+
+.cookie-consent {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  background-color: #1a1a1a;
+  color: #f5f5f5;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.25);
+  padding: 1rem 0;
+  box-sizing: border-box;
+}
+
+.cookie-consent--visible,
+.cookie-consent:not([hidden]) {
+  display: block;
+}
+
+.cookie-consent[hidden] {
+  display: none !important;
+}
+
+.cookie-consent__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+  margin: 0 auto;
+  padding: 0 var(--spacing-unit, 1rem);
+  box-sizing: border-box;
+}
+
+.cookie-consent__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+
+.cookie-consent__text {
+  margin: 0;
+  flex: 1 1 280px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: #e0e0e0;
+}
+
+.cookie-consent__link {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.cookie-consent__link:hover,
+.cookie-consent__link:focus {
+  color: #f0c0c0;
+}
+
+.cookie-consent__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+}
+
+.cookie-consent__btn {
+  border: none;
+  border-radius: 4px;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.cookie-consent__btn--accept {
+  background-color: #c20017;
+  color: #fff;
+}
+
+.cookie-consent__btn--accept:hover,
+.cookie-consent__btn--accept:focus {
+  background-color: #8a0000;
+}
+
+.cookie-consent__btn--reject {
+  background-color: transparent;
+  color: #fff;
+  border: 1px solid #666;
+}
+
+.cookie-consent__btn--reject:hover,
+.cookie-consent__btn--reject:focus {
+  border-color: #aaa;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 640px) {
+  .cookie-consent__inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cookie-consent__actions {
+    width: 100%;
+  }
+
+  .cookie-consent__btn {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+}

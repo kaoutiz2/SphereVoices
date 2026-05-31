@@ -11,6 +11,7 @@
  */
 #}
 <div class="page-wrapper">
+  {% include '@spherevoices_theme/layout/ad-banner-header.html.twig' %}
   <header class="site-header" role="banner">
     {% if page.header_top %}
       <div class="header-top">
@@ -110,6 +111,14 @@
                 {{ poll_block }}
               </div>
             {% endif %}
+
+            {% if ad_sidebar %}
+              <div class="sidebar-ad-widget">
+                <div class="ad-slot ad-slot--sidebar" role="complementary" aria-label="{{ 'Publicité'|t }}">
+                  {{ ad_sidebar }}
+                </div>
+              </div>
+            {% endif %}
           </aside>
 
           {% if featured_article %}
@@ -118,7 +127,21 @@
             </div>
           {% endif %}
 
-          {% if all_articles %}
+          {% if homepage_gallery_items %}
+            {% for item in homepage_gallery_items %}
+              {% if item.type == 'ad' %}
+                <div class="article-gallery-item ad-gallery-slot">
+                  <div class="ad-slot ad-slot--grid" role="complementary" aria-label="{{ 'Publicité'|t }}">
+                    {{ item.render }}
+                  </div>
+                </div>
+              {% else %}
+                <div class="article-gallery-item">
+                  {{ item.render }}
+                </div>
+              {% endif %}
+            {% endfor %}
+          {% elseif all_articles %}
             {% for article in all_articles %}
               <div class="article-gallery-item">
                 {{ article }}

@@ -5,9 +5,12 @@
   var DESKTOP_MIN = 1200;
   var GAP_PX = 32;
 
-  function getArticles(layout) {
+  function getGalleryCells(layout) {
     return Array.prototype.filter.call(layout.children, function (el) {
-      return el.nodeType === 1 && el.classList.contains('article-gallery-item');
+      return el.nodeType === 1 && (
+        el.classList.contains('article-gallery-item') ||
+        el.classList.contains('ad-gallery-slot')
+      );
     });
   }
 
@@ -25,7 +28,7 @@
 
     var breaking = layout.querySelector('.breaking-news-in-grid');
     var sidebar = layout.querySelector('.homepage-sidebar');
-    var articles = getArticles(layout);
+    var articles = getGalleryCells(layout);
 
     if (breaking) {
       breaking.style.gridColumn = '1 / 4';

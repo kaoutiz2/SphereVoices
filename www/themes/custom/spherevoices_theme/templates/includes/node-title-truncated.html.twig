@@ -1,15 +1,15 @@
 {#
 /**
  * @file
- * Titre affiché en liste : au-delà de 60 caractères, tronquer et ajouter "...".
+ * Titre affiché en liste : au-delà de 100 caractères, tronquer et ajouter "...".
  *
  * @var title_render
  *   Chaîne ou render array (souvent `label`).
  */
 #}
 {% set plain = title_render|render|striptags|trim %}
-{% if plain|length > 60 %}
-  {{ plain|slice(0, 60) ~ '...' }}
+{% if plain|length > 100 %}
+  {{ plain|slice(0, 100) ~ '...' }}
 {% else %}
   {{ plain }}
 {% endif %}

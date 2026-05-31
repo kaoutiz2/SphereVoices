@@ -1,4 +1,11 @@
 services:
+  spherevoices_core.ad_slot_manager:
+    class: Drupal\spherevoices_core\Service\AdSlotManager
+    arguments:
+      - '@config.factory'
+      - '@entity_type.manager'
+      - '@file_url_generator'
+
   user.toolbar_link_builder:
     class: Drupal\spherevoices_core\ToolbarLinkBuilder
     arguments: ['@current_user']

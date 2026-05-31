@@ -18,8 +18,8 @@
       if ($choice.length) {
         console.log('Updating choice', result.index, 'with', result.votes, 'votes');
         
-        // Mettre à jour le nombre de votes affiché à gauche (span.poll-votes-count)
-        // Ex : <div class="poll-choice-info"><span class="poll-votes-count">0</span> vote<span class="poll-percentage">100%</span></div>
+        // Mettre à jour le pourcentage (gauche) et le nombre de votes (droite).
+        // Ex : <div class="poll-choice-info"><span class="poll-percentage">100%</span><span class="poll-votes-count">0</span> vote</div>
         var $votesCount = $choice.find('.poll-choice-info .poll-votes-count');
         if ($votesCount.length) {
           $votesCount.text(result.votes);

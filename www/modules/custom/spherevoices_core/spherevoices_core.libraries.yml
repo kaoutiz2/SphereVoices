@@ -1,3 +1,28 @@
+ads:
+  css:
+    theme:
+      css/ads.css: {}
+
+cookie_consent:
+  css:
+    theme:
+      css/cookie-consent.css: {}
+  js:
+    js/cookie-consent.js: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+    - core/once
+
+adsense:
+  js:
+    js/adsense.js: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+    - core/once
+    - spherevoices_core/cookie_consent
+
 poll_choices_widget:
   js:
     js/poll_choices_widget.js: {}

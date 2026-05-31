@@ -1,0 +1,217 @@
+/**
+ * @file
+ * Advertising slots (header, sidebar, in-grid).
+ */
+
+/* Full-width band above the main navigation */
+.ad-slot--header {
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  background-color: #f4f4f4;
+  border-bottom: 1px solid var(--color-border, #ddd);
+  box-sizing: border-box;
+}
+
+.ad-slot--header .ad-slot__inner--header,
+.ad-slot--header .ad-slot__inner--adsense,
+.ad-slot--header .ad-slot__inner--placeholder {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  text-align: center;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.ad-slot--header .ad-slot__inner--header {
+  line-height: 0;
+}
+
+.ad-slot--header .ad-slot__link,
+.ad-slot--header .ad-slot__image {
+  display: block;
+  width: 100%;
+}
+
+.ad-slot--header .ad-slot__image {
+  height: 300px;
+  max-height: 300px;
+  width: auto;
+  max-width: 100%;
+  margin: 0 auto;
+  object-fit: contain;
+}
+
+/* Square slot under poll in homepage sidebar */
+.ad-slot--sidebar {
+  width: 100%;
+}
+
+.ad-slot--sidebar .ad-slot__inner--sidebar {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  min-height: 420px;
+  max-height: 420px;
+  overflow: hidden;
+  background-color: #f4f4f4;
+  border: 1px solid var(--color-border, #ddd);
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.ad-slot--sidebar .ad-slot__link,
+.ad-slot--sidebar .ad-slot__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ad-slot--sidebar .ad-slot__image {
+  object-fit: cover;
+}
+
+/* In-grid slot: same footprint as an article card */
+.ad-gallery-slot {
+  display: flex;
+  flex-direction: column;
+  min-height: 420px;
+  max-height: 550px;
+  overflow: hidden;
+}
+
+.ad-slot--grid {
+  width: 100%;
+  height: 100%;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  background-color: #f4f4f4;
+  border: 1px solid var(--color-border, #ddd);
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.ad-slot--grid .ad-slot__inner--grid {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
+}
+
+.ad-slot--grid .ad-slot__link {
+  display: flex;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+}
+
+.ad-slot--grid .ad-slot__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Google AdSense units */
+.ad-slot__inner--adsense {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 90px;
+  overflow: hidden;
+}
+
+.ad-slot--header .ad-slot__inner--adsense {
+  min-height: 300px;
+  width: 100%;
+}
+
+.ad-slot--sidebar .ad-slot__inner--adsense {
+  width: 100%;
+  min-height: 420px;
+  max-height: 420px;
+}
+
+.ad-slot--grid .ad-slot__inner--adsense {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 250px;
+}
+
+.ad-slot__inner--adsense ins.adsbygoogle {
+  display: block;
+  width: 100%;
+}
+
+/* Layout test placeholder (no AdSense account / missing slot yet) */
+.ad-slot__inner--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+  border: 2px dashed #bbb;
+  box-sizing: border-box;
+}
+
+.ad-slot__placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 1rem;
+  text-align: center;
+  color: #666;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.ad-slot__placeholder-label {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #888;
+}
+
+.ad-slot__placeholder-hint {
+  max-width: 16rem;
+}
+
+.ad-slot__placeholder-meta {
+  font-size: 0.75rem;
+  color: #999;
+  font-family: monospace;
+}
+
+.ad-slot--header .ad-slot__inner--placeholder {
+  min-height: 300px;
+  width: 100%;
+}
+
+.ad-slot--sidebar .ad-slot__inner--placeholder {
+  width: 100%;
+  min-height: 420px;
+  max-height: 420px;
+}
+
+.ad-slot--grid .ad-slot__inner--placeholder {
+  width: 100%;
+  min-height: 420px;
+  flex: 1 1 auto;
+}
+
+@media (max-width: 1199px) {
+  .ad-slot--sidebar .ad-slot__inner--sidebar {
+    min-height: 320px;
+    max-height: none;
+  }
+
+  .ad-gallery-slot {
+    min-height: 380px;
+    max-height: none;
+  }
+}

@@ -1,0 +1,31 @@
+{#
+/**
+ * @file
+ * Cookie consent banner.
+ *
+ * - mode: informational (pubs chargées) | strict (AdSense après acceptation)
+ */
+#}
+<div id="spherevoices-cookie-banner" class="cookie-consent cookie-consent--{{ mode|default('informational') }} cookie-consent--visible" role="dialog" aria-labelledby="cookie-consent-title" aria-describedby="cookie-consent-desc">
+  <div class="cookie-consent__inner site-content-width">
+    <p id="cookie-consent-title" class="cookie-consent__title">{{ 'Gestion des cookies'|t }}</p>
+    <p id="cookie-consent-desc" class="cookie-consent__text">
+      {% if mode == 'strict' %}
+        {{ 'Nous utilisons des cookies pour mesurer l’audience et afficher des publicités (Google AdSense). Vous pouvez accepter ou refuser les cookies non essentiels.'|t }}
+      {% else %}
+        {{ 'Ce site utilise des cookies pour mesurer l’audience et afficher des publicités. En poursuivant votre navigation, vous acceptez leur utilisation.'|t }}
+      {% endif %}
+      <a href="{{ cookies_url }}" class="cookie-consent__link">{{ 'Politique de cookies'|t }}</a>
+      ·
+      <a href="{{ privacy_url }}" class="cookie-consent__link">{{ 'Mentions légales'|t }}</a>
+    </p>
+    <div class="cookie-consent__actions">
+      {% if mode == 'strict' %}
+        <button type="button" class="cookie-consent__btn cookie-consent__btn--accept">{{ 'Tout accepter'|t }}</button>
+        <button type="button" class="cookie-consent__btn cookie-consent__btn--reject">{{ 'Tout refuser'|t }}</button>
+      {% else %}
+        <button type="button" class="cookie-consent__btn cookie-consent__btn--accept">{{ 'J’ai compris'|t }}</button>
+      {% endif %}
+    </div>
+  </div>
+</div>

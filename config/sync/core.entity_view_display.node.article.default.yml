@@ -8,6 +8,7 @@ dependencies:
     - field.field.node.article.comment
     - field.field.node.article.field_cover_media
     - field.field.node.article.field_image
+    - field.field.node.article.field_breaking_title_color
     - field.field.node.article.field_sponsored
     - field.field.node.article.field_tags
     - field.field.node.article.field_tweet
@@ -62,6 +63,7 @@ content:
     region: content
 hidden:
   comment: true
+  field_breaking_title_color: true
   field_cover_media: true
   field_sponsored: true
   langcode: true

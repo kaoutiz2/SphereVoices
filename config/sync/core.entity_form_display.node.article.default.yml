@@ -7,6 +7,7 @@ dependencies:
     - field.field.node.article.comment
     - field.field.node.article.field_cover_media
     - field.field.node.article.field_image
+    - field.field.node.article.field_breaking_title_color
     - field.field.node.article.field_sponsored
     - field.field.node.article.field_tags
     - field.field.node.article.field_tweet
@@ -73,9 +74,15 @@ content:
       media_types:
         - tweet
     third_party_settings: {  }
+  field_breaking_title_color:
+    type: options_buttons
+    weight: 17
+    region: content
+    settings: {  }
+    third_party_settings: {  }
   field_sponsored:
     type: boolean_checkbox
-    weight: 17
+    weight: 18
     region: content
     settings:
       display_label: true

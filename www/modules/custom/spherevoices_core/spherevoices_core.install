@@ -562,5 +562,23 @@ function spherevoices_core_update_8019() {
   return t('Placed bourse ticker block in header_subnav region.');
 }
 
+/**
+ * Installe la configuration du bandeau cookies si absente.
+ */
+function spherevoices_core_update_8020() {
+  $factory = \Drupal::configFactory();
+  if (!$factory->get('spherevoices_core.cookie_consent')->isNew()) {
+    return t('Cookie consent configuration already exists.');
+  }
+  $path = \Drupal::service('extension.list.module')->getPath('spherevoices_core')
+    . '/config/install/spherevoices_core.cookie_consent.yml';
+  if (!is_readable($path)) {
+    return t('Cookie consent install config file not found.');
+  }
+  $data = \Symfony\Component\Yaml\Yaml::parseFile($path);
+  $factory->getEditable('spherevoices_core.cookie_consent')->setData($data)->save(TRUE);
+  return t('Cookie consent configuration installed.');
+}
+
 
 

@@ -1,0 +1,43 @@
+{#
+/**
+ * @file
+ * Single advertising slot (image or Google AdSense).
+ *
+ * - mode: image|adsense
+ * - placement: header|sidebar|grid
+ * - url, alt, image_url: image mode
+ * - ad_client, ad_slot, ad_format: AdSense mode
+ */
+#}
+{% if mode == 'placeholder' %}
+  <div class="ad-slot__inner ad-slot__inner--{{ placement }} ad-slot__inner--placeholder">
+    <div class="ad-slot__placeholder" aria-hidden="true">
+      <span class="ad-slot__placeholder-label">{{ 'Publicité'|t }}</span>
+      {% if placeholder_message %}
+        <span class="ad-slot__placeholder-hint">{{ placeholder_message }}</span>
+      {% endif %}
+      {% if ad_client %}
+        <span class="ad-slot__placeholder-meta">{{ ad_client }}{% if ad_slot %} · slot {{ ad_slot }}{% endif %}</span>
+      {% endif %}
+    </div>
+  </div>
+{% elseif mode == 'adsense' and ad_client and ad_slot %}
+  <div class="ad-slot__inner ad-slot__inner--{{ placement }} ad-slot__inner--adsense">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="{{ ad_client }}"
+         data-ad-slot="{{ ad_slot }}"
+         data-ad-format="{{ ad_format|default('auto') }}"
+         data-full-width-responsive="true"></ins>
+  </div>
+{% elseif image_url %}
+  <div class="ad-slot__inner ad-slot__inner--{{ placement }}">
+    {% if url %}
+      <a href="{{ url }}" class="ad-slot__link" target="_blank" rel="noopener noreferrer sponsored">
+        <img src="{{ image_url }}" alt="{{ alt }}" class="ad-slot__image" loading="lazy" decoding="async" />
+      </a>
+    {% else %}
+      <img src="{{ image_url }}" alt="{{ alt }}" class="ad-slot__image" loading="lazy" decoding="async" />
+    {% endif %}
+  </div>
+{% endif %}

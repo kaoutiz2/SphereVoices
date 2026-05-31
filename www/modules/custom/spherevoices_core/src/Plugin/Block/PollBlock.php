@@ -188,13 +188,13 @@ class PollBlock extends BlockBase implements ContainerFactoryPluginInterface {
           'info' => [
             '#type' => 'container',
             '#attributes' => ['class' => ['poll-choice-info']],
-            'votes' => [
-              '#markup' => '<span class="poll-votes-count">' . $votes . '</span> vote' . ($votes > 1 ? 's' : ''),
-              '#attributes' => ['class' => ['poll-votes']],
-            ],
             'percentage' => [
               '#markup' => '<span class="poll-percentage">' . $percentage . '%</span>',
               '#attributes' => ['class' => ['poll-percentage']],
+            ],
+            'votes' => [
+              '#markup' => '<span class="poll-votes-count">' . $votes . '</span> vote' . ($votes > 1 ? 's' : ''),
+              '#attributes' => ['class' => ['poll-votes']],
             ],
           ],
         ],

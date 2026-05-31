@@ -251,11 +251,11 @@ a:focus {
   background-color: transparent;
 }
 
-/* Margin-top quand la toolbar est affichée */
+/* Toolbar Drupal : pas de décalage vertical du bandeau menu */
 body.toolbar-oriented .header-main,
 body.toolbar-tray-open .header-main,
 body:has(#toolbar-administration) .header-main {
-  margin-top: 30px !important;
+  margin-top: 0 !important;
 }
 
 /* Variable pour le padding horizontal du header (utilisé pour aligner le contenu) */

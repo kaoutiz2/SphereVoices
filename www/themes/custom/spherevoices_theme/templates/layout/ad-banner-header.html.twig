@@ -1,0 +1,11 @@
+{#
+/**
+ * @file
+ * Bandeau publicitaire pleine largeur au-dessus de la navigation.
+ */
+#}
+{% if ad_header %}
+  <div class="ad-slot ad-slot--header" role="complementary" aria-label="{{ 'Publicité'|t }}">
+    {{ ad_header }}
+  </div>
+{% endif %}

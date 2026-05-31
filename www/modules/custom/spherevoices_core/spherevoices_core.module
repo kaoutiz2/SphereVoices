@@ -23,6 +23,32 @@ use Drupal\media\MediaInterface;
 use Drupal\media\Plugin\Filter\MediaEmbed;
 use Drupal\node\NodeInterface;
 use Drupal\spherevoices_core\Render\ArticleBodyPostRender;
+use Drupal\spherevoices_core\Service\AdSenseHelper;
+
+/**
+ * Cookie consent settings with defaults when config is not yet imported.
+ *
+ * @return array{enabled: bool, mode: string, privacy_url: string, cookies_url: string}
+ */
+function _spherevoices_core_cookie_consent_settings(): array {
+  $config = \Drupal::config('spherevoices_core.cookie_consent');
+  $defaults = [
+    'enabled' => TRUE,
+    'mode' => 'informational',
+    'privacy_url' => '/mentions-legales',
+    'cookies_url' => '/politique-de-cookies',
+  ];
+  if ($config->isNew()) {
+    return $defaults;
+  }
+  $enabled = $config->get('enabled');
+  return [
+    'enabled' => $enabled === NULL ? $defaults['enabled'] : (bool) $enabled,
+    'mode' => $config->get('mode') ?: $defaults['mode'],
+    'privacy_url' => $config->get('privacy_url') ?: $defaults['privacy_url'],
+    'cookies_url' => $config->get('cookies_url') ?: $defaults['cookies_url'],
+  ];
+}
 
 /**
  * Implements hook_theme_registry_alter().
@@ -63,7 +89,51 @@ function spherevoices_core_page_attachments(array &$attachments): void {
   $route = \Drupal::routeMatch()->getRouteName();
   if ($route === 'entity.node.edit_form' || $route === 'entity.node.add_form') {
     $attachments['#attached']['library'][] = 'spherevoices_core/admin_node_form';
+    return;
   }
+
+  if (\Drupal::service('router.admin_context')->isAdminRoute()) {
+    return;
+  }
+
+  $cookie = _spherevoices_core_cookie_consent_settings();
+  if ($cookie['enabled']) {
+    $attachments['#attached']['library'][] = 'spherevoices_core/cookie_consent';
+    $attachments['#attached']['drupalSettings']['spherevoicesCookies'] = [
+      'mode' => $cookie['mode'],
+    ];
+  }
+
+  $ads_config = \Drupal::config('spherevoices_core.ads');
+  $client = AdSenseHelper::sanitizeClientId((string) $ads_config->get('adsense_client'));
+  if ($client !== '') {
+    $attachments['#attached']['drupalSettings']['spherevoicesAds']['client'] = $client;
+  }
+}
+
+/**
+ * Implements hook_preprocess_page().
+ */
+function spherevoices_core_preprocess_page(array &$variables): void {
+  if (\Drupal::service('router.admin_context')->isAdminRoute()) {
+    return;
+  }
+
+  $cookie = _spherevoices_core_cookie_consent_settings();
+  if (!$cookie['enabled']) {
+    return;
+  }
+
+  $variables['cookie_consent_banner'] = [
+    '#theme' => 'spherevoices_cookie_consent',
+    '#privacy_url' => $cookie['privacy_url'],
+    '#cookies_url' => $cookie['cookies_url'],
+    '#mode' => $cookie['mode'],
+    '#cache' => [
+      'tags' => ['config:spherevoices_core.cookie_consent'],
+      'contexts' => ['languages:language_interface'],
+    ],
+  ];
 }
 
 /**
@@ -387,6 +457,7 @@ function spherevoices_core_apply_article_body_display(array &$variables): void {
 function spherevoices_core_preprocess_node(&$variables): void {
   spherevoices_core_apply_article_body_display($variables);
   _spherevoices_core_preprocess_node_article_cover($variables);
+  _spherevoices_core_preprocess_node_breaking_title_color($variables);
   _spherevoices_core_preprocess_node_trending_standard_teaser($variables);
   _spherevoices_core_preprocess_node_related_articles($variables);
 }
@@ -433,6 +504,31 @@ function _spherevoices_core_preprocess_node_article_cover(array &$variables): vo
   if (!empty($cover['image']['uri'])) {
     $variables['article_cover_image'] = $cover['image'];
   }
+}
+
+/**
+ * Couleur du titre breaking news (bleu, rouge, noir).
+ */
+function _spherevoices_core_preprocess_node_breaking_title_color(array &$variables): void {
+  if (empty($variables['node'])) {
+    return;
+  }
+  $node = $variables['node'];
+  if ($node->bundle() !== 'article') {
+    return;
+  }
+  $is_breaking = !empty($node->breaking_news_context) || $node->isSticky();
+  if (!$is_breaking) {
+    return;
+  }
+  $color = 'black';
+  if ($node->hasField('field_breaking_title_color') && !$node->get('field_breaking_title_color')->isEmpty()) {
+    $value = $node->get('field_breaking_title_color')->value;
+    if (in_array($value, ['blue', 'red', 'black'], TRUE)) {
+      $color = $value;
+    }
+  }
+  $variables['breaking_title_color'] = $color;
 }
 
 /**
@@ -1352,6 +1448,28 @@ function spherevoices_core_theme($existing, $type, $theme, $path) {
       'variables' => [],
       'template' => 'bourse-ticker',
     ],
+    'spherevoices_ad_slot' => [
+      'variables' => [
+        'mode' => 'image',
+        'placement' => '',
+        'url' => '',
+        'alt' => '',
+        'image_url' => '',
+        'ad_client' => '',
+        'ad_slot' => '',
+        'ad_format' => 'auto',
+        'placeholder_message' => '',
+      ],
+      'template' => 'spherevoices-ad-slot',
+    ],
+    'spherevoices_cookie_consent' => [
+      'variables' => [
+        'privacy_url' => '/mentions-legales',
+        'cookies_url' => '/politique-de-cookies',
+        'mode' => 'informational',
+      ],
+      'template' => 'spherevoices-cookie-consent',
+    ],
   ];
 }
 
@@ -1388,13 +1506,17 @@ function spherevoices_core_form_node_form_alter(&$form, FormStateInterface $form
     }
   }
 
-  // Article : afficher « Breaking news label » seulement si « Épinglé » est coché.
-  if ($node->bundle() === 'article') {
+  // Article : champs breaking news visibles seulement si « Épinglé » est coché.
+  if ($node->bundle() === 'article' && isset($form['sticky'])) {
+    $sticky_visible = [
+      ':input[name="sticky[value]"]' => ['checked' => TRUE],
+    ];
     $fname = _spherevoices_core_article_breaking_label_field_name();
-    if ($fname && isset($form[$fname], $form['sticky'])) {
-      $form[$fname]['#states']['visible'] = [
-        ':input[name="sticky[value]"]' => ['checked' => TRUE],
-      ];
+    if ($fname && isset($form[$fname])) {
+      $form[$fname]['#states']['visible'] = $sticky_visible;
+    }
+    if (isset($form['field_breaking_title_color'])) {
+      $form['field_breaking_title_color']['#states']['visible'] = $sticky_visible;
     }
   }
 }
@@ -1415,6 +1537,14 @@ function spherevoices_core_entity_form_display_alter(&$display, $context) {
     if ($fname && !$display->getComponent($fname)) {
       $display->setComponent($fname, [
         'weight' => 18,
+        'settings' => [],
+      ]);
+    }
+    if (!$display->getComponent('field_breaking_title_color')) {
+      $display->setComponent('field_breaking_title_color', [
+        'type' => 'options_buttons',
+        'weight' => 17,
+        'region' => 'content',
         'settings' => [],
       ]);
     }

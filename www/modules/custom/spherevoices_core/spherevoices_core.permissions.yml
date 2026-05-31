@@ -1,3 +1,7 @@
+administer spherevoices ads:
+  title: 'Configurer les publicités SphereVoices'
+  description: 'Gérer les emplacements publicitaires (bandeau, sidebar, grille d’accueil).'
+
 administer spherevoices facebook live:
   title: 'Configurer les lives (Facebook, Instagram, YouTube)'
   description: 'Définir les URLs des directs et indiquer quand chaque plateforme est à l’antenne sur la page /en-direct.'

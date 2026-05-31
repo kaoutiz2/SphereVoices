@@ -1,3 +1,74 @@
+spherevoices_core.cookie_consent:
+  type: config_object
+  label: 'Cookie consent banner'
+  mapping:
+    enabled:
+      type: boolean
+    mode:
+      type: string
+      label: 'Cookie banner mode (informational|strict)'
+    privacy_url:
+      type: string
+    cookies_url:
+      type: string
+
+spherevoices_core.ads:
+  type: config_object
+  label: 'Advertising slots'
+  mapping:
+    adsense_client:
+      type: string
+      label: 'Google AdSense publisher ID'
+    header_enabled:
+      type: boolean
+    header_type:
+      type: string
+      label: 'Header ad type (image|adsense)'
+    header_ad_slot:
+      type: string
+    header_ad_format:
+      type: string
+    header_image:
+      type: integer
+      label: 'Header ad image file ID'
+      nullable: true
+    header_url:
+      type: string
+    header_alt:
+      type: string
+    sidebar_enabled:
+      type: boolean
+    sidebar_type:
+      type: string
+    sidebar_ad_slot:
+      type: string
+    sidebar_ad_format:
+      type: string
+    sidebar_image:
+      type: integer
+      label: 'Sidebar ad image file ID'
+      nullable: true
+    sidebar_url:
+      type: string
+    sidebar_alt:
+      type: string
+    grid_enabled:
+      type: boolean
+    grid_type:
+      type: string
+    grid_ad_slot:
+      type: string
+    grid_ad_format:
+      type: string
+    grid_image:
+      type: integer
+      label: 'In-grid ad image file ID'
+      nullable: true
+    grid_url:
+      type: string
+    grid_alt:
+      type: string
+
 spherevoices_core.facebook_live:
   type: config_object
   label: 'Social live streams'
