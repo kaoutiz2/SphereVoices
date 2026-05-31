@@ -23,9 +23,8 @@ try {
     $autoloader = require __DIR__ . '/autoload.php';
     
     $request = \Symfony\Component\HttpFoundation\Request::createFromGlobals();
-    $kernel = \Drupal\Core\DrupalKernel::createFromRequest($request, $autoloader, 'prod');
-    $kernel->boot();
-    $kernel->prepareLegacyRequest($request);
+    require_once __DIR__ . '/spherevoices-ops-bootstrap.inc.php';
+    spherevoices_ops_bootstrap_drupal(__DIR__);
     
     echo "✅ Drupal chargé\n\n";
     

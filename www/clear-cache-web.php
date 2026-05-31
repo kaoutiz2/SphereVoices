@@ -77,34 +77,14 @@ $provided_token = $_GET['token'] ?? '';
             }
             
             try {
-                // Charger Drupal
-                require_once $drupal_root . '/autoload.php';
-                $autoloader = require $drupal_root . '/autoload.php';
-                $request = \Symfony\Component\HttpFoundation\Request::createFromGlobals();
-                $kernel = \Drupal\Core\DrupalKernel::createFromRequest($request, $autoloader, 'prod');
-                
-                $kernel->boot();
-                $kernel->prepareLegacyRequest($request);
+                require_once __DIR__ . '/spherevoices-ops-bootstrap.inc.php';
+                $kernel = spherevoices_ops_bootstrap_drupal(__DIR__);
                 
                 echo '<p class="success">✅ Drupal chargé avec succès</p>';
                 
-                // Vider tous les caches
                 echo '<p class="info">🔄 Vidage des caches en cours...</p>';
-                drupal_flush_all_caches();
+                spherevoices_ops_rebuild_cache($kernel);
                 echo '<p class="success">✅ Tous les caches ont été vidés</p>';
-                
-                // Invalider les caches CSS/JS
-                \Drupal::service('asset.css.collection_optimizer')->deleteAll();
-                \Drupal::service('asset.js.collection_optimizer')->deleteAll();
-                echo '<p class="success">✅ Caches CSS/JS invalidés</p>';
-                
-                // Reconstruire les routes
-                \Drupal::service('router.builder')->rebuild();
-                echo '<p class="success">✅ Routes reconstruites</p>';
-                
-                // Invalider les caches de rendu
-                \Drupal\Core\Cache\Cache::invalidateTags(['rendered']);
-                echo '<p class="success">✅ Caches de rendu invalidés</p>';
                 
                 echo '<h2 class="success">🎉 Vidage du cache terminé avec succès!</h2>';
                 echo '<p>Le site affiche maintenant la dernière version.</p>';
@@ -132,7 +112,7 @@ $provided_token = $_GET['token'] ?? '';
             
             <h3>📝 Utilisation</h3>
             <p><strong>URL avec token:</strong></p>
-            <pre>https://www.spherevoices.com/www/clear-cache-web.php?token=<?php echo htmlspecialchars($security_token); ?></pre>
+            <pre>https://www.spherevoices.com/clear-cache-web.php?token=<?php echo htmlspecialchars($security_token); ?></pre>
             
             <h3>🔒 Sécurité</h3>
             <ul>

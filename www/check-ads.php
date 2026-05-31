@@ -253,8 +253,9 @@ catch (\Throwable $e) {
   <div class="card">
     <h2>Autres outils</h2>
     <ul>
-      <li><a href="/clear-cache-web.php?token=spherevoices2026">Vider le cache Drupal</a></li>
-      <li><a href="/exec-drush.php?token=spherevoices2026">Exécuter drush cr</a></li>
+      <li><a href="/drush-cr.php?token=spherevoices2026"><strong>Vider le cache (recommandé)</strong></a></li>
+      <li><a href="/clear-cache-web.php?token=spherevoices2026">Vider le cache (clear-cache-web)</a></li>
+      <li><a href="/exec-drush.php?token=spherevoices2026">Exécuter drush cr (fallback auto)</a></li>
       <li><a href="/am-i-logged-in.php?token=spherevoices2026">Vérifier la session Drupal</a></li>
     </ul>
   </div>

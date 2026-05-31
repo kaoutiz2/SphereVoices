@@ -32,115 +32,60 @@ header('Content-Type: text/html; charset=utf-8');
         
         <?php
         if ($provided_token === $security_token) {
+            require_once __DIR__ . '/spherevoices-ops-bootstrap.inc.php';
             echo '<div class="info">🚀 Exécution de drush cr via ligne de commande...</div>';
             echo '<hr>';
             
-            // Chemins à tester
-            $paths_to_test = [
-                __DIR__ . "/.." . '/vendor/bin/drush',
-                __DIR__ . "/.." . '/www/../vendor/bin/drush',
-                '/usr/local/bin/drush',
-                '/usr/bin/drush',
-            ];
-            
-            $drush_path = null;
-            foreach ($paths_to_test as $path) {
-                if (file_exists($path)) {
-                    $drush_path = $path;
-                    echo "<div class='success'>✅ Drush trouvé : $path</div>";
-                    break;
-                }
-            }
+            $paths = spherevoices_ops_paths(__DIR__);
+            $drush_path = $paths['drush'];
+            $working_dir = $paths['drupal_root'];
             
             if (!$drush_path) {
-                echo '<div class="error">❌ Drush introuvable !</div>';
-                echo '<div class="warning">Chemins testés :</div><pre>';
-                print_r($paths_to_test);
-                echo '</pre>';
-                
-                echo '<div class="info">Fichiers dans ' . __DIR__ . "/.." . ' :</div><pre>';
-                print_r(scandir(__DIR__ . "/.."));
-                echo '</pre>';
-                exit;
+                echo '<div class="error">❌ Drush introuvable — bascule sur vidage cache natif PHP...</div>';
+            }
+            else {
+                echo "<div class='success'>✅ Drush trouvé : " . htmlspecialchars($drush_path) . "</div>";
             }
             
-            // Déterminer le répertoire de travail
-            $working_dir = __DIR__ . "/.." . '/www';
-            if (!is_dir($working_dir)) {
-                $working_dir = __DIR__ . "/..";
-            }
-            
-            echo "<div class='info'>📁 Répertoire de travail : $working_dir</div>";
+            echo "<div class='info'>📁 Répertoire Drupal : " . htmlspecialchars($working_dir) . "</div>";
             echo '<hr>';
             
-            // Trouver l'exécutable PHP via which
-            echo '<div class="info">🔍 Recherche de PHP...</div>';
-            
-            // Méthode 1: Tester avec which php
-            $php_path = null;
-            $which_output = [];
-            exec('which php 2>&1', $which_output, $which_return);
-            if ($which_return === 0 && !empty($which_output[0])) {
-                $php_path = trim($which_output[0]);
-                echo "<div class='success'>✅ PHP trouvé via 'which' : $php_path</div>";
+            $php_path = spherevoices_ops_resolve_cli_php();
+            if ($php_path) {
+                echo "<div class='success'>✅ PHP CLI trouvé : " . htmlspecialchars($php_path) . "</div>";
+            }
+            else {
+                echo "<div class='warning'>⚠️ PHP CLI introuvable dans PATH (normal sur OVH mutualisé)</div>";
             }
             
-            // Méthode 2: Tester des chemins communs
-            if (!$php_path) {
-                $php_paths = [
-                    '/usr/bin/php',
-                    '/usr/local/bin/php',
-                    '/opt/alt/php81/usr/bin/php',
-                    '/opt/alt/php82/usr/bin/php',
-                    '/opt/alt/php80/usr/bin/php',
-                    '/usr/bin/php8.2',
-                    '/usr/bin/php8.1',
-                    '/usr/bin/php8.0',
-                ];
-                
-                foreach ($php_paths as $path) {
-                    if (file_exists($path) && is_executable($path)) {
-                        $php_path = $path;
-                        echo "<div class='success'>✅ PHP trouvé : $path</div>";
-                        break;
-                    }
+            $return_var = 127;
+            $output = [];
+            
+            if ($drush_path && $php_path) {
+                $command = 'cd ' . escapeshellarg($working_dir) . ' && '
+                  . escapeshellarg($php_path) . ' ' . escapeshellarg($drush_path) . ' cr 2>&1';
+                echo '<div class="info">⚡ Commande exécutée :</div><pre>' . htmlspecialchars($command) . '</pre><hr>';
+                echo '<div class="info">🔄 Sortie de drush cr :</div><pre>';
+                exec($command, $output, $return_var);
+                foreach ($output as $line) {
+                    echo htmlspecialchars($line) . "\n";
+                }
+                echo '</pre><hr>';
+            }
+            
+            if ($return_var !== 0) {
+                echo '<div class="warning">⚠️ Drush indisponible — vidage cache via PHP (équivalent drush cr)...</div>';
+                try {
+                    $kernel = spherevoices_ops_bootstrap_drupal(__DIR__);
+                    spherevoices_ops_rebuild_cache($kernel);
+                    echo '<div class="success">✅ Cache vidé via PHP (sans Drush CLI)</div>';
+                    $return_var = 0;
+                }
+                catch (\Throwable $e) {
+                    echo '<div class="error">❌ Erreur fallback : ' . htmlspecialchars($e->getMessage()) . '</div>';
+                    echo '<p class="info">Utilisez plutôt : <a href="/drush-cr.php?token=spherevoices2026">drush-cr.php</a></p>';
                 }
             }
-            
-            // Méthode 3: Dernier recours - appeler directement drush (il a un shebang)
-            if (!$php_path) {
-                echo "<div class='warning'>⚠️ PHP introuvable, tentative d'exécution directe de drush...</div>";
-                // On va essayer sans PHP, drush a peut-être un shebang
-                $php_path = null;
-            }
-            
-            echo '<hr>';
-            
-            // Commande drush cr
-            if ($php_path) {
-                $command = "cd " . escapeshellarg($working_dir) . " && " . escapeshellarg($php_path) . " " . escapeshellarg($drush_path) . " cr 2>&1";
-            } else {
-                // Tenter d'ajouter les permissions d'exécution puis exécuter
-                $command = "cd " . escapeshellarg($working_dir) . " && chmod +x " . escapeshellarg($drush_path) . " && " . escapeshellarg($drush_path) . " cr 2>&1";
-            }
-            
-            echo '<div class="info">⚡ Commande exécutée :</div>';
-            echo '<pre>' . htmlspecialchars($command) . '</pre>';
-            echo '<hr>';
-            
-            echo '<div class="info">🔄 Sortie de drush cr :</div>';
-            echo '<pre>';
-            
-            $output = [];
-            $return_var = 0;
-            exec($command, $output, $return_var);
-            
-            foreach ($output as $line) {
-                echo htmlspecialchars($line) . "\n";
-            }
-            
-            echo '</pre>';
-            echo '<hr>';
             
             if ($return_var === 0) {
                 echo '<h2 class="success">🎉 DRUSH CR RÉUSSI !</h2>';
