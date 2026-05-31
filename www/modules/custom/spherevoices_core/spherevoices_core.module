@@ -220,12 +220,19 @@ function spherevoices_core_page_top(array &$page_top): void {
   $page_top['spherevoices_ad_header'] = [
     '#type' => 'container',
     '#attributes' => [
-      'class' => ['ad-slot', 'ad-slot--header'],
-      'role' => 'complementary',
-      'aria-label' => (string) t('Publicité'),
+      'class' => ['sv-promo-header-frame'],
     ],
     '#weight' => -1000,
-    'inner' => $slot,
+    'ad' => [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['ad-slot', 'ad-slot--header'],
+        'role' => 'complementary',
+        'aria-label' => (string) t('Publicité'),
+      ],
+      'inner' => $slot,
+    ],
+    'fallback' => _spherevoices_core_promo_fallback_build('header'),
     '#cache' => [
       'max-age' => 0,
       'tags' => $ads_config->getCacheTags(),
@@ -1569,6 +1576,22 @@ function spherevoices_core_theme($existing, $type, $theme, $path) {
       ],
       'template' => 'spherevoices-cookie-consent',
     ],
+    'spherevoices_promo_fallback' => [
+      'variables' => [
+        'placement' => 'grid',
+      ],
+      'template' => 'spherevoices-promo-fallback',
+    ],
+  ];
+}
+
+/**
+ * Builds a neutral fallback notice for blocked promo slots.
+ */
+function _spherevoices_core_promo_fallback_build(string $placement): array {
+  return [
+    '#theme' => 'spherevoices_promo_fallback',
+    '#placement' => $placement,
   ];
 }
 

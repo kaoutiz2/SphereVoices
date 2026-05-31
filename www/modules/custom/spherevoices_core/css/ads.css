@@ -233,3 +233,89 @@
     max-height: none;
   }
 }
+
+/* Neutral fallback when an ad blocker hides .ad-slot content (classes avoid "ad" filters). */
+.sv-promo-header-frame,
+.sv-promo-sidebar-frame,
+.sv-promo-grid-frame {
+  position: relative;
+  width: 100%;
+}
+
+.sv-promo-grid-frame {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 420px;
+  height: 100%;
+}
+
+.sv-promo-fallback {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  text-align: center;
+  color: #555;
+  background-color: #f0f0f0;
+  border: 2px dashed #bbb;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.sv-promo-fallback--visible {
+  display: flex;
+}
+
+.sv-promo-fallback__title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #777;
+}
+
+.sv-promo-fallback__message {
+  margin: 0;
+  max-width: 18rem;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.sv-promo-fallback--header {
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  min-height: 300px;
+  border-left: none;
+  border-right: none;
+  border-radius: 0;
+}
+
+.sv-promo-fallback--sidebar {
+  width: 100%;
+  min-height: 420px;
+  max-height: 420px;
+}
+
+.sv-promo-fallback--grid {
+  width: 100%;
+  min-height: 420px;
+  flex: 1 1 auto;
+}
+
+html.sv-promo-blocked .sv-promo-header-frame > .ad-slot,
+html.sv-promo-blocked .sv-promo-sidebar-frame > .ad-slot,
+html.sv-promo-blocked .sv-promo-grid-frame > .ad-slot {
+  display: none !important;
+}
+
+html.sv-promo-blocked .sv-promo-header-frame > .sv-promo-fallback--header,
+html.sv-promo-blocked .sv-promo-sidebar-frame > .sv-promo-fallback--sidebar,
+html.sv-promo-blocked .sv-promo-grid-frame > .sv-promo-fallback--grid {
+  display: flex;
+}

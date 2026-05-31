@@ -2,6 +2,11 @@ ads:
   css:
     theme:
       css/ads.css: {}
+  js:
+    js/ad-block-fallback.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
 
 cookie_consent:
   css:

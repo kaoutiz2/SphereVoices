@@ -114,8 +114,13 @@
 
             {% if show_ad_sidebar or ad_sidebar %}
               <div class="sidebar-ad-widget">
-                <div class="ad-slot ad-slot--sidebar" role="complementary" aria-label="{{ 'Publicité'|t }}">
-                  {{ ad_sidebar }}
+                <div class="sv-promo-sidebar-frame">
+                  <div class="ad-slot ad-slot--sidebar" role="complementary" aria-label="{{ 'Publicité'|t }}">
+                    {{ ad_sidebar }}
+                  </div>
+                  {% if ad_sidebar_fallback %}
+                    {{ ad_sidebar_fallback }}
+                  {% endif %}
                 </div>
               </div>
             {% endif %}
@@ -131,8 +136,13 @@
             {% for item in homepage_gallery_items %}
               {% if item.type == 'ad' %}
                 <div class="article-gallery-item ad-gallery-slot">
-                  <div class="ad-slot ad-slot--grid" role="complementary" aria-label="{{ 'Publicité'|t }}">
-                    {{ item.render }}
+                  <div class="sv-promo-grid-frame">
+                    <div class="ad-slot ad-slot--grid" role="complementary" aria-label="{{ 'Publicité'|t }}">
+                      {{ item.render }}
+                    </div>
+                    {% if item.fallback %}
+                      {{ item.fallback }}
+                    {% endif %}
                   </div>
                 </div>
               {% else %}

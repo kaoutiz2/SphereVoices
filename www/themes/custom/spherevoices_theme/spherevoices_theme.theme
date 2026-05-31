@@ -665,15 +665,23 @@ function spherevoices_theme_preprocess_page(&$variables) {
         : array_map(static function ($article) {
           return ['type' => 'article', 'render' => $article];
         }, $variables['all_articles']);
+      foreach ($variables['homepage_gallery_items'] as &$gallery_item) {
+        if (($gallery_item['type'] ?? '') === 'ad') {
+          $gallery_item['fallback'] = _spherevoices_core_promo_fallback_build('grid');
+        }
+      }
+      unset($gallery_item);
       $variables['ad_sidebar'] = $ad_slots
         ? $ad_slots->build(\Drupal\spherevoices_core\Service\AdSlotManager::PLACEMENT_SIDEBAR)
         : [];
+      $variables['ad_sidebar_fallback'] = _spherevoices_core_promo_fallback_build('sidebar');
     }
     else {
       $variables['homepage_gallery_items'] = [];
       $variables['ad_sidebar'] = $ad_slots
         ? $ad_slots->build(\Drupal\spherevoices_core\Service\AdSlotManager::PLACEMENT_SIDEBAR)
         : [];
+      $variables['ad_sidebar_fallback'] = _spherevoices_core_promo_fallback_build('sidebar');
     }
 
     $variables['#cache']['max-age'] = 0;

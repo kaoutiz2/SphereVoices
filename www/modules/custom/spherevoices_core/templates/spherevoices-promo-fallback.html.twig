@@ -1,0 +1,12 @@
+{#
+/**
+ * @file
+ * Message affiché quand un bloqueur masque l'emplacement publicitaire.
+ *
+ * Classes volontairement neutres (sans "ad") pour ne pas être filtrées.
+ */
+#}
+<div class="sv-promo-fallback sv-promo-fallback--{{ placement }}" data-sv-promo-fallback hidden role="status">
+  <p class="sv-promo-fallback__title">{{ 'Contenu masqué'|t }}</p>
+  <p class="sv-promo-fallback__message">{{ 'Un bloqueur de publicités (AdBlock, uBlock Origin, Brave Shields, etc.) masque cet emplacement. Désactivez-le pour spherevoices.com afin de soutenir le site et afficher le contenu prévu.'|t }}</p>
+</div>
