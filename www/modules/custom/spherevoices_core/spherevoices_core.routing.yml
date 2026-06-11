@@ -80,6 +80,51 @@ spherevoices_core.trending:
     _permission: 'access content'
 
 # Ancien chemin /trending → redirection 301 vers /tendances (signets, anciens liens).
+spherevoices_core.category:
+  path: '/categorie/{category}'
+  defaults:
+    _controller: '\Drupal\spherevoices_core\Controller\CategoryController::page'
+    _title_callback: '\Drupal\spherevoices_core\Controller\CategoryController::title'
+  requirements:
+    _permission: 'access content'
+    category: '^[a-z0-9\-]+$'
+
+spherevoices_core.analytics_settings:
+  path: '/admin/config/spherevoices/analytics'
+  defaults:
+    _form: '\Drupal\spherevoices_core\Form\AnalyticsSettingsForm'
+    _title: 'Google Analytics & SEO'
+  requirements:
+    _custom_access: '\Drupal\spherevoices_core\Form\AnalyticsSettingsForm::access'
+  options:
+    _admin_route: TRUE
+
+spherevoices_core.gallery_settings:
+  path: '/admin/config/spherevoices/gallery'
+  defaults:
+    _form: '\Drupal\spherevoices_core\Form\GallerySettingsForm'
+    _title: 'Galerie photo — page d''accueil'
+  requirements:
+    _custom_access: '\Drupal\spherevoices_core\Form\GallerySettingsForm::access'
+  options:
+    _admin_route: TRUE
+
+spherevoices_core.mentions_legales:
+  path: '/mentions-legales'
+  defaults:
+    _controller: '\Drupal\spherevoices_core\Controller\LegalController::mentionsLegales'
+    _title: 'Mentions légales'
+  requirements:
+    _permission: 'access content'
+
+spherevoices_core.politique_cookies:
+  path: '/politique-de-cookies'
+  defaults:
+    _controller: '\Drupal\spherevoices_core\Controller\LegalController::politiqueCookies'
+    _title: 'Politique de cookies'
+  requirements:
+    _permission: 'access content'
+
 spherevoices_core.trending_legacy:
   path: '/trending'
   defaults:

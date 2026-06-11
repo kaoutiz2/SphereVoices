@@ -1,0 +1,32 @@
+uuid: 9b6a5d4c-3e7f-4081-acbd-2e3f4a5b6c7d
+langcode: fr
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.media.media_library
+    - field.field.media.tweet.field_media_oembed_tweet
+    - media.type.tweet
+  module:
+    - media
+id: media.tweet.media_library
+targetEntityType: media
+bundle: tweet
+mode: media_library
+content:
+  thumbnail:
+    type: image
+    label: hidden
+    settings:
+      image_link: ''
+      image_style: medium
+      image_loading:
+        attribute: lazy
+    third_party_settings: {  }
+    weight: 0
+    region: content
+hidden:
+  created: true
+  field_media_oembed_tweet: true
+  langcode: true
+  name: true
+  uid: true

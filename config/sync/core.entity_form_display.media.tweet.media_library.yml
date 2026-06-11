@@ -1,0 +1,29 @@
+uuid: acb7b6e5-4f80-4192-bdce-3f4a5b6c7d8e
+langcode: fr
+status: true
+dependencies:
+  config:
+    - core.entity_form_mode.media.media_library
+    - field.field.media.tweet.field_media_oembed_tweet
+    - media.type.tweet
+  module:
+    - media
+id: media.tweet.media_library
+targetEntityType: media
+bundle: tweet
+mode: media_library
+content:
+  langcode:
+    type: language_select
+    weight: 2
+    region: content
+    settings:
+      include_locked: true
+    third_party_settings: {  }
+hidden:
+  created: true
+  field_media_oembed_tweet: true
+  name: true
+  path: true
+  status: true
+  uid: true

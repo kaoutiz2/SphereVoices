@@ -1,0 +1,20 @@
+uuid: 4ad2ab4d-c8b6-49bb-a409-803735170f87
+langcode: fr
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: rpwvgyEURXLz_JjgMCrkS1rUv-0k3L79BpO-ReN7fDI
+id: node
+label: Contenu
+tags:
+  title: '[node:title] | [site:name]'
+  description: '[node:summary]'
+  robots: 'index, follow'
+  og_title: '[node:title]'
+  og_description: '[node:summary]'
+  og_image: '[node:field_cover_media:entity:thumbnail:url]'
+  og_type: article
+  og_url: '[node:url]'
+  twitter_cards_type: summary_large_image
+  twitter_cards_title: '[node:title]'
+  twitter_cards_description: '[node:summary]'

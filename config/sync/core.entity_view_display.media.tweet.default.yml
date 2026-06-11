@@ -1,0 +1,31 @@
+uuid: 7f4e3b2a-1c5d-4e6f-8a9b-0c1d2e3f4a5b
+langcode: fr
+status: true
+dependencies:
+  config:
+    - field.field.media.tweet.field_media_oembed_tweet
+    - media.type.tweet
+  module:
+    - media
+id: media.tweet.default
+targetEntityType: media
+bundle: tweet
+mode: default
+content:
+  field_media_oembed_tweet:
+    type: oembed
+    label: hidden
+    settings:
+      max_width: 0
+      max_height: 0
+      loading:
+        attribute: lazy
+    third_party_settings: {  }
+    weight: 0
+    region: content
+hidden:
+  created: true
+  langcode: true
+  name: true
+  thumbnail: true
+  uid: true

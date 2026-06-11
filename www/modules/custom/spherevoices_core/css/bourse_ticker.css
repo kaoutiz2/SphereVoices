@@ -1,5 +1,5 @@
 /**
- * Bandeau bourse (sous-menu, à droite de Tendances).
+ * Bandeau bourse / capitales (sous-menu, à droite de Tendances).
  */
 .bourse-ticker-block {
   height: 45px;
@@ -9,14 +9,90 @@
   overflow: hidden;
   background: rgba(0, 0, 0, 0.03);
   border-radius: 4px;
+  position: relative; /* nécessaire pour les panneaux en position absolute */
 }
 
+/* ------------------------------------------------------------------ */
+/* Système de panneaux superposés                                      */
+/* ------------------------------------------------------------------ */
+.ticker-panel {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ticker-panel.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ------------------------------------------------------------------ */
+/* Panneau bourse (TradingView)                                        */
+/* ------------------------------------------------------------------ */
 .bourse-ticker-block .tradingview-widget-container {
   position: relative;
   height: 45px;
   width: 100%;
 }
 
+/* ------------------------------------------------------------------ */
+/* Panneau capitales mondiales                                         */
+/* ------------------------------------------------------------------ */
+.capitals-ticker-inner {
+  display: flex;
+  flex-wrap: nowrap;
+  width: max-content;
+  height: 45px;
+  animation: sv-capitals-scroll 28s linear infinite;
+}
+
+.capitals-pass {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.capital-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 1.25rem;
+  height: 45px;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+  font-family: var(--font-primary, sans-serif);
+}
+
+.capital-item__city {
+  font-weight: 700;
+  color: #111;
+}
+
+.capital-item__time {
+  color: #555;
+  font-variant-numeric: tabular-nums;
+}
+
+.capital-item__temp {
+  font-weight: 700;
+  color: #c20017;
+  font-variant-numeric: tabular-nums;
+  min-width: 2.5rem;
+}
+
+/* Défilement continu : 0 → -50 % (= une passe sur les deux dupliquées) */
+@keyframes sv-capitals-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* ------------------------------------------------------------------ */
+/* Mobile                                                              */
+/* ------------------------------------------------------------------ */
 @media (max-width: 599px) {
   .bourse-ticker-block {
     max-width: 100%;

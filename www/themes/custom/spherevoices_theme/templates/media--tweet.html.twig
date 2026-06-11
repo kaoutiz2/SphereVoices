@@ -1,0 +1,18 @@
+{#
+/**
+ * @file
+ * Template pour les médias de type Tweet.
+ * Rend l'embed Twitter directement via un blockquote + widgets.js,
+ * sans passer par le mécanisme oEmbed/iframe de Drupal.
+ */
+#}
+{% set tweet_url = media.field_media_oembed_tweet.value %}
+{% if tweet_url %}
+  <div{{ attributes.addClass('tweet-embed-wrapper') }}>
+    {{ title_suffix.contextual_links }}
+    <blockquote class="twitter-tweet" data-dnt="true" data-lang="fr">
+      <a href="{{ tweet_url }}"></a>
+    </blockquote>
+  </div>
+  {{ attach_library('spherevoices_core/twitter_embed') }}
+{% endif %}

@@ -1,32 +1,60 @@
 /**
  * @file
- * Styles responsive - Mobile-first approach.
+ * Responsive — SphereVoices.
+ *
+ * Breakpoints :
+ *   xs  : < 480 px   (petits téléphones)
+ *   sm  : < 768 px   (mobile courant)
+ *   md  : < 1024 px  (tablette + mobile) ← burger menu
+ *   lg  : ≥ 1024 px  (desktop)
  */
 
-/* Mobile First - Base styles are for mobile */
+/* ================================================================== */
+/* 1. TOOLBAR DRUPAL — tablette + mobile                               */
+/* ================================================================== */
+@media (max-width: 1023px) {
+  #toolbar-administration,
+  .toolbar-bar,
+  .toolbar-tray {
+    display: none !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
 
-/* Retirer le margin-inline-start de la toolbar quand la page passe sous 800px */
-@media (max-width: 799px) {
-  body.toolbar-tray-open.toolbar-vertical.toolbar-fixed,
-  html.toolbar-tray-open.toolbar-vertical.toolbar-fixed {
-    margin-inline-start: 0 !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
+  body.toolbar-vertical,
+  body.toolbar-tray-open,
+  body.toolbar-fixed,
+  body.toolbar-oriented {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+  }
+
+  .site-header {
+    margin-top: 0 !important;
+    top: 0 !important;
+  }
+
+  body.toolbar-tray-open.toolbar-vertical.toolbar-fixed {
+    margin-inline-start: 0;
+    margin-left: 0;
   }
 }
 
+/* ================================================================== */
+/* 2. HEADER — tablette + mobile (≤ 1023 px)                          */
+/* ================================================================== */
 
-/* Bouton menu hamburger - Caché par défaut */
+/* Hamburger : caché sur desktop */
 .menu-toggle {
   display: none;
   background: none;
   border: none;
-  color: var(--color-text);
-  font-size: 1.5rem;
+  color: #fff;
   cursor: pointer;
   padding: 0.5rem;
-  margin-left: 1rem;
+  flex-shrink: 0;
   align-self: center;
+  line-height: 1;
 }
 
 .menu-toggle-icon {
@@ -35,482 +63,515 @@
   height: 24px;
 }
 
-.menu-toggle-icon svg {
-  width: 100%;
-  height: 100%;
-}
-
-/* Tablet */
-@media (min-width: 768px) {
-  .article-list {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  h1 {
-    font-size: 3rem;
-  }
-
-  .hero-article-title {
-    font-size: 3rem;
-  }
-}
-
-/* Desktop */
-@media (min-width: 1024px) {
-  .article-list {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .hero-article-title {
-    font-size: 3.5rem;
-  }
-}
-
-/* Mobile adjustments */
-@media (max-width: 767px) {
-  /* Cacher la toolbar en version mobile */
-  #toolbar-administration,
-  .toolbar,
-  .toolbar-bar,
-  .toolbar-tray {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    width: 0 !important;
-    overflow: hidden !important;
-    position: absolute !important;
-    left: -9999px !important;
-  }
-
-  /* Retirer le margin-top du header quand la toolbar est cachée en mobile */
-  body.toolbar-oriented .header-main,
-  body.toolbar-tray-open .header-main,
-  body:has(#toolbar-administration) .header-main,
-  body.toolbar-fixed .header-main,
-  body.toolbar-vertical .header-main,
-  body.spherevoices-theme.toolbar-vertical .header-main,
-  body.spherevoices-theme.toolbar-tray-open .header-main,
-  body.spherevoices-theme.toolbar-fixed .header-main {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-  }
-
-  /* Retirer aussi le padding-top du body en mobile */
-  body.toolbar-vertical,
-  body.toolbar-tray-open,
-  body.toolbar-fixed,
-  body.toolbar-oriented,
-  body.spherevoices-theme.toolbar-vertical,
-  body.spherevoices-theme.toolbar-tray-open,
-  body.spherevoices-theme.toolbar-fixed {
-    padding-top: 0 !important;
-    margin-top: 0 !important;
-  }
-
-  /* Retirer le margin-top de tous les éléments qui pourraient être affectés */
-  body.toolbar-vertical .site-header,
-  body.toolbar-tray-open .site-header,
-  body.toolbar-fixed .site-header {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-  }
-
-  /* Header mobile - Logo à gauche, hamburger à droite */
+@media (max-width: 1023px) {
+  /* Hauteur réduite */
   .header-main {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.75rem var(--spacing-unit) !important;
-    padding-left: var(--spacing-unit) !important;
-    padding-bottom: 1rem !important;
-    width: 100% !important;
-    background-color: var(--color-primary) !important;
-  }
-  
-  /* Retirer le margin-top du header en mobile car la toolbar est cachée */
-  body.toolbar-oriented .header-main,
-  body.toolbar-tray-open .header-main,
-  body:has(#toolbar-administration) .header-main,
-  body.toolbar-fixed .header-main,
-  body.toolbar-vertical .header-main {
-    margin-top: 0 !important;
-  }
-
-  .header-left-section {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    gap: 1rem;
-    padding-left: 0; /* Logo en absolute, pas de réserve */
-  }
-
-  .site-logo-straddle {
-    width: 80px !important;
-    height: 80px !important;
-    margin-bottom: -40px !important;
-  }
-
-  .site-logo-straddle .site-branding__logo,
-  .site-logo-straddle a.site-branding__logo {
-    width: 80px !important;
-    max-width: 80px !important;
-    height: 80px !important;
-    max-height: 80px !important;
-  }
-
-  /* Bouton hamburger visible sur mobile - à droite */
-  .menu-toggle {
-    display: block;
-    order: 2;
-    margin: 0;
-    padding: 0.5rem;
-    margin-left: auto;
-  }
-
-  /* Navigation mobile - CACHÉE par défaut - FORCER la visibilité cachée */
-  .main-navigation.mobile-menu-hidden,
-  .main-navigation .menu.menu--main,
-  .main-navigation .menu,
-  .header-left-section .main-navigation,
-  .header-main .main-navigation,
-  .site-header .main-navigation,
-  .main-navigation {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    max-height: 0 !important;
-    overflow: hidden !important;
-    position: absolute !important;
-    left: -9999px !important;
-    width: 0 !important;
-    height: 0 !important;
+    height: auto !important;
+    min-height: 56px;
     padding: 0 !important;
-    margin: 0 !important;
-    pointer-events: none !important;
   }
 
-  /* Cacher aussi tous les éléments enfants */
-  .main-navigation.mobile-menu-hidden *,
-  .main-navigation .menu.menu--main *,
-  .main-navigation .menu *,
-  .main-navigation * {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
+  .header-main-inner {
+    padding: 0.5rem var(--spacing-unit);
+    align-items: center;
+    flex-wrap: nowrap;
   }
 
-  /* Section droite - CACHÉE par défaut sur mobile */
+  /* ---------------------------------------------------------------
+   * Logo : supprimer le "straddle" (chevauchement vers le bas)
+   * sur tablette/mobile pour éviter que le logo cache le subnav.
+   * --------------------------------------------------------------- */
+  .site-logo-straddle {
+    width: 72px !important;
+    height: 72px !important;
+    margin-bottom: 0 !important;   /* ← supprime le -44px */
+    transform: none !important;
+  }
+
+  .header-logo-nav-row > .site-branding,
+  .header-logo-nav-row .block-system-branding-block {
+    flex: 0 0 72px !important;
+    width: 72px !important;
+    max-width: 72px !important;
+    min-width: 72px !important;
+  }
+
+  /* Search icon */
+  .header-search-icon {
+    padding: 0.5rem 0.6rem;
+    border-bottom: none;
+  }
+
+  /* Hamburger visible */
+  .menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    order: 10;
+    margin-left: 0.25rem;
+  }
+
+  /* Section utilisateur masquée (apparaît dans le menu ouvert) */
   .header-right-section {
     display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    max-height: 0 !important;
-    overflow: hidden !important;
   }
 
-  /* Menu déroulant - Conteneur pour tout le contenu mobile */
-  .header-main::after {
-    content: '';
+  /* ---------------------------------------------------------------
+   * Sous-navigation : plus de padding-left pour le logo straddle
+   * --------------------------------------------------------------- */
+  .header-subnav-inner {
+    padding-left: var(--spacing-unit) !important;
+    padding-right: var(--spacing-unit);
+  }
+
+  /* Bourse ticker : masqué */
+  .header-subnav-row #block-spherevoices-core-bourse-ticker {
     display: none;
   }
 
-  /* Quand le menu est ouvert, créer un conteneur pour tout afficher */
-  .site-header.menu-open .header-main {
-    flex-direction: column;
-    align-items: stretch;
+  /* Subnav : scroll horizontal si beaucoup de liens */
+  .header-subnav .menu--header-subnav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 0 1rem;
+    scrollbar-width: none;
+    padding-bottom: 2px;
   }
 
-  .site-header.menu-open .header-left-section {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    margin-bottom: 0;
+  .header-subnav .menu--header-subnav::-webkit-scrollbar {
+    display: none;
   }
+}
 
-  /* Quand le menu est ouvert, logo + nav en colonne (nav sous le logo) */
-  .site-header.menu-open .header-logo-nav-row {
-    flex-direction: column !important;
-    align-items: stretch;
-    width: 100%;
-    order: 1;
-  }
-
-  /* Quand le menu est ouvert, le logo reste à gauche */
-  .site-header.menu-open .site-branding {
-    order: 1;
-    margin-right: auto;
-    margin-left: 0 !important;
-    padding-left: 0 !important;
-    flex-shrink: 0;
-  }
-
-  /* Quand le menu est ouvert, le bouton hamburger (croix) doit être tout à droite */
-  .site-header.menu-open .menu-toggle {
-    order: 2;
-    margin-left: auto;
-    margin-right: 0;
-    align-self: flex-start;
-    margin-top: 20px;
-  }
-
-  /* Navigation visible quand menu ouvert - RÈGLES TRÈS SPÉCIFIQUES */
+/* ------------------------------------------------------------------ */
+/* Menu ouvert (.menu-open ajouté par JS sur .site-header)            */
+/*                                                                      */
+/* IMPORTANT : toutes les propriétés doivent avoir !important car le  */
+/* CSS de masquage dans style.css utilise aussi !important.            */
+/* ------------------------------------------------------------------ */
+@media (max-width: 1023px) {
+  /* Navigation : réapparaît en dessous du logo+hamburger */
+  .site-header.menu-open .main-navigation,
   .site-header.menu-open .main-navigation.mobile-menu-hidden,
-  .site-header.menu-open .main-navigation .menu.menu--main,
-  .site-header.menu-open .main-navigation .menu,
-  .site-header.menu-open .header-main .header-left-section .main-navigation,
   .site-header.menu-open .header-main .main-navigation,
-  .site-header.menu-open .header-left-section .main-navigation,
-  .site-header.menu-open .main-navigation {
+  .site-header.menu-open .header-left-section .main-navigation {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
-    max-height: 1000px !important;
-    overflow: visible !important;
-    width: 100% !important;
     height: auto !important;
+    width: 100% !important;
+    overflow: visible !important;
     position: relative !important;
     left: 0 !important;
     pointer-events: auto !important;
-    z-index: 998 !important; /* En dessous de la toolbar */
-    order: 3;
-    margin: 0;
-    padding: 0;
-    top: auto;
-    right: auto;
-    /* Fond rouge sur tout le dropdown du menu en mobile */
+    margin: 0 !important;
+    padding: 0 !important;
+    order: 20;
     background-color: var(--color-primary);
-    box-shadow: none;
-    border-top: none;
-    border-bottom: none;
-    margin-top: 0;
   }
 
-  /* Quand le menu mobile est ouvert, décaler le bloc de menu principal vers le bas */
-  .site-header.menu-open #block-spherevoices-theme-main-menu {
-    margin-top: 100px;
-  }
-
-  /* Réafficher les éléments enfants quand menu ouvert */
-  .site-header.menu-open .main-navigation.mobile-menu-hidden *,
-  .site-header.menu-open .main-navigation .menu.menu--main *,
-  .site-header.menu-open .main-navigation .menu *,
-  .site-header.menu-open .main-navigation ul,
-  .site-header.menu-open .main-navigation li,
-  .site-header.menu-open .main-navigation a,
-  .site-header.menu-open .main-navigation * {
+  /* Ré-afficher tous les enfants */
+  .site-header.menu-open .main-navigation *,
+  .site-header.menu-open .main-navigation.mobile-menu-hidden * {
     display: revert !important;
     visibility: visible !important;
     opacity: 1 !important;
   }
 
+  /* Liste des liens */
   .site-header.menu-open .main-navigation ul {
-    flex-direction: column;
-    width: 100%;
-    padding: 0;
-    margin: 0;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    list-style: none !important;
   }
 
+  /* Chaque item */
   .site-header.menu-open .main-navigation li {
-    width: 100%;
-    margin: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    display: block !important;
+    width: 100% !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+    white-space: normal !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .site-header.menu-open .main-navigation li:last-child {
-    border-bottom: none;
+    border-bottom: none !important;
   }
 
-  .site-header.menu-open .main-navigation .menu-link,
+  /* Liens */
+  .site-header.menu-open .main-navigation a.menu-link,
   .site-header.menu-open .main-navigation a {
-    width: 100%;
-    padding: 1rem var(--spacing-unit);
-    text-align: left;
-    display: block;
-    border-bottom: none;
+    display: block !important;
+    width: 100% !important;
+    padding: 0.9rem var(--spacing-unit) !important;
+    font-size: 1rem !important;
+    color: #fff !important;
+    text-decoration: none !important;
+    border-bottom: none !important;
+    letter-spacing: 0.02em;
+    text-transform: none;
   }
 
-  .site-header.menu-open .main-navigation .menu-link:hover,
   .site-header.menu-open .main-navigation a:hover {
-    background-color: rgba(184, 0, 0, 0.1);
+    background-color: rgba(0, 0, 0, 0.15) !important;
   }
 
-  /* Section droite visible quand menu ouvert */
+  /* Section header : wrap pour accueillir la nav en dessous */
+  .site-header.menu-open .header-main-inner {
+    flex-wrap: wrap !important;
+  }
+
+  .site-header.menu-open .header-left-section {
+    width: 100% !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+  }
+
+  /* Section utilisateur dans le menu ouvert */
   .site-header.menu-open .header-right-section {
     display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    max-height: 1000px !important;
-    overflow: visible !important;
+    order: 30;
+    width: 100%;
     flex-direction: column;
-    width: 100%;
-    order: 4;
-    margin-top: 1rem;
-    gap: 1rem;
-  }
-
-  .site-header.menu-open .header-search {
-    width: 100%;
-    order: 1;
-  }
-
-  .site-header.menu-open .search-form-inline {
-    width: 100%;
-    display: flex;
+    padding: 0.75rem var(--spacing-unit) 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
     gap: 0.5rem;
   }
 
-  .site-header.menu-open .search-input-inline {
-    flex: 1;
-    min-width: 0;
-    width: auto;
-  }
-
-  .site-header.menu-open .search-button-inline {
-    flex-shrink: 0;
-    white-space: nowrap;
-  }
-
-  /* Section utilisateur visible quand menu ouvert */
   .site-header.menu-open .header-user-section {
     width: 100%;
     align-items: flex-start !important;
-    gap: 0.5rem !important;
-    order: 2;
-  }
-
-  .site-header.menu-open .header-user-links,
-  .site-header.menu-open .header-rss {
-    width: 100%;
-    justify-content: flex-start !important;
-  }
-
-  .site-header.menu-open .header-user-links ul,
-  .site-header.menu-open .header-rss ul {
-    justify-content: flex-start !important;
     text-align: left !important;
   }
 
-  /* Main content mobile */
-  .main-content {
-    grid-template-columns: 1fr;
-    padding: 1rem var(--spacing-unit) !important;
+  .site-header.menu-open .header-user-section * {
+    text-align: left !important;
   }
 
-  .content-wrapper .page-title {
+  .site-header.menu-open .header-user-links {
+    justify-content: flex-start !important;
+    width: 100%;
+  }
+}
+
+/* ================================================================== */
+/* 3. CONTENU PRINCIPAL                                                */
+/* ================================================================== */
+@media (max-width: 1023px) {
+  .main-content {
+    padding: 0.75rem var(--spacing-unit) 1.5rem !important;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+    white-space: normal;
+    margin: 0.75rem 0 1rem !important;
+  }
+}
+
+/* ================================================================== */
+/* 4. PAGE D'ACCUEIL — grille : 1 article par ligne sur tablette      */
+/* ================================================================== */
+
+/*
+ * Tablette (768–1023 px) : 1 colonne
+ * Breaking news + sidebar + articles empilés proprement
+ */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .homepage-gallery-layout {
+    grid-template-columns: 1fr !important;
+    gap: 1rem;
+  }
+
+  .breaking-news-section.breaking-news-in-grid {
+    grid-column: 1;
+  }
+
+  /* Sidebar : ligne horizontale (3 widgets côte à côte) */
+  .homepage-sidebar {
+    grid-column: 1;
+    grid-row: auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    align-items: start;
+  }
+
+  /* Si moins de 3 widgets : 2 colonnes auto */
+  .homepage-sidebar > *:only-child {
+    grid-column: 1 / -1;
+  }
+
+  .homepage-gallery-layout > .article-gallery-item {
+    min-height: auto;
+    max-height: none;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 160px !important;
+  }
+
+  /* Image à gauche, texte à droite dans les cartes */
+  .homepage-gallery-layout > .article-gallery-item .article-teaser-image-wrapper,
+  .homepage-gallery-layout > .article-gallery-item .article-featured-image-wrapper {
+    height: 100% !important;
+    min-height: 160px;
+    max-height: 220px;
+    width: 100%;
+  }
+
+  .homepage-gallery-layout > .article-gallery-item .article-teaser-content,
+  .homepage-gallery-layout > .article-gallery-item .article-featured-content {
+    padding: 1rem;
+  }
+}
+
+/* Mobile large (480–767 px) : 1 colonne aussi */
+@media (max-width: 767px) {
+  .homepage-gallery-layout {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem;
+  }
+
+  .breaking-news-section.breaking-news-in-grid {
+    grid-column: 1;
+  }
+
+  .homepage-sidebar {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .homepage-gallery-layout > .article-gallery-item {
+    min-height: auto !important;
+    max-height: none;
+  }
+
+  .homepage-gallery-layout > .ad-gallery-slot {
+    min-height: auto !important;
+    max-height: none;
+  }
+
+  .homepage-sidebar .poll-block {
+    min-height: auto;
+    max-height: none;
+  }
+}
+
+/* Container homepage */
+@media (max-width: 1023px) {
+  .homepage-container {
+    padding: 0.5rem 0 1.5rem;
+  }
+}
+
+/* ================================================================== */
+/* 5. BREAKING NEWS                                                    */
+/* ================================================================== */
+@media (max-width: 1023px) {
+  .article-breaking-news-link {
+    flex-direction: column;
+  }
+
+  .article-breaking-news-image-wrapper {
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    flex: 0 0 auto;
+  }
+
+  .article-breaking-news-content {
+    width: 100%;
+    padding: 0.75rem 0 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .article-breaking-news-title {
+    font-size: 1.5rem;
+    line-height: 1.25;
+  }
+
+  .article-breaking-news-summary {
+    font-size: 0.9375rem;
+    -webkit-line-clamp: 3;
+  }
+}
+
+/* ================================================================== */
+/* 6. PAGE ARTICLE (full)                                              */
+/* ================================================================== */
+@media (max-width: 1023px) {
+  .article-full {
+    max-width: 100%;
+    padding: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .article-full-title {
+    font-size: 1.625rem;
+    line-height: 1.25;
+    margin-bottom: 0.75rem;
+  }
+
+  .article-body {
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+
+  .article-body p  { font-size: 1rem; }
+  .article-body h2 { font-size: 1.35rem; }
+  .article-body h3 { font-size: 1.15rem; }
+
+  /* Images flottées → bloc sur mobile */
+  .article-body figure.align-left,
+  .article-body figure.image-style-align-left,
+  .article-body figure.drupal-media.align-left,
+  .article-body figure.align-right,
+  .article-body figure.image-style-align-right,
+  .article-body figure.drupal-media.align-right {
+    float: none !important;
+    max-width: 100% !important;
     width: 100% !important;
-    font-size: 1.75rem;
     margin: 1rem 0 !important;
   }
 
-  /* Footer mobile */
+  .article-full-meta { font-size: 0.875rem; }
+}
+
+/* Articles liés */
+@media (max-width: 767px) {
+  .article-related-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .article-related-title { font-size: 1.15rem; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .article-related-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+/* ================================================================== */
+/* 7. TYPOGRAPHIE GLOBALE                                              */
+/* ================================================================== */
+@media (max-width: 767px) {
+  h1 { font-size: 1.75rem; }
+  h2 { font-size: 1.375rem; }
+  h3 { font-size: 1.125rem; }
+  .article-full-title,
+  .article-title { font-size: 1.625rem; }
+}
+
+/* ================================================================== */
+/* 8. SONDAGE                                                          */
+/* ================================================================== */
+@media (max-width: 1023px) {
+  .poll-block {
+    min-height: auto;
+    max-height: none;
+  }
+}
+@media (max-width: 767px) {
+  .poll-block   { padding: 0.875rem; }
+  .poll-question { font-size: 1.05rem; }
+}
+
+/* ================================================================== */
+/* 9. FOOTER                                                           */
+/* ================================================================== */
+@media (max-width: 767px) {
+  .site-footer {
+    padding: 1.75rem var(--spacing-unit) 1.25rem;
+    margin-top: 2rem;
+  }
+
   .site-footer-main {
     grid-template-columns: 1fr;
     justify-items: center;
     text-align: center;
+    gap: 1rem;
     padding-bottom: 1.25rem;
   }
 
-  .site-footer-brand {
-    grid-column: 1;
-    justify-self: center;
-  }
-
+  .site-footer-brand,
   .site-footer-social,
   .site-footer-legal {
     grid-column: 1;
-    grid-row: auto;
     justify-self: center;
   }
 
   .site-footer-legal {
     justify-content: center;
-  }
-
-  .footer-content {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-
-  /* Typography mobile */
-  .article-title {
-    font-size: 2rem;
-  }
-
-  .hero-article-title {
-    font-size: 1.75rem;
-  }
-
-  .article-body {
-    font-size: 1rem;
-  }
-
-  h1 {
-    font-size: 2rem;
-  }
-
-  h2 {
-    font-size: 1.5rem;
-  }
-
-  h3 {
-    font-size: 1.25rem;
-  }
-
-  /* En responsive, tous les articles ont la même taille que ceux du centre */
-  .article-card-side {
-    width: 100% !important;
-    max-width: 530px !important;
-    height: 320px !important;
-  }
-
-  .homepage-left-column .article-card-side,
-  .homepage-right-column .article-card-side,
-  .homepage-center-column .article-card-side {
-    width: 100% !important;
-    max-width: 530px !important;
-    height: 320px !important;
-  }
-
-  .homepage-center-column .article-card-side .article-featured-image {
-    height: 180px;
-  }
-
-  .homepage-left-column .article-card-side .article-featured-image,
-  .homepage-right-column .article-card-side .article-featured-image {
-    height: 180px;
-  }
-
-  /* Les articles teaser doivent aussi avoir la même taille */
-  .homepage-left-column .article-teaser,
-  .homepage-right-column .article-teaser {
-    width: 100% !important;
-    max-width: 530px !important;
-    height: 320px !important;
-  }
-
-  /* Les publicités des colonnes prennent toute la largeur en responsive */
-  .homepage-left-column .ad-banner-left-column,
-  .homepage-right-column .ad-banner-right-column {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-
-  /* La première publicité (breaking news) prend toute la largeur en responsive */
-  .ad-banner-breaking-news {
-    width: 100% !important;
-    max-width: 100% !important;
-    flex: none !important;
-  }
-
-  .homepage-left-column .article-teaser .article-teaser-image-wrapper,
-  .homepage-right-column .article-teaser .article-teaser-image-wrapper {
-    height: 180px !important;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
   }
 }
 
+/* ================================================================== */
+/* 10. PAGES LÉGALES                                                   */
+/* ================================================================== */
+@media (max-width: 767px) {
+  .legal-page { padding: 1.25rem var(--spacing-unit); }
+  .legal-page__title { font-size: 1.5rem; }
+}
+
+/* ================================================================== */
+/* 11. TABLEAUX                                                        */
+/* ================================================================== */
+@media (max-width: 1023px) {
+  .article-body table,
+  .main-content table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+}
+
+/* ================================================================== */
+/* 12. FORMULAIRES — usabilité touch                                   */
+/* ================================================================== */
+@media (max-width: 1023px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  textarea,
+  select {
+    font-size: 1rem;
+  }
+
+  .poll-vote-button,
+  .poll-choice-button {
+    min-height: 44px;
+  }
+}
+
+/* ================================================================== */
+/* 13. PAGE RECHERCHE                                                  */
+/* ================================================================== */
+@media (max-width: 767px) {
+  #search-form .container-inline,
+  .search-form .container-inline {
+    flex-wrap: nowrap;
+  }
+}
+
+/* ================================================================== */
+/* 14. TENDANCES / AGENDA                                              */
+/* ================================================================== */
+@media (max-width: 767px) {
+  .trending-grid,
+  .trending-list  { grid-template-columns: 1fr; }
+  .agenda-events-grid { grid-template-columns: 1fr; }
+  .event-card { padding: 0.875rem; }
+}

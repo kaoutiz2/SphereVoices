@@ -1,4 +1,4 @@
 enabled: true
 mode: informational
-privacy_url: '/mentions-legales'
-cookies_url: '/politique-de-cookies'
+privacy_url: /mentions-legales
+cookies_url: /politique-de-cookies

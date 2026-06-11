@@ -212,7 +212,7 @@
 .article-breaking-news-title {
   font-size: 35pt;
   font-weight: 700;
-  color: #000000;
+  color: #333333;
   margin: 0 0 1rem 0;
   line-height: 1.25;
   letter-spacing: -0.5px;
@@ -230,7 +230,7 @@
 }
 
 .article-breaking-news-title--black {
-  color: #000000;
+  color: #333333;
 }
 
 .article-breaking-news-title:hover,

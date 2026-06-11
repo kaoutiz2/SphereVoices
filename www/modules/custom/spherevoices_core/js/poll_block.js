@@ -20,13 +20,15 @@
         
         // Mettre à jour le pourcentage (gauche) et le nombre de votes (droite).
         // Ex : <div class="poll-choice-info"><span class="poll-percentage">100%</span><span class="poll-votes-count">0</span> vote</div>
-        var $votesCount = $choice.find('.poll-choice-info .poll-votes-count');
+        var $votesCount = $choice.find('.poll-votes-count');
         if ($votesCount.length) {
           $votesCount.text(result.votes);
-          console.log('Updated votes count span to', result.votes);
-        }
-        else {
-          console.warn('Votes count span (.poll-votes-count) not found for choice', result.index);
+          // Mettre à jour le libellé vote/votes
+          var $votesEl = $choice.find('.poll-votes');
+          if ($votesEl.length) {
+            var label = result.votes > 1 ? ' votes' : ' vote';
+            $votesEl.html('<span class="poll-votes-count">' + result.votes + '</span>' + label);
+          }
         }
         
         // Mettre à jour le pourcentage

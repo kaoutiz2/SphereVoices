@@ -11,9 +11,15 @@ entity_type: node
 type: list_string
 settings:
   allowed_values:
-    blue: 'Bleu (#003366)'
-    red: 'Rouge (#c20017)'
-    black: 'Noir (#000000)'
+    -
+      value: blue
+      label: Bleu
+    -
+      value: red
+      label: Rouge
+    -
+      value: black
+      label: Noir
   allowed_values_function: ''
 module: options
 locked: false

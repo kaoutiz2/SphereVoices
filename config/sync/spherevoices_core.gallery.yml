@@ -1,0 +1,6 @@
+enabled: true
+title: 'Galerie photo'
+columns: 4
+file_ids:
+  - 78
+  - 79

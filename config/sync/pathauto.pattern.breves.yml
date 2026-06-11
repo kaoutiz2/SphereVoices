@@ -1,0 +1,21 @@
+uuid: 840ecc7b-ee90-41b5-94dc-45db9041ba5f
+langcode: fr
+status: true
+dependencies:
+  module:
+    - node
+id: breves
+label: Brèves
+type: 'canonical_entities:node'
+pattern: '/breves/[node:title]'
+selection_criteria:
+  bundle:
+    id: 'entity_bundle:node'
+    negate: false
+    context_mapping:
+      node: node
+    bundles:
+      breve: breve
+selection_logic: and
+weight: 1
+relationships: {  }

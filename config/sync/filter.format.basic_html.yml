@@ -38,15 +38,6 @@ filters:
       allowed_html: '<br> <p> <h2 id> <h3 id> <h4 id> <h5 id> <h6 id> <cite> <dl> <dt> <dd> <a hreflang href> <blockquote cite> <ul type> <ol start type> <strong> <em> <code> <li> <img src alt data-entity-uuid data-entity-type height width data-caption data-align> <drupal-media data-entity-type data-entity-uuid data-view-mode alt data-align> <video controls playsinline preload poster src width height class> <source src type> <iframe src width height allowfullscreen frameborder title allow loading referrerpolicy>'
       filter_html_help: false
       filter_html_nofollow: false
-  media_embed:
-    id: media_embed
-    provider: media
-    status: true
-    weight: 100
-    settings:
-      default_view_mode: default
-      allowed_view_modes: {  }
-      allowed_media_types: {  }
   filter_html_image_secure:
     id: filter_html_image_secure
     provider: filter
@@ -59,3 +50,12 @@ filters:
     status: true
     weight: 15
     settings: {  }
+  media_embed:
+    id: media_embed
+    provider: media
+    status: true
+    weight: 100
+    settings:
+      default_view_mode: default
+      allowed_view_modes: {  }
+      allowed_media_types: {  }

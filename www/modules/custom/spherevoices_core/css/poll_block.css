@@ -231,22 +231,23 @@
   color: var(--color-text-light, #666);
 }
 
-.poll-percentage {
-  font-weight: 600;
-  color: #000;
-  min-width: 50px;
-  text-align: left;
-}
-
 .poll-votes {
-  flex: 1;
   font-weight: 600;
   color: #b80000;
-  text-align: right;
+  text-align: left;
+  flex: 1;
 }
 
 .poll-votes-count {
+  font-weight: 700;
   color: #b80000;
+}
+
+.poll-percentage {
+  font-weight: 700;
+  color: #111;
+  text-align: right;
+  flex-shrink: 0;
 }
 
 /* Responsive */

@@ -26,8 +26,10 @@ content:
 hidden:
   body: true
   comment: true
+  field_breaking_title_color: true
   field_cover_media: true
   field_image: true
+  field_sponsored: true
   field_tags: true
   field_tweet: true
   langcode: true

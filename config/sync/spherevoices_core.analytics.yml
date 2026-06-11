@@ -1,0 +1,5 @@
+enabled: false
+ga4_measurement_id: ''
+anonymize_ip: true
+track_logged_in: false
+google_search_console: ''

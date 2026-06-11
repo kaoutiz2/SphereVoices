@@ -64,6 +64,14 @@ instagram_embed:
       attributes:
         async: true
 
+twitter_embed:
+  js:
+    https://platform.twitter.com/widgets.js:
+      type: external
+      attributes:
+        async: true
+        charset: utf-8
+
 trending_page:
   css:
     theme:

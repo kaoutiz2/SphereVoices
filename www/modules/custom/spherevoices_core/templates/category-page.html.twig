@@ -1,0 +1,41 @@
+{#
+/**
+ * @file
+ * Page de catégorie : liste des articles filtrés par étiquette.
+ *
+ * Variables :
+ *   - category : nom de la catégorie (ex. "Politique")
+ *   - slug     : identifiant URL (ex. "politique")
+ *   - articles : liste de render arrays (vue teaser)
+ *   - total    : nombre total d'articles trouvés
+ */
+#}
+<div class="category-page site-content-width">
+
+  {# En-tête de la catégorie #}
+  <header class="category-header">
+    <h1 class="category-title">{{ category }}</h1>
+    {% if total > 0 %}
+      <span class="category-count">
+        {{ total }} {{ total == 1 ? 'article' : 'articles' }}
+      </span>
+    {% endif %}
+  </header>
+
+  {# Grille d'articles #}
+  {% if articles|length > 0 %}
+    <div class="homepage-gallery-layout category-grid">
+      {% for article in articles %}
+        <div class="article-gallery-item">
+          {{ article }}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="category-empty">
+      <p>{{ 'Aucun article dans cette catégorie pour le moment.'|t }}</p>
+      <a href="/" class="category-back-link">← {{ 'Retour à l\'accueil'|t }}</a>
+    </div>
+  {% endif %}
+
+</div>

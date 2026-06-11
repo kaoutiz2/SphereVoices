@@ -1,0 +1,67 @@
+{#
+/**
+ * @file
+ * Galerie photo de la page d'accueil.
+ * Variables :
+ *   - gallery.title   : titre de la section
+ *   - gallery.columns : nombre de colonnes (2-5)
+ *   - gallery.photos  : liste de {thumb, full, alt, title}
+ */
+#}
+{% if gallery and gallery.photos|length > 0 %}
+<section class="homepage-photo-gallery" aria-label="{{ gallery.title }}">
+  <div class="homepage-photo-gallery__header">
+    <h2 class="homepage-photo-gallery__title">{{ gallery.title }}</h2>
+  </div>
+
+  <div class="homepage-photo-gallery__grid js-photo-gallery-grid"
+       style="--gallery-cols: {{ gallery.columns }};"
+       data-gallery>
+    {% for idx, photo in gallery.photos %}
+      <button
+        class="gallery-photo-item js-gallery-open"
+        type="button"
+        data-index="{{ idx }}"
+        data-full="{{ photo.full }}"
+        data-alt="{{ photo.alt }}"
+        aria-label="{{ 'Agrandir : '|t }}{{ photo.title }}"
+      >
+        <img
+          src="{{ photo.thumb }}"
+          alt="{{ photo.alt }}"
+          loading="lazy"
+          class="gallery-photo-item__img"
+        />
+        <span class="gallery-photo-item__overlay" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      </button>
+    {% endfor %}
+  </div>
+</section>
+
+{# Lightbox overlay (caché par défaut, activé par JS) #}
+<div class="gallery-lightbox js-gallery-lightbox" role="dialog" aria-modal="true" aria-label="{{ 'Visionneuse photo'|t }}" hidden>
+  <button class="gallery-lightbox__close js-gallery-close" type="button" aria-label="{{ 'Fermer'|t }}">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+  </button>
+  <button class="gallery-lightbox__nav gallery-lightbox__prev js-gallery-prev" type="button" aria-label="{{ 'Photo précédente'|t }}">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+  <div class="gallery-lightbox__img-wrap js-gallery-img-wrap">
+    <img class="gallery-lightbox__img js-gallery-img" src="" alt="" />
+  </div>
+  <button class="gallery-lightbox__nav gallery-lightbox__next js-gallery-next" type="button" aria-label="{{ 'Photo suivante'|t }}">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+  <span class="gallery-lightbox__counter js-gallery-counter"></span>
+</div>
+{% endif %}

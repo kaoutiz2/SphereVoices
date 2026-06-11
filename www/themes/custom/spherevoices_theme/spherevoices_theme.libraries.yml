@@ -10,6 +10,7 @@ global-styling:
     layout:
       css/layout.css: {}
       css/gallery.css: {}
+      css/photo-gallery.css: {}
     component:
       css/components.css: {}
   js:
@@ -17,6 +18,7 @@ global-styling:
     js/agenda-navigation.js: {}
     js/gallery-layout.js: {}
     js/breves-height.js: {}
+    js/photo-gallery.js: {}
   dependencies:
     - spherevoices_theme/site-fonts
     - core/drupal

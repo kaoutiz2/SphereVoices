@@ -689,7 +689,50 @@ function spherevoices_theme_preprocess_page(&$variables) {
       $variables['#cache']['tags'] ?? [],
       \Drupal::config('spherevoices_core.ads')->getCacheTags()
     );
-    
+
+    // === Galerie photo ===
+    $variables['photo_gallery'] = NULL;
+    try {
+      $gallery_config = \Drupal::config('spherevoices_core.gallery');
+      if ($gallery_config->get('enabled')) {
+        // Lire les file_ids (nouveau) ou media_ids (rétro-compatibilité).
+        $file_ids = $gallery_config->get('file_ids') ?? $gallery_config->get('media_ids') ?? [];
+        $photos = [];
+        if (!empty($file_ids)) {
+          $file_storage = \Drupal::entityTypeManager()->getStorage('file');
+          $image_style  = \Drupal::entityTypeManager()->getStorage('image_style')->load('large');
+          $url_gen      = \Drupal::service('file_url_generator');
+          $files        = $file_storage->loadMultiple($file_ids);
+          foreach ($file_ids as $fid) {
+            if (!isset($files[$fid])) {
+              continue;
+            }
+            /** @var \Drupal\file\FileInterface $file */
+            $file = $files[$fid];
+            $uri  = $file->getFileUri();
+            $full = $url_gen->generateAbsoluteString($uri);
+            // Miniature via image style 'large' (ou URL originale en secours).
+            $thumb = $image_style ? $image_style->buildUrl($uri) : $full;
+            $photos[] = [
+              'thumb' => $thumb,
+              'full'  => $full,
+              'alt'   => $file->getFilename(),
+              'title' => $file->getFilename(),
+            ];
+          }
+        }
+        $variables['photo_gallery'] = [
+          'enabled' => TRUE,
+          'title'   => $gallery_config->get('title') ?: 'Galerie photo',
+          'columns' => (int) ($gallery_config->get('columns') ?: 4),
+          'photos'  => $photos,
+        ];
+      }
+    }
+    catch (\Exception $e) {
+      \Drupal::logger('spherevoices_theme')->error('Galerie photo : @msg', ['@msg' => $e->getMessage()]);
+    }
+
     // Garder les anciennes variables pour compatibilité (mais vides)
     $variables['left_articles'] = [];
     $variables['center_articles'] = [];

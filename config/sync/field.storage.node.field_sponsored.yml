@@ -8,9 +8,7 @@ id: node.field_sponsored
 field_name: field_sponsored
 entity_type: node
 type: boolean
-settings:
-  on_label: 'Article sponsorisé'
-  off_label: ''
+settings: {  }
 module: core
 locked: false
 cardinality: 1

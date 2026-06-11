@@ -27,6 +27,34 @@ spherevoices_core.facebook_live_settings:
   route_name: spherevoices_core.facebook_live_settings
   weight: 50
 
+spherevoices_core.analytics_settings:
+  title: 'Google Analytics & SEO'
+  description: 'Google Analytics 4, Search Console, suivi des statistiques.'
+  parent: system.admin_config_system
+  route_name: spherevoices_core.analytics_settings
+  weight: -20
+
+spherevoices_core.analytics_settings_media:
+  title: 'Google Analytics & SEO'
+  description: 'Google Analytics 4, Search Console, suivi des statistiques.'
+  parent: system.admin_config_media
+  route_name: spherevoices_core.analytics_settings
+  weight: 40
+
+spherevoices_core.gallery_settings:
+  title: 'Galerie photo'
+  description: 'Photos affichées en galerie sur la page d''accueil.'
+  parent: system.admin_config_media
+  route_name: spherevoices_core.gallery_settings
+  weight: 55
+
+spherevoices_core.gallery_settings_system:
+  title: 'Galerie photo'
+  description: 'Photos affichées en galerie sur la page d''accueil.'
+  parent: system.admin_config_system
+  route_name: spherevoices_core.gallery_settings
+  weight: -17
+
 spherevoices_core.facebook_live_settings_system:
   title: 'Lives (Facebook, Instagram, YouTube)'
   description: 'URLs des directs et statut à l’antenne pour chaque plateforme.'

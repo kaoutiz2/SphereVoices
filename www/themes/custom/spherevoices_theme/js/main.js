@@ -38,7 +38,7 @@
           this.forceVerticalToolbar(context);
           
           // Sur mobile, cacher le menu par défaut IMMÉDIATEMENT
-          if (window.innerWidth <= 767) {
+          if (window.innerWidth <= 1023) {
             const mainNav = context.querySelector('.main-navigation');
             const menuBlock = context.querySelector('.menu.menu--main');
             if (mainNav) {
@@ -1127,7 +1127,7 @@
 
       // Fonction pour cacher le menu sur mobile
       const hideMenuOnMobile = function() {
-        if (window.innerWidth <= 767) {
+        if (window.innerWidth <= 1023) {
           if (mainNav) {
             mainNav.classList.add('mobile-menu-hidden');
             mainNav.style.display = 'none';

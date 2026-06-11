@@ -1,0 +1,16 @@
+uuid: 442c8fc3-988a-460d-8438-fa5f49b10413
+langcode: fr
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: sL588ui1E_8-2c_UupwyYxcqX2OVyMFp3HTLbbFqvPc
+id: global
+label: Global
+tags:
+  title: '[current-page:title] | [site:name]'
+  description: '[site:slogan]'
+  robots: 'index, follow'
+  og_site_name: SphereVoices
+  og_url: '[current-page:url]'
+  og_type: website
+  twitter_cards_type: summary_large_image

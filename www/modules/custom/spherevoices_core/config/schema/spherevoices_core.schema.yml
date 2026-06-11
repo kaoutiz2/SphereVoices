@@ -69,6 +69,45 @@ spherevoices_core.ads:
     grid_alt:
       type: string
 
+spherevoices_core.gallery:
+  type: config_object
+  label: 'Galerie photo page d''accueil'
+  mapping:
+    enabled:
+      type: boolean
+      label: 'Galerie activée'
+    title:
+      type: string
+      label: 'Titre de la section'
+    columns:
+      type: integer
+      label: 'Nombre de colonnes'
+    file_ids:
+      type: sequence
+      label: 'IDs des fichiers image uploadés'
+      sequence:
+        type: integer
+
+spherevoices_core.analytics:
+  type: config_object
+  label: 'Google Analytics / SEO'
+  mapping:
+    ga4_measurement_id:
+      type: string
+      label: 'GA4 Measurement ID (G-XXXXXXXXXX)'
+    enabled:
+      type: boolean
+      label: 'Analytics activé'
+    anonymize_ip:
+      type: boolean
+      label: 'Anonymiser les IPs'
+    track_logged_in:
+      type: boolean
+      label: 'Suivre les utilisateurs connectés'
+    google_search_console:
+      type: string
+      label: 'Code de vérification Google Search Console'
+
 spherevoices_core.facebook_live:
   type: config_object
   label: 'Social live streams'

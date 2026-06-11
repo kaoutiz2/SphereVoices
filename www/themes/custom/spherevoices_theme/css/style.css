@@ -371,8 +371,8 @@ body:has(#toolbar-administration) .header-main {
   left: 0;
 }
 
-/* Sur mobile, la navigation est cachée par défaut - géré dans responsive.css */
-@media (max-width: 767px) {
+/* Sur mobile ET tablette, la navigation est cachée par défaut (burger menu) */
+@media (max-width: 1023px) {
   .main-navigation {
     display: none !important;
   }
@@ -591,8 +591,8 @@ body:has(#toolbar-administration) .header-main {
   flex: 1 1 auto;
 }
 
-/* Sur mobile, la navigation est CACHÉE par défaut - FORCER le masquage */
-@media (max-width: 767px) {
+/* Sur mobile ET tablette, la navigation est CACHÉE - masquage forcé */
+@media (max-width: 1023px) {
   .site-header .header-main .header-left-section .main-navigation,
   .site-header .header-main .main-navigation,
   .site-header .main-navigation,
@@ -676,94 +676,27 @@ body:has(#toolbar-administration) .header-main {
   background-color: rgba(255, 255, 255, 0.15);
 }
 
-/* Barre de recherche intégrée - Style CNN, alignée sur les items du menu */
-.header-search {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  padding-bottom: calc(0.875rem + 3px); /* même ligne de base que .main-navigation a.menu-link */
-  box-sizing: border-box;
-}
-
-.header-search form,
-.search-form-inline {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0;
-}
-
-.header-search input[type="search"],
-.header-search input[type="text"],
-.search-input-inline {
-  padding: 0.875rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 4px;
-  font-size: 0.8125rem;
-  min-width: 140px;
-  background-color: rgba(255, 255, 255, 0.95);
-  height: 26px;
-  min-height: 26px;
-  box-sizing: border-box;
-}
-
-/* Sur fond rouge (header-main), input plus visible */
-.header-main .header-search input[type="search"],
-.header-main .header-search input[type="text"],
-.header-main .search-input-inline {
-  border-color: rgba(255, 255, 255, 0.6);
-  background-color: #fff;
-}
-
-.header-search input[type="search"]:focus,
-.header-search input[type="text"]:focus,
-.search-input-inline:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(184, 0, 0, 0.1);
-}
-
-.header-main .header-search input[type="search"]:focus,
-.header-main .header-search input[type="text"]:focus,
-.header-main .search-input-inline:focus {
-  border-color: #fff;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
-}
-
-.header-search button,
-.header-search input[type="submit"],
-.search-button-inline {
-  padding: 0.35rem;
-  background-color: var(--color-secondary);
-  color: var(--color-bg-light);
-  border: none;
-  border-radius: 4px;
-  font-weight: 600;
-  font-size: 0.8125rem;
-  cursor: pointer;
-  height: 26px;
-  min-height: 26px;
-  width: 26px;
-  min-width: 26px;
-  box-sizing: border-box;
-  white-space: nowrap;
+/* Icône loupe de recherche — se comporte comme un item du menu principal */
+.header-search-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-
-.search-button-inline .search-button-icon {
-  display: block;
+  color: #fff !important;
+  text-decoration: none;
+  padding: 0.875rem 0.85rem;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
   flex-shrink: 0;
+  letter-spacing: 0.02em;
 }
 
-/* Ne montrer que l'icône : masquer tout texte dans le bouton recherche */
-.search-button-inline {
-  font-size: 0;
-  line-height: 0;
-}
-.search-button-inline .search-button-icon {
-  font-size: initial;
+.header-search-icon:hover,
+.header-search-icon:focus {
+  color: #fff !important;
+  border-bottom-color: #fff;
+  background-color: rgba(255, 255, 255, 0.15);
+  outline: none;
+  text-decoration: none;
 }
 
 .header-main .header-search button,
@@ -1179,69 +1112,131 @@ body:has(#toolbar-administration) .header-main {
   background-color: #111;
 }
 
-/* Images média / CKEditor dans le corps : même principe (cadre 16:9, image contenue). */
+/* ================================================================== */
+/* Images et médias dans le corps d'article                           */
+/* ================================================================== */
+
+/* --- Base : toute figure dans le corps --- */
+.article-body figure {
+  margin: 1.5rem 0;
+  padding: 0;
+  max-width: 100%;
+}
+
+/* --- CKEditor 5 : <figure class="image"> --- */
+.article-body figure.image {
+  display: table;       /* shrink-wrap autour de l'image + légende */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.article-body figure.image img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+/* --- Drupal media embed : <figure class="drupal-media"> (centré par défaut) --- */
 .article-body figure.drupal-media,
 .article-body figure.align-center.drupal-media,
-.article-body figure.align-left.drupal-media,
-.article-body figure.align-right.drupal-media {
-  position: relative;
+.article-body figure.image-style-align-center {
+  display: block;
   width: 100%;
   max-width: 100%;
-  margin: 1.5rem 0;
-  aspect-ratio: 16 / 9;
+  margin: 1.5rem auto;
   background-color: #f2f2f2;
   border-radius: 4px;
   overflow: hidden;
 }
 
 .article-body figure.drupal-media img,
-.article-body figure.align-center.drupal-media img,
-.article-body figure[class*='drupal-media'] img {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  margin: 0;
+.article-body figure.align-center.drupal-media img {
   display: block;
-}
-
-/* Variante CKEditor : figure > div > img */
-.article-body figure.drupal-media > div,
-.article-body figure[class*='drupal-media'] > div {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.article-body figure.drupal-media > div img,
-.article-body figure[class*='drupal-media'] > div img {
-  position: static;
-  transform: none;
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
+  width: 100%;
   height: auto;
+  max-height: 32rem;
   object-fit: contain;
+  margin: 0 auto;
 }
 
-/* Images simples dans le corps (sans figure média) : limite hauteur + largeur colonne */
+/* --- Alignement gauche (flottant) --- */
+.article-body figure.align-left,
+.article-body figure.image-style-align-left,
+.article-body figure.drupal-media.align-left {
+  float: left !important;
+  width: auto;
+  max-width: 45%;
+  margin: 0.25rem 1.5rem 1rem 0 !important;
+  background: transparent;
+  overflow: visible;
+  aspect-ratio: unset;
+}
+
+/* --- Alignement droite (flottant) --- */
+.article-body figure.align-right,
+.article-body figure.image-style-align-right,
+.article-body figure.drupal-media.align-right {
+  float: right !important;
+  width: auto;
+  max-width: 45%;
+  margin: 0.25rem 0 1rem 1.5rem !important;
+  background: transparent;
+  overflow: visible;
+  aspect-ratio: unset;
+}
+
+.article-body figure.align-left img,
+.article-body figure.align-right img,
+.article-body figure.image-style-align-left img,
+.article-body figure.image-style-align-right img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+/* Clearfix : évite que le texte se chevauche avec les images flottantes */
+.article-body p,
+.article-body > * {
+  clear: none;
+}
+
+.article-body::after {
+  content: '';
+  display: table;
+  clear: both;
+}
+
+/* --- Légendes (figcaption) --- */
+.article-body figcaption,
+.article-body figure figcaption {
+  font-size: 0.8125rem;
+  color: #666;
+  font-style: italic;
+  text-align: center;
+  padding: 0.4rem 0.5rem 0;
+  line-height: 1.4;
+  caption-side: bottom;
+}
+
+/* --- Images simples dans le corps (hors figure) --- */
 .article-body > p img,
 .article-body p img {
-  width: 100%;
   max-width: 100%;
   height: auto;
-  max-height: 28rem;
-  object-fit: contain;
   display: block;
   margin: 1rem auto;
   border-radius: 4px;
+}
+
+/* --- Taille définie par l'éditeur (attribut width/height inline ou data-width) --- */
+.article-body figure[style] img,
+.article-body figure img[width],
+.article-body figure img[style*="width"] {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
 }
 
 /* Footer */
@@ -1788,7 +1783,7 @@ label.option {
 
 .article-related-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
 }
 
@@ -1799,3 +1794,175 @@ label.option {
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* Page de recherche — formulaire inline                               */
+/* ------------------------------------------------------------------ */
+#search-form .container-inline,
+.search-form .container-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+}
+
+#search-form .container-inline input[type="search"],
+.search-form .container-inline input[type="search"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.6rem 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: var(--font-primary, sans-serif);
+  color: var(--color-text, #1a1a1a);
+  background: #fff;
+}
+
+#search-form .container-inline input[type="search"]:focus,
+.search-form .container-inline input[type="search"]:focus {
+  outline: none;
+  border-color: var(--color-primary, #b80000);
+  box-shadow: 0 0 0 2px rgba(184, 0, 0, 0.15);
+}
+
+#search-form .container-inline input[type="submit"],
+#search-form .container-inline button[type="submit"],
+.search-form .container-inline input[type="submit"],
+.search-form .container-inline button[type="submit"] {
+  flex-shrink: 0;
+  padding: 0.6rem 1.25rem;
+  background-color: var(--color-primary, #b80000);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: var(--font-primary, sans-serif);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s;
+}
+
+#search-form .container-inline input[type="submit"]:hover,
+#search-form .container-inline button[type="submit"]:hover,
+.search-form .container-inline input[type="submit"]:hover,
+.search-form .container-inline button[type="submit"]:hover {
+  background-color: var(--color-primary-dark, #900000);
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Pages légales (mentions légales, politique de cookies)             */
+/* ------------------------------------------------------------------ */
+.legal-page {
+  padding: 2.5rem var(--spacing-unit, 1rem);
+  max-width: var(--max-width, 900px);
+  margin: 0 auto;
+}
+
+.legal-page__title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-secondary, #111);
+  margin-bottom: 2rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 3px solid var(--color-primary, #b80000);
+}
+
+.legal-section {
+  margin-bottom: 2rem;
+}
+
+.legal-section h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-secondary, #111);
+  margin: 0 0 0.75rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.legal-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-secondary, #333);
+  margin: 1rem 0 0.4rem;
+}
+
+.legal-section p,
+.legal-section li {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--color-text, #333);
+  margin-bottom: 0.5rem;
+}
+
+.legal-section ul {
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.legal-section a {
+  color: var(--color-primary, #b80000);
+  text-decoration: underline;
+}
+
+.legal-section a:hover {
+  opacity: 0.8;
+}
+
+/* ------------------------------------------------------------------ */
+/* Page catégorie                                                       */
+/* ------------------------------------------------------------------ */
+.category-page {
+  padding: 1.5rem var(--spacing-unit, 1rem);
+}
+
+.category-header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 3px solid var(--color-primary, #b80000);
+}
+
+.category-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-secondary, #111);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.category-count {
+  font-size: 0.875rem;
+  color: var(--color-text-light, #666);
+  white-space: nowrap;
+}
+
+.category-grid {
+  /* Réutilise la grille homepage */
+}
+
+.category-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--color-text-light, #666);
+}
+
+.category-empty p {
+  font-size: 1.125rem;
+  margin-bottom: 1.5rem;
+}
+
+.category-back-link {
+  color: var(--color-primary, #b80000);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.category-back-link:hover {
+  text-decoration: underline;
+}

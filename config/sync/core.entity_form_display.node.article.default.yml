@@ -47,6 +47,12 @@ content:
     region: content
     settings: {  }
     third_party_settings: {  }
+  field_breaking_title_color:
+    type: options_buttons
+    weight: 17
+    region: content
+    settings: {  }
+    third_party_settings: {  }
   field_cover_media:
     type: media_library_widget
     weight: 1
@@ -55,6 +61,13 @@ content:
       media_types:
         - image
         - video
+    third_party_settings: {  }
+  field_sponsored:
+    type: boolean_checkbox
+    weight: 18
+    region: content
+    settings:
+      display_label: true
     third_party_settings: {  }
   field_tags:
     type: entity_reference_autocomplete_tags
@@ -73,19 +86,6 @@ content:
     settings:
       media_types:
         - tweet
-    third_party_settings: {  }
-  field_breaking_title_color:
-    type: options_buttons
-    weight: 17
-    region: content
-    settings: {  }
-    third_party_settings: {  }
-  field_sponsored:
-    type: boolean_checkbox
-    weight: 18
-    region: content
-    settings:
-      display_label: true
     third_party_settings: {  }
   langcode:
     type: language_select

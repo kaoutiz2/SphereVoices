@@ -1,11 +1,22 @@
 {#
 /**
  * @file
- * Conteneur pour le ticker TradingView (script injecté par bourse_tradingview.js).
+ * Bandeau alterné : indices boursiers (TradingView) / capitales mondiales.
+ * Les deux panneaux sont empilés ; le JS alterne leur visibilité toutes les 30 s.
  */
 #}
-<div class="bourse-ticker-block js-bourse-ticker-mount" role="complementary" aria-label="{{ 'Cours des marchés'|t }}">
-  <div class="tradingview-widget-container">
-    <div class="tradingview-widget-container__widget"></div>
+<div class="bourse-ticker-block js-bourse-ticker-mount" role="complementary" aria-label="{{ 'Informations en temps réel'|t }}">
+
+  {# Panneau 1 : bourse (TradingView, actif par défaut) #}
+  <div class="ticker-panel ticker-panel--bourse js-ticker-bourse is-active">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+    </div>
   </div>
+
+  {# Panneau 2 : capitales (heure + température) — rempli par bourse_tradingview.js #}
+  <div class="ticker-panel ticker-panel--capitals js-ticker-capitals">
+    <div class="capitals-ticker-inner js-capitals-inner"></div>
+  </div>
+
 </div>
