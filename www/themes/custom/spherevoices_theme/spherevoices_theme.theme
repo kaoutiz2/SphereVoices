@@ -919,6 +919,17 @@ function spherevoices_theme_preprocess_page(&$variables) {
   else {
     $variables['page_title'] = NULL;
   }
+
+  // Ces routes affichent leur propre <h1> dans leur template — ne pas doubler.
+  $route_name = $route_match->getRouteName();
+  $self_titled = [
+    'spherevoices_core.category',
+    'spherevoices_core.mentions_legales',
+    'spherevoices_core.politique_cookies',
+  ];
+  if (in_array($route_name, $self_titled, TRUE)) {
+    $variables['page_title'] = NULL;
+  }
   
   // Retirer "Bienvenue" du contenu principal
   if (isset($variables['content']['system_main']['#markup'])) {
