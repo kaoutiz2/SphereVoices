@@ -51,12 +51,55 @@ $results = [];
 $overall_success = true;
 
 /**
- * Exécute une commande Drush via l'interpréteur PHP courant.
- * Contourne le problème OVH où 'php' n'est pas dans le PATH du serveur web.
+ * Trouve le binaire PHP CLI sur OVH.
+ *
+ * OVH : PHP_BINARY pointe vers php-fpm (sbin/php-fpm).
+ * On dérive le CLI en remplaçant sbin/php-fpm par bin/php,
+ * puis on essaie plusieurs chemins de secours.
+ */
+function find_php_cli(): string {
+  // 1. Dériver depuis PHP_BINARY : .../sbin/php-fpm → .../bin/php
+  $fpm = PHP_BINARY;
+  $cli = preg_replace('#/sbin/php-fpm[\d.]*$#', '/bin/php', $fpm);
+  if ($cli !== $fpm && is_executable($cli)) {
+    return $cli;
+  }
+
+  // 2. Variante avec numéro de version : bin/php8.1
+  $version = PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;
+  $cli_versioned = preg_replace('#/sbin/php-fpm[\d.]*$#', '/bin/php' . $version, $fpm);
+  if ($cli_versioned !== $fpm && is_executable($cli_versioned)) {
+    return $cli_versioned;
+  }
+
+  // 3. Liste de secours (chemins OVH connus)
+  $base = preg_replace('#/sbin/.*$#', '', $fpm);
+  $candidates = array_filter([
+    $base ? $base . '/bin/php' : null,
+    $base ? $base . '/bin/php' . $version : null,
+    '/usr/local/php' . $version . '/bin/php',
+    '/usr/local/bin/php' . $version,
+    '/usr/local/bin/php',
+    '/usr/bin/php' . $version,
+    '/usr/bin/php',
+  ]);
+  foreach ($candidates as $c) {
+    if ($c && is_executable($c)) {
+      return $c;
+    }
+  }
+
+  return '';
+}
+
+/**
+ * Exécute une commande Drush avec le bon interpréteur PHP CLI.
  */
 function run_drush(string $drush, string $root, string $cmd): array {
-  // PHP_BINARY = chemin absolu de l'interpréteur qui exécute ce script
-  $php  = PHP_BINARY;
+  $php = find_php_cli();
+  if (!$php) {
+    return [1, 'PHP CLI introuvable. PHP_BINARY=' . PHP_BINARY];
+  }
   $full = escapeshellarg($php) . ' ' . escapeshellarg($drush)
         . ' --root=' . escapeshellarg($root)
         . ' ' . $cmd . ' 2>&1';
@@ -65,6 +108,13 @@ function run_drush(string $drush, string $root, string $cmd): array {
   exec($full, $output, $code);
   return [$code, implode("\n", $output)];
 }
+
+// Afficher les infos de debug
+$php_cli = find_php_cli();
+$results['debug'] = [
+  'success' => $php_cli !== '',
+  'output'  => 'PHP_BINARY=' . PHP_BINARY . ' | PHP CLI=' . ($php_cli ?: 'INTROUVABLE') . ' | Drush=' . $drush,
+];
 
 // 1. updatedb
 [$code, $out] = run_drush($drush, $root, 'updatedb --yes');
