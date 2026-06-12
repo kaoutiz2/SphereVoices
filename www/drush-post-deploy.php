@@ -93,23 +93,49 @@ function find_php_cli(): string {
 }
 
 /**
- * Exécute une commande Drush.
- * Même approche que exec-drush.php : cd dans www puis php drush <cmd>.
- * Drush détecte le root Drupal automatiquement via le répertoire courant.
+ * Exécute une commande Drush via proc_open() avec environnement explicite.
+ * Évite les problèmes OVH (HOME absent, PATH minimal) qui rendent exec() muet.
  */
 function run_drush(string $drush, string $root, string $cmd): array {
   $php = find_php_cli();
   if (!$php) {
     return [1, 'PHP CLI introuvable. PHP_BINARY=' . PHP_BINARY];
   }
-  // cd d'abord dans le répertoire Drupal, puis appel PHP explicite
-  $full = 'cd ' . escapeshellarg($root)
-        . ' && ' . escapeshellarg($php) . ' ' . escapeshellarg($drush)
-        . ' ' . $cmd . ' 2>&1';
-  $output = [];
-  $code   = 0;
-  exec($full, $output, $code);
-  return [$code, implode("\n", $output)];
+
+  // Construire l'environnement minimal requis par Drush
+  $env = [
+    'HOME'             => '/tmp',
+    'PATH'             => dirname($php) . ':/usr/local/bin:/usr/bin:/bin',
+    'TERM'             => 'dumb',
+    'DRUSH_OPTIONS_YES'=> '1',
+  ];
+
+  $args = [$php, $drush, $cmd];
+  // Splitter $cmd en arguments séparés (ex. "config:import --yes")
+  $parts = array_map('trim', explode(' ', $cmd));
+  $argv  = array_merge([$php, $drush], $parts);
+
+  // Pipes : stdin fermé, stdout + stderr capturés
+  $descriptors = [
+    0 => ['pipe', 'r'],
+    1 => ['pipe', 'w'],
+    2 => ['pipe', 'w'],
+  ];
+
+  $proc = proc_open($argv, $descriptors, $pipes, $root, $env);
+  if (!is_resource($proc)) {
+    return [1, 'proc_open() a échoué.'];
+  }
+
+  fclose($pipes[0]);
+  $stdout = stream_get_contents($pipes[1]);
+  $stderr = stream_get_contents($pipes[2]);
+  fclose($pipes[1]);
+  fclose($pipes[2]);
+  $code = proc_close($proc);
+
+  $out = trim($stdout . ($stderr ? "\nSTDERR: " . $stderr : ''));
+  return [$code, $out ?: '(pas de sortie)'];
 }
 
 // Afficher les infos de debug
