@@ -256,3 +256,21 @@ jobs:
             **/*.example.*
             **/*.json
           dangerous-clean-slate: false
+
+      - name: Post-deploy — config:import + updatedb + cache:rebuild
+        timeout-minutes: 10
+        run: |
+          echo "⏳ Attente propagation FTP (15s)..."
+          sleep 15
+          echo "🔄 Lancement du post-déploiement Drupal..."
+          HTTP_CODE=$(curl -s -o /tmp/post_deploy_output.txt -w "%{http_code}" \
+            --max-time 300 \
+            "https://www.spherevoices.com/drush-post-deploy.php?token=spherevoices2026")
+          echo "--- Sortie ---"
+          cat /tmp/post_deploy_output.txt
+          echo "--- HTTP: $HTTP_CODE ---"
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "⚠️ Post-déploiement HTTP $HTTP_CODE — vérifiez manuellement."
+            exit 0
+          fi
+          echo "✅ Post-déploiement OK !"
