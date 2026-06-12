@@ -93,15 +93,18 @@ function find_php_cli(): string {
 }
 
 /**
- * Exécute une commande Drush avec le bon interpréteur PHP CLI.
+ * Exécute une commande Drush.
+ * Même approche que exec-drush.php : cd dans www puis php drush <cmd>.
+ * Drush détecte le root Drupal automatiquement via le répertoire courant.
  */
 function run_drush(string $drush, string $root, string $cmd): array {
   $php = find_php_cli();
   if (!$php) {
     return [1, 'PHP CLI introuvable. PHP_BINARY=' . PHP_BINARY];
   }
-  $full = escapeshellarg($php) . ' ' . escapeshellarg($drush)
-        . ' --root=' . escapeshellarg($root)
+  // cd d'abord dans le répertoire Drupal, puis appel PHP explicite
+  $full = 'cd ' . escapeshellarg($root)
+        . ' && ' . escapeshellarg($php) . ' ' . escapeshellarg($drush)
         . ' ' . $cmd . ' 2>&1';
   $output = [];
   $code   = 0;
