@@ -51,10 +51,15 @@ $results = [];
 $overall_success = true;
 
 /**
- * Exécute une commande Drush et retourne [exitCode, output].
+ * Exécute une commande Drush via l'interpréteur PHP courant.
+ * Contourne le problème OVH où 'php' n'est pas dans le PATH du serveur web.
  */
 function run_drush(string $drush, string $root, string $cmd): array {
-  $full = escapeshellarg($drush) . ' --root=' . escapeshellarg($root) . ' ' . $cmd . ' 2>&1';
+  // PHP_BINARY = chemin absolu de l'interpréteur qui exécute ce script
+  $php  = PHP_BINARY;
+  $full = escapeshellarg($php) . ' ' . escapeshellarg($drush)
+        . ' --root=' . escapeshellarg($root)
+        . ' ' . $cmd . ' 2>&1';
   $output = [];
   $code   = 0;
   exec($full, $output, $code);
