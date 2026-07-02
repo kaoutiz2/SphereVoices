@@ -372,7 +372,7 @@ body:has(#toolbar-administration) .header-main {
 }
 
 /* Sur mobile ET tablette, la navigation est cachée par défaut (burger menu) */
-@media (max-width: 1023px) {
+@media (max-width: 1199px) {
   .main-navigation {
     display: none !important;
   }
@@ -592,7 +592,7 @@ body:has(#toolbar-administration) .header-main {
 }
 
 /* Sur mobile ET tablette, la navigation est CACHÉE - masquage forcé */
-@media (max-width: 1023px) {
+@media (max-width: 1199px) {
   .site-header .header-main .header-left-section .main-navigation,
   .site-header .header-main .main-navigation,
   .site-header .main-navigation,

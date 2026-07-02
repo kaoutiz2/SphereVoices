@@ -38,7 +38,7 @@
   gap: 0.5rem;
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 1199px) {
   .homepage-photo-gallery__grid {
     grid-template-columns: repeat(min(var(--gallery-cols, 4), 3), 1fr);
   }

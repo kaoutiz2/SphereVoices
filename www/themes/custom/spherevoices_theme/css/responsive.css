@@ -5,14 +5,14 @@
  * Breakpoints :
  *   xs  : < 480 px   (petits téléphones)
  *   sm  : < 768 px   (mobile courant)
- *   md  : < 1024 px  (tablette + mobile) ← burger menu
- *   lg  : ≥ 1024 px  (desktop)
+ *   md  : < 1200 px  (tablette + mobile) ← burger menu
+ *   lg  : ≥ 1200 px  (desktop)
  */
 
 /* ================================================================== */
 /* 1. TOOLBAR DRUPAL — tablette + mobile                               */
 /* ================================================================== */
-@media (max-width: 1023px) {
+@media (max-width: 1199px) {
   #toolbar-administration,
   .toolbar-bar,
   .toolbar-tray {
@@ -41,7 +41,7 @@
 }
 
 /* ================================================================== */
-/* 2. HEADER — tablette + mobile (≤ 1023 px)                          */
+/* 2. HEADER — tablette + mobile (≤ 1199 px)                          */
 /* ================================================================== */
 
 /* Hamburger : caché sur desktop */
@@ -63,7 +63,7 @@
   height: 24px;
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 1199px) {
   /* Hauteur réduite */
   .header-main {
     height: auto !important;
@@ -150,7 +150,7 @@
 /* IMPORTANT : toutes les propriétés doivent avoir !important car le  */
 /* CSS de masquage dans style.css utilise aussi !important.            */
 /* ------------------------------------------------------------------ */
-@media (max-width: 1023px) {
+@media (max-width: 1199px) {
   /* Navigation : réapparaît en dessous du logo+hamburger */
   .site-header.menu-open .main-navigation,
   .site-header.menu-open .main-navigation.mobile-menu-hidden,
@@ -262,7 +262,7 @@
 /* ================================================================== */
 /* 3. CONTENU PRINCIPAL                                                */
 /* ================================================================== */
-@media (max-width: 1023px) {
+@media (max-width: 1199px) {
   .main-content {
     padding: 0.75rem var(--spacing-unit) 1.5rem !important;
   }
@@ -279,10 +279,10 @@
 /* ================================================================== */
 
 /*
- * Tablette (768–1023 px) : 1 colonne
+ * Tablette (768–1199 px) : 1 colonne
  * Breaking news + sidebar + articles empilés proprement
  */
-@media (min-width: 768px) and (max-width: 1023px) {
+@media (min-width: 768px) and (max-width: 1199px) {
   .homepage-gallery-layout {
     grid-template-columns: 1fr !important;
     gap: 1rem;
@@ -392,7 +392,7 @@
 }
 
 /* Container homepage */
-@media (max-width: 1023px) {
+@media (max-width: 1199px) {
   .homepage-container {
     padding: 0.5rem 0 1.5rem;
   }
@@ -401,7 +401,7 @@
 /* ================================================================== */
 /* 5. BREAKING NEWS                                                    */
 /* ================================================================== */
-@media (max-width: 1023px) {
+@media (max-width: 1199px) {
   .article-breaking-news-link {
     flex-direction: column;
   }
@@ -434,7 +434,7 @@
 /* ================================================================== */
 /* 6. PAGE ARTICLE (full)                                              */
 /* ================================================================== */
-@media (max-width: 1023px) {
+@media (max-width: 1199px) {
   .article-full {
     max-width: 100%;
     padding: 0;
@@ -482,7 +482,7 @@
   .article-related-title { font-size: 1.15rem; }
 }
 
-@media (min-width: 768px) and (max-width: 1023px) {
+@media (min-width: 768px) and (max-width: 1199px) {
   .article-related-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 1.25rem;
@@ -503,7 +503,7 @@
 /* ================================================================== */
 /* 8. SONDAGE                                                          */
 /* ================================================================== */
-@media (max-width: 1023px) {
+@media (max-width: 1199px) {
   .poll-block {
     min-height: auto;
     max-height: none;
@@ -517,7 +517,7 @@
 /* ================================================================== */
 /* 9. FOOTER                                                           */
 /* ================================================================== */
-@media (max-width: 1023px) {
+@media (max-width: 1199px) {
   .site-footer {
     padding: 1.75rem var(--spacing-unit) 1.25rem;
     margin-top: 2rem;
@@ -564,7 +564,7 @@
 /* ================================================================== */
 /* 11. TABLEAUX                                                        */
 /* ================================================================== */
-@media (max-width: 1023px) {
+@media (max-width: 1199px) {
   .article-body table,
   .main-content table {
     display: block;
@@ -577,7 +577,7 @@
 /* ================================================================== */
 /* 12. FORMULAIRES — usabilité touch                                   */
 /* ================================================================== */
-@media (max-width: 1023px) {
+@media (max-width: 1199px) {
   input[type="text"],
   input[type="email"],
   input[type="password"],
@@ -636,7 +636,7 @@
  * On sort de la grille partagée sur tablette/mobile et on passe en flexbox,
  * puis on réordonne avec `order` : breaking → articles → aside (tout en bas).
  *   • Mobile (< 768px)      : 1 carte par ligne, aside empilée en dernier.
- *   • Tablette (768–1023px) : 2 cartes par ligne, aside pleine largeur en bas.
+ *   • Tablette (768–1199px) : 2 cartes par ligne, aside pleine largeur en bas.
  *
  * POSE
  * ----
@@ -647,9 +647,9 @@
  */
 
 /* ====================================================================== */
-/* TABLETTE (768–1023px) : 2 colonnes d'articles, aside pleine largeur     */
+/* TABLETTE (768–1199px) : 2 colonnes d'articles, aside pleine largeur     */
 /* ====================================================================== */
-@media (min-width: 768px) and (max-width: 1023px) {
+@media (min-width: 768px) and (max-width: 1199px) {
   /* On remplace la grille 4 colonnes par un flux flex qui s'enroule. */
   .homepage-gallery-layout {
     display: flex !important;
@@ -763,7 +763,7 @@
 /* AGENDA (téléphone + tablette) : la date rouge devient un RECTANGLE       */
 /* pleine largeur (et non plus un petit carré).                            */
 /* ====================================================================== */
-@media (max-width: 1023px) {
+@media (max-width: 1199px) {
   .homepage-sidebar .event-teaser {
     flex-direction: column;
     align-items: stretch;     /* la date occupe toute la largeur du widget */
