@@ -25,4 +25,11 @@ class LegalController extends ControllerBase {
     ];
   }
 
+  public function quiSommesNous(): array {
+    return [
+      '#theme' => 'legal_qui_sommes_nous',
+      '#cache' => ['max-age' => 86400],
+    ];
+  }
+
 }

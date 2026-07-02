@@ -248,7 +248,7 @@
 /* Titres dans la galerie - Même taille pour tous */
 .article-gallery-item .article-featured-title,
 .article-gallery-item .article-teaser-title {
-  font-size: 1.15rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: var(--color-secondary);
   margin: 0 0 0.75rem 0;

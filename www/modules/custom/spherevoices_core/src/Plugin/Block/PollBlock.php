@@ -145,11 +145,14 @@ class PollBlock extends BlockBase implements ContainerFactoryPluginInterface {
       ];
     }
     
+    $poll_colors = ['#e63946', '#457b9d', '#2a9d8f', '#f4a261', '#7b2d8b', '#e9c46a'];
+
     // Construire les choix
       foreach ($choices as $index => $choice) {
         $votes = isset($choice['votes']) ? (int) $choice['votes'] : 0;
         $percentage = $total_votes > 0 ? round(($votes / $total_votes) * 100, 1) : 0;
-        
+        $bar_color = $poll_colors[$index % count($poll_colors)];
+
         $build['choices'][$index] = [
           '#type' => 'container',
           '#attributes' => [
@@ -181,7 +184,7 @@ class PollBlock extends BlockBase implements ContainerFactoryPluginInterface {
               '#tag' => 'div',
               '#attributes' => [
                 'class' => ['poll-bar'],
-                'style' => 'width: ' . $percentage . '%;',
+                'style' => 'width: ' . $percentage . '%; background-color: ' . $bar_color . ';',
               ],
             ],
           ],

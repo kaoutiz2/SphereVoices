@@ -748,7 +748,7 @@ function spherevoices_theme_preprocess_page(&$variables) {
         ->condition('type', 'breve')
         ->condition('status', 1)
         ->sort('created', 'DESC')
-        ->range(0, 2)
+        ->range(0, 5)
         ->accessCheck(TRUE);
       
       $breves_nids = $breves_query->execute();
@@ -926,6 +926,7 @@ function spherevoices_theme_preprocess_page(&$variables) {
     'spherevoices_core.category',
     'spherevoices_core.mentions_legales',
     'spherevoices_core.politique_cookies',
+    'spherevoices_core.qui_sommes_nous',
   ];
   if (in_array($route_name, $self_titled, TRUE)) {
     $variables['page_title'] = NULL;

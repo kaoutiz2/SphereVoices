@@ -1726,6 +1726,10 @@ function spherevoices_core_theme($existing, $type, $theme, $path) {
       'variables' => [],
       'template' => 'legal-politique-cookies',
     ],
+    'legal_qui_sommes_nous' => [
+      'variables' => [],
+      'template' => 'legal-qui-sommes-nous',
+    ],
   ];
 }
 

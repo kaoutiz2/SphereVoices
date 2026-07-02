@@ -125,6 +125,14 @@ spherevoices_core.politique_cookies:
   requirements:
     _permission: 'access content'
 
+spherevoices_core.qui_sommes_nous:
+  path: '/qui-sommes-nous'
+  defaults:
+    _controller: '\Drupal\spherevoices_core\Controller\LegalController::quiSommesNous'
+    _title: 'Qui sommes-nous ?'
+  requirements:
+    _permission: 'access content'
+
 spherevoices_core.trending_legacy:
   path: '/trending'
   defaults:
