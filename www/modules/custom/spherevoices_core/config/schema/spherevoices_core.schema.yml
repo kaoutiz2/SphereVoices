@@ -107,6 +107,9 @@ spherevoices_core.analytics:
     google_search_console:
       type: string
       label: 'Code de vérification Google Search Console'
+    gtm_container_id:
+      type: string
+      label: 'Google Tag Manager Container ID (GTM-XXXXXXX)'
 
 spherevoices_core.facebook_live:
   type: config_object

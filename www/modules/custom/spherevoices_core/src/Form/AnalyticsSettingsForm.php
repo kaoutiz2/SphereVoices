@@ -74,6 +74,24 @@ class AnalyticsSettingsForm extends ConfigFormBase {
       ],
     ];
 
+    $form['gtm'] = [
+      '#type'  => 'details',
+      '#title' => $this->t('Google Tag Manager'),
+      '#open'  => TRUE,
+    ];
+
+    $form['gtm']['gtm_container_id'] = [
+      '#type'          => 'textfield',
+      '#title'         => $this->t('Container ID'),
+      '#description'   => $this->t(
+        'Trouvez cet identifiant dans <strong>Google Tag Manager → votre conteneur</strong>. '
+        . 'Format : <code>GTM-XXXXXXX</code>.'
+      ),
+      '#default_value' => $config->get('gtm_container_id') ?: '',
+      '#placeholder'   => 'GTM-XXXXXXX',
+      '#maxlength'     => 30,
+    ];
+
     $form['seo'] = [
       '#type'  => 'details',
       '#title' => $this->t('Google Search Console'),
@@ -112,6 +130,14 @@ class AnalyticsSettingsForm extends ConfigFormBase {
         $this->t('Le Measurement ID doit être au format <code>G-XXXXXXXXXX</code>.')
       );
     }
+
+    $gtm_id = trim((string) $form_state->getValue('gtm_container_id'));
+    if ($gtm_id !== '' && !preg_match('/^GTM-[A-Z0-9]+$/i', $gtm_id)) {
+      $form_state->setErrorByName(
+        'gtm_container_id',
+        $this->t('Le Container ID doit être au format <code>GTM-XXXXXXX</code>.')
+      );
+    }
   }
 
   public function submitForm(array &$form, FormStateInterface $form_state): void {
@@ -123,6 +149,7 @@ class AnalyticsSettingsForm extends ConfigFormBase {
       ->set('anonymize_ip', (bool) $form_state->getValue('anonymize_ip'))
       ->set('track_logged_in', (bool) $form_state->getValue('track_logged_in'))
       ->set('google_search_console', trim((string) $form_state->getValue('google_search_console')))
+      ->set('gtm_container_id', strtoupper(trim((string) $form_state->getValue('gtm_container_id'))))
       ->save();
 
     \Drupal::service('cache.page')->invalidateAll();
