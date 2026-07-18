@@ -81,30 +81,4 @@ final class AdSenseHelper {
     return in_array($value, self::FORMATS, TRUE) ? $value : 'auto';
   }
 
-  /**
-   * Attaches the AdSense loader script once per page (html_head).
-   *
-   * @param array $element
-   *   Render array to attach to (#attached).
-   * @param string $client_id
-   *   Publisher ID (ca-pub-…).
-   */
-  public static function attachLoaderScript(array &$element, string $client_id): void {
-    if ($client_id === '') {
-      return;
-    }
-    $element['#attached']['html_head'][] = [
-      [
-        '#type' => 'html_tag',
-        '#tag' => 'script',
-        '#attributes' => [
-          'async' => 'async',
-          'src' => 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' . rawurlencode($client_id),
-          'crossorigin' => 'anonymous',
-        ],
-      ],
-      'spherevoices_adsense_loader',
-    ];
-  }
-
 }

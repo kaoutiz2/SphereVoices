@@ -176,7 +176,6 @@ class AdSlotManager {
         '#placeholder_message' => (string) t('Google AdSense — en attente de diffusion (compte ou slot à valider).'),
       ];
       $build['#attached']['library'][] = 'spherevoices_core/adsense';
-      AdSenseHelper::attachLoaderScript($build, $client);
       return $build;
     }
 
