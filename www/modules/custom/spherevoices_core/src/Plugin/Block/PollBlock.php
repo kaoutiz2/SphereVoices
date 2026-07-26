@@ -202,10 +202,18 @@ class PollBlock extends BlockBase implements ContainerFactoryPluginInterface {
       ];
     }
     
+    // Total des votants, affiché en petit en bas du bloc.
+    $build['total'] = [
+      '#type' => 'html_tag',
+      '#tag' => 'p',
+      '#value' => $total_votes . ' ' . ($total_votes > 1 ? 'votants' : 'votant'),
+      '#attributes' => ['class' => ['poll-total-votes']],
+    ];
+
     // Wrapper pour l'AJAX
     $build['#attributes']['id'] = 'poll-block-' . $node->id();
     $build['#attributes']['data-total-votes'] = $total_votes;
-    
+
     return $build;
   }
 

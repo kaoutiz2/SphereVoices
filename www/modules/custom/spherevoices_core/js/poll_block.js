@@ -71,6 +71,12 @@
     }, 0);
     $block.attr('data-total-votes', totalVotes);
     $block.attr('data-voted', 'true');
+
+    // Mettre à jour le total des votants affiché en bas du bloc
+    var $totalEl = $block.find('.poll-total-votes');
+    if ($totalEl.length) {
+      $totalEl.text(totalVotes + ' ' + (totalVotes > 1 ? 'votants' : 'votant'));
+    }
     
     // Stocker le vote dans localStorage
     var pollId = $block.attr('data-poll-id');

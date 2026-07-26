@@ -13,16 +13,14 @@
            data-ad-slot="{{ ad_slot }}"
            data-ad-format="{{ ad_format|default('auto') }}"
            data-full-width-responsive="true"></ins>
+    {% else %}
+      <div class="ad-slot__placeholder">
+        <span class="ad-slot__placeholder-label">{{ 'Publicité'|t }}</span>
+        {% if placeholder_message %}
+          <span class="ad-slot__placeholder-hint">{{ placeholder_message }}</span>
+        {% endif %}
+      </div>
     {% endif %}
-    <div class="ad-slot__placeholder">
-      <span class="ad-slot__placeholder-label">{{ 'Publicité'|t }}</span>
-      {% if placeholder_message %}
-        <span class="ad-slot__placeholder-hint">{{ placeholder_message }}</span>
-      {% endif %}
-      {% if ad_client %}
-        <span class="ad-slot__placeholder-meta">{{ ad_client }}{% if ad_slot %} · slot {{ ad_slot }}{% endif %}</span>
-      {% endif %}
-    </div>
   </div>
 {% elseif mode == 'placeholder' %}
   <div class="ad-slot__inner ad-slot__inner--{{ placement }} ad-slot__inner--placeholder{% if preview_only %} ad-slot__inner--preview{% endif %}">

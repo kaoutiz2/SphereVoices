@@ -52,20 +52,21 @@
 .poll-choices {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 0.6rem;
 }
 
+/* Chaque option est une pilule autonome : contour rond, remplissage
+   proportionnel au pourcentage en fond, bouton de vote invisible qui
+   recouvre toute la pilule pour la rendre cliquable partout. */
 .poll-choice {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
   position: relative;
-  padding: 0.55rem 0;
-}
-
-/* Séparateur très clair entre chaque option de vote */
-.poll-choice + .poll-choice {
-  border-top: 1px solid #ececec;
+  display: flex;
+  align-items: center;
+  min-height: 3.1rem;
+  border: 2px solid var(--color-secondary, #111);
+  border-radius: 999px;
+  background-color: #fff;
+  overflow: hidden;
 }
 
 .poll-choice-selected {
@@ -73,17 +74,27 @@
 }
 
 .poll-choice-text-wrapper {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  margin-bottom: 0.25rem;
+  /* Espace réservé à droite pour ne jamais chevaucher .poll-percentage */
+  padding: 0 3.75rem 0 1.1rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .poll-choice-text {
-  font-size: 0.85rem;
-  color: var(--color-text, #333);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text, #222);
   line-height: 1.35;
-  flex: 1;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.65);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .poll-choice-check-icon {
@@ -108,39 +119,29 @@
   display: flex;
 }
 
+/* Le bouton de vote recouvre toute la pilule (invisible) : c'est lui qui
+   rend l'option entièrement cliquable, sans afficher de bouton "Voter". */
 .poll-vote-button {
-  background-color: #b80000 !important;
-  color: #fff !important;
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent !important;
   border: none !important;
-  border-radius: 4px;
-  padding: 0.35rem 0.65rem;
-  font-size: 0.85rem;
-  font-weight: 600;
+  color: transparent;
+  font-size: 0;
+  line-height: 0;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.1s ease;
-  text-align: center;
-  width: auto;
-  min-width: 100px;
-  align-self: flex-start;
-  line-height: 15px;
-  display: inline-block;
-  appearance: button;
-  -webkit-appearance: button;
-  -moz-appearance: button;
-}
-
-.poll-vote-button:hover:not(:disabled) {
-  background-color: #8a0000;
-  transform: translateY(-1px);
-}
-
-.poll-vote-button:active:not(:disabled) {
-  transform: translateY(0);
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
 
 .poll-vote-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  cursor: default;
 }
 
 .poll-choice-button {
@@ -179,10 +180,6 @@
   cursor: not-allowed;
 }
 
-.poll-choice-selected {
-  position: relative;
-}
-
 .poll-choice-selected-button {
   background-color: #28a745 !important;
   border: 2px solid #1e7e34 !important;
@@ -194,60 +191,80 @@
   color: #fff !important;
 }
 
+/* Neutralise le style "sélectionné/hover" hérité ci-dessus : ici la
+   sélection se voit via le remplissage coloré (.poll-bar) et le
+   check-icon, jamais via le bouton (toujours invisible). Doit rester
+   après les règles ci-dessus pour gagner la cascade (même spécificité). */
+.poll-vote-button.poll-choice-selected-button,
+.poll-vote-button.poll-choice-selected-button:hover,
+.poll-vote-button:hover {
+  background: transparent !important;
+  border: none !important;
+  color: transparent !important;
+}
+
 .poll-block.poll-voting .poll-vote-button,
 .poll-block.poll-voting .poll-choice-button {
   opacity: 0.6;
   cursor: wait;
 }
 
+/* Le remplissage et le pourcentage sont superposés en fond de pilule,
+   derrière le texte du choix (.poll-choice-text-wrapper). */
 .poll-choice-results {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin-top: 0.25rem;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  margin: 0;
 }
 
 .poll-bar-container {
-  position: relative;
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: 8px;
-  background-color: #f0f0f0;
-  border-radius: 4px;
+  height: 100%;
+  background-color: transparent;
+  border-radius: inherit;
   overflow: hidden;
 }
 
 .poll-bar {
   height: 100%;
-  background-color: var(--color-primary, #0066cc);
-  transition: width 0.3s ease;
-  border-radius: 4px;
+  border-radius: inherit;
+  transition: width 0.4s ease;
 }
 
 .poll-choice-info {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
+  height: 100%;
+  padding: 0 1.1rem;
   font-size: 0.85rem;
   color: var(--color-text-light, #666);
 }
 
+/* Le décompte brut par option est masqué : seul le pourcentage reste
+   visible ici, le total des votants s'affiche en bas du bloc. */
 .poll-votes {
-  font-weight: 600;
-  color: #b80000;
-  text-align: left;
-  flex: 1;
-}
-
-.poll-votes-count {
-  font-weight: 700;
-  color: #b80000;
+  display: none;
 }
 
 .poll-percentage {
   font-weight: 700;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.65);
   color: #111;
   text-align: right;
   flex-shrink: 0;
+}
+
+/* Total des votants, en petit sous la liste des choix */
+.poll-total-votes {
+  margin: 0.65rem 0 0 0;
+  font-size: 0.75rem;
+  color: var(--color-text-light, #999);
 }
 
 /* Responsive */
