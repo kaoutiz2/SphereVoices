@@ -210,8 +210,9 @@
 }
 
 .article-breaking-news-title {
+  font-family: 'Roboto', sans-serif;
   font-size: 35pt;
-  font-weight: 700;
+  font-weight: 900;
   color: #333333;
   margin: 0 0 1rem 0;
   line-height: 1.25;
