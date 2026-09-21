@@ -56,3 +56,77 @@ form.node-article-form .layout-region--main,
   box-sizing: border-box;
   object-fit: contain;
 }
+
+/* ------------------------------------------------------------------ */
+/* Étiquettes existantes : liste de consultation (non sélectionnable)   */
+/* Couleurs semi-transparentes pour rester lisible en Claro comme en Gin. */
+/* ------------------------------------------------------------------ */
+.sv-existing-tags {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.sv-existing-tags__summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  font-weight: 600;
+  color: #0a58ca;
+  user-select: none;
+}
+
+.sv-existing-tags__count {
+  font-weight: 400;
+  opacity: 0.75;
+}
+
+.sv-existing-tags__panel {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(128, 128, 128, 0.35);
+  border-radius: 6px;
+  background: rgba(128, 128, 128, 0.07);
+}
+
+.sv-existing-tags__hint {
+  margin: 0 0 0.6rem;
+  font-size: 0.8125rem;
+  opacity: 0.75;
+}
+
+.sv-existing-tags__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  max-height: 11rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+/* Puces purement informatives : ni curseur main, ni sélection de texte. */
+.sv-existing-tags__chip {
+  margin: 0;
+  padding: 0.15rem 0.6rem;
+  border: 1px solid rgba(128, 128, 128, 0.4);
+  border-radius: 999px;
+  background: rgba(128, 128, 128, 0.14);
+  line-height: 1.4;
+  cursor: default;
+  user-select: none;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+/* Surbrillance pendant la saisie : correspondances mises en avant. */
+.sv-existing-tags--filtering .sv-existing-tags__chip {
+  opacity: 0.35;
+}
+
+.sv-existing-tags--filtering .sv-existing-tags__chip.is-match {
+  opacity: 1;
+  font-weight: 600;
+  border-color: #0a58ca;
+  background: rgba(10, 88, 202, 0.16);
+}

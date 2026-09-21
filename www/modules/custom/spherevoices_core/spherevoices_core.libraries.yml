@@ -97,3 +97,8 @@ admin_node_form:
   css:
     theme:
       css/admin_node_form.css: {}
+  js:
+    js/admin_tags_existing.js: {}
+  dependencies:
+    - core/drupal
+    - core/once

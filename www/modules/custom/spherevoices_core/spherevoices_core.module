@@ -88,7 +88,8 @@ function spherevoices_core_theme_registry_alter(&$theme_registry): void {
  */
 function spherevoices_core_page_attachments(array &$attachments): void {
   $route = \Drupal::routeMatch()->getRouteName();
-  if ($route === 'entity.node.edit_form' || $route === 'entity.node.add_form') {
+  // « node.add » est la vraie route de création (/node/add/{node_type}).
+  if (in_array($route, ['entity.node.edit_form', 'node.add', 'entity.node.add_form'], TRUE)) {
     $attachments['#attached']['library'][] = 'spherevoices_core/admin_node_form';
     return;
   }
@@ -1839,6 +1840,58 @@ function spherevoices_core_form_node_form_alter(&$form, FormStateInterface $form
       }
     }
   }
+
+  // Article : liste consultable (non sélectionnable) des étiquettes existantes,
+  // pour éviter de créer un doublon en saisissant une étiquette à la volée.
+  if ($node->bundle() === 'article' && isset($form['field_tags']) && ($form['field_tags']['#access'] ?? TRUE)) {
+    $tag_names = _spherevoices_core_existing_tag_names();
+    if ($tag_names) {
+      $form['field_tags']['existing_tags'] = [
+        '#type' => 'inline_template',
+        '#template' => '<details class="sv-existing-tags" data-sv-existing-tags>'
+          . '<summary class="sv-existing-tags__summary">'
+          . '{{ "Étiquettes existantes"|t }} <span class="sv-existing-tags__count">({{ count }})</span>'
+          . '</summary>'
+          . '<div class="sv-existing-tags__panel">'
+          . '<p class="sv-existing-tags__hint">{{ "Pour consultation uniquement : vérifiez que l’étiquette n’existe pas déjà avant d’en créer une nouvelle."|t }}</p>'
+          . '<ul class="sv-existing-tags__list">'
+          . '{% for name in names %}<li class="sv-existing-tags__chip">{{ name }}</li>{% endfor %}'
+          . '</ul>'
+          . '</div>'
+          . '</details>',
+        '#context' => [
+          'names' => $tag_names,
+          'count' => count($tag_names),
+        ],
+        '#weight' => 50,
+        '#cache' => ['tags' => ['taxonomy_term_list:tags']],
+      ];
+    }
+  }
+}
+
+/**
+ * Returns the names of all existing "tags" (Étiquettes) terms, sorted A→Z.
+ *
+ * @return string[]
+ *   Term names.
+ */
+function _spherevoices_core_existing_tag_names(): array {
+  $names = [];
+  $tree = \Drupal::entityTypeManager()
+    ->getStorage('taxonomy_term')
+    ->loadTree('tags', 0, NULL, FALSE);
+  foreach ($tree as $term) {
+    $names[] = (string) $term->name;
+  }
+  // Tri insensible à la casse et aux accents (« Économie » avec les « E »),
+  // sans dépendre de l'extension intl.
+  $transliteration = \Drupal::transliteration();
+  usort($names, static fn (string $a, string $b): int => strcasecmp(
+    $transliteration->transliterate($a, 'fr'),
+    $transliteration->transliterate($b, 'fr')
+  ));
+  return $names;
 }
 
 /**
