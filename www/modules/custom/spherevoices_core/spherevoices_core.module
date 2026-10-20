@@ -23,6 +23,7 @@ use Drupal\media\MediaInterface;
 use Drupal\media\Plugin\Filter\MediaEmbed;
 use Drupal\node\NodeInterface;
 use Drupal\spherevoices_core\Render\ArticleBodyPostRender;
+use Drupal\spherevoices_core\Render\SocialEmbedConverter;
 use Drupal\spherevoices_core\Service\AdSenseHelper;
 use Drupal\spherevoices_core\Service\AdSlotManager;
 
@@ -88,6 +89,15 @@ function spherevoices_core_theme_registry_alter(&$theme_registry): void {
  */
 function spherevoices_core_page_attachments(array &$attachments): void {
   $route = \Drupal::routeMatch()->getRouteName();
+
+  // Embeds sociaux du corps d'article : page publique et aperçu (thème public ou admin).
+  if ($route === 'entity.node.canonical' || $route === 'entity.node.preview') {
+    $page_node = \Drupal::routeMatch()->getParameter($route === 'entity.node.preview' ? 'node_preview' : 'node');
+    if ($page_node instanceof NodeInterface && $page_node->bundle() === 'article') {
+      $attachments['#attached']['library'][] = 'spherevoices_core/social_embeds';
+    }
+  }
+
   // « node.add » est la vraie route de création (/node/add/{node_type}).
   if (in_array($route, ['entity.node.edit_form', 'node.add', 'entity.node.add_form'], TRUE)) {
     $attachments['#attached']['library'][] = 'spherevoices_core/admin_node_form';
@@ -652,9 +662,28 @@ function spherevoices_core_apply_article_body_display(array &$variables): void {
 function spherevoices_core_preprocess_node(&$variables): void {
   spherevoices_core_apply_article_body_display($variables);
   _spherevoices_core_preprocess_node_article_cover($variables);
+  _spherevoices_core_preprocess_node_article_summary($variables);
   _spherevoices_core_preprocess_node_breaking_title_color($variables);
   _spherevoices_core_preprocess_node_trending_standard_teaser($variables);
   _spherevoices_core_preprocess_node_related_articles($variables);
+}
+
+/**
+ * Résumé saisi en back-office (champ « Résumé » du corps) pour les cartes d'article.
+ *
+ * Les templates teaser / featured / breaking news affichent `article_summary`.
+ * Texte brut : les cartes sont entièrement enveloppées dans un lien, on évite
+ * donc tout HTML (liens imbriqués) dans le résumé.
+ */
+function _spherevoices_core_preprocess_node_article_summary(array &$variables): void {
+  $node = $variables['node'] ?? NULL;
+  if (!$node instanceof NodeInterface || $node->bundle() !== 'article' || !$node->hasField('body')) {
+    return;
+  }
+  $node = \Drupal::service('entity.repository')->getTranslationFromContext($node);
+  $summary = (string) ($node->get('body')->summary ?? '');
+  $summary = html_entity_decode(strip_tags($summary), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+  $variables['article_summary'] = trim((string) preg_replace('/\s+/u', ' ', $summary));
 }
 
 /**
@@ -1422,18 +1451,86 @@ function _spherevoices_core_drupal_media_attributes_to_twig_segment(string $attr
     return ['kind' => 'html', 'html' => $missing_html];
   }
 
+  // Largeur choisie dans l'éditeur (poignées de redimensionnement, module
+  // ckeditor_media_resize) : data-media-width="358px" ou "50%".
+  $width = _spherevoices_core_parse_media_width($attrs);
+  if ($width !== NULL && $width['unit'] === 'px' && $view_mode === 'default' && $media->bundle() === 'image') {
+    // Style d'image adapté à la largeur (évite de charger 1090 px pour 200 px).
+    $view_mode = _spherevoices_core_media_view_mode_for_width($width['value']) ?: $view_mode;
+  }
+
   $html = _spherevoices_core_media_embed_markup($media, $view_mode);
   if ($html === '') {
     return ['kind' => 'html', 'html' => $missing_html];
   }
 
-  // Envelopper dans <figure> si alignement ou légende demandés.
-  $html = _spherevoices_core_wrap_media_html_with_figure($html, $align, $caption);
+  // Envelopper dans <figure> si alignement, légende ou largeur demandés.
+  $html = _spherevoices_core_wrap_media_html_with_figure($html, $align, $caption, $width !== NULL ? $width['value'] . $width['unit'] : '');
 
   return [
     'kind' => 'html',
     'html' => Markup::create($html),
   ];
+}
+
+/**
+ * Largeur validée depuis l'attribut data-media-width d'une balise drupal-media.
+ *
+ * @return array{value: int, unit: string}|null
+ *   « px » (20 à 2400) ou « % » (5 à 100) ; NULL si absente ou invalide.
+ */
+function _spherevoices_core_parse_media_width(string $attrs): ?array {
+  if (!preg_match('/\bdata-media-width\s*=\s*(["\'])\s*(\d{1,4})(?:\.\d+)?\s*(px|%)\s*\1/i', $attrs, $m)) {
+    return NULL;
+  }
+  $value = (int) $m[2];
+  $unit = strtolower($m[3]);
+  if ($unit === '%') {
+    $value = max(5, min(100, $value));
+  }
+  else {
+    $value = max(20, min(2400, $value));
+  }
+  return ['value' => $value, 'unit' => $unit];
+}
+
+/**
+ * Mode d'affichage (style d'image) le plus léger couvrant une largeur en pixels.
+ *
+ * Reprend la logique du filtre du module ckeditor_media_resize : premier style
+ * cke_media_resize_* dont la largeur est >= à celle demandée.
+ *
+ * @return string
+ *   Identifiant du mode d'affichage, ou '' (module absent / image plus large
+ *   que tous les styles : on garde le mode par défaut).
+ */
+function _spherevoices_core_media_view_mode_for_width(int $width): string {
+  static $map = NULL;
+  if ($map === NULL) {
+    $map = [];
+    $styles = \Drupal::entityTypeManager()->getStorage('image_style')->loadMultiple([
+      'cke_media_resize_small',
+      'cke_media_resize_medium',
+      'cke_media_resize_large',
+      'cke_media_resize_xl',
+    ]);
+    foreach ($styles as $id => $style) {
+      foreach ($style->getEffects() as $effect) {
+        $effect_width = (int) ($effect->getConfiguration()['data']['width'] ?? 0);
+        if ($effect_width > 0) {
+          $map[$id] = $effect_width;
+          break;
+        }
+      }
+    }
+    asort($map);
+  }
+  foreach ($map as $id => $style_width) {
+    if ($style_width >= $width) {
+      return $id;
+    }
+  }
+  return '';
 }
 
 /**
@@ -1443,16 +1540,22 @@ function _spherevoices_core_drupal_media_attributes_to_twig_segment(string $attr
  * @param string $html     HTML rendu du média.
  * @param string $align    'left' | 'right' | 'center' | '' (vide = pas de figure).
  * @param string $caption  Texte de la légende (déjà filtré XSS).
+ * @param string $width    Largeur validée (« 358px » ou « 50% »), vide = non redimensionné.
  */
-function _spherevoices_core_wrap_media_html_with_figure(string $html, string $align, string $caption): string {
-  if ($align === '' && $caption === '') {
+function _spherevoices_core_wrap_media_html_with_figure(string $html, string $align, string $caption, string $width = ''): string {
+  if ($align === '' && $caption === '' && $width === '') {
     return $html;
   }
   $classes = 'drupal-media';
   if ($align !== '') {
     $classes .= ' align-' . $align;
   }
-  $out = '<figure class="' . $classes . '">' . $html;
+  $style = '';
+  if ($width !== '') {
+    $classes .= ' media-embed-resized';
+    $style = ' style="width:' . $width . ';"';
+  }
+  $out = '<figure class="' . $classes . '"' . $style . '>' . $html;
   if ($caption !== '') {
     $out .= '<figcaption>' . $caption . '</figcaption>';
   }
@@ -1540,6 +1643,9 @@ function _spherevoices_core_media_embed_missing_markup(): string {
 
 /**
  * Replaces empty .media-video-embed wrappers (incl. &nbsp;, br, unicode spaces).
+ *
+ * Étape finale commune du HTML du corps d'article : convertit aussi les liens
+ * de posts sociaux isolés en embeds (voir SocialEmbedConverter).
  */
 function _spherevoices_core_cleanup_empty_media_video_embeds(string $html): string {
   $missing = _spherevoices_core_media_embed_missing_markup();
@@ -1589,7 +1695,9 @@ function _spherevoices_core_cleanup_empty_media_video_embeds(string $html): stri
     $prev = $out;
     $out = preg_replace('/<div\b[^>]*media-video-embed[^>]*>\s*<\/div>/iu', $missing, $out) ?? $out;
   }
-  return $out;
+  // Tous les chemins de rendu du corps passent par ici : liens de posts sociaux
+  // (X, Facebook, Instagram, TikTok) seuls sur leur ligne -> embeds.
+  return SocialEmbedConverter::convert($out);
 }
 
 /**
@@ -1841,6 +1949,11 @@ function spherevoices_core_form_node_form_alter(&$form, FormStateInterface $form
     }
   }
 
+  // Article : aide à la saisie des posts sociaux dans le corps.
+  if ($node->bundle() === 'article' && isset($form['body']['widget'][0])) {
+    $form['body']['widget'][0]['#description'] = t('Pour intégrer un post X, Facebook, Instagram ou TikTok : collez son lien seul sur une ligne, sans autre texte. Il s’affichera en post intégré sur l’article (visible via « Aperçu »).');
+  }
+
   // Article : liste consultable (non sélectionnable) des étiquettes existantes,
   // pour éviter de créer un doublon en saisissant une étiquette à la volée.
   if ($node->bundle() === 'article' && isset($form['field_tags']) && ($form['field_tags']['#access'] ?? TRUE)) {
@@ -1868,6 +1981,41 @@ function spherevoices_core_form_node_form_alter(&$form, FormStateInterface $form
       ];
     }
   }
+}
+
+/**
+ * Implements hook_media_presave().
+ *
+ * Tweet : X ne fournit ni titre ni vignette à Drupal, le média s'appellerait donc
+ * « media:tweet:{uuid} » dans le formulaire d'article. On le nomme d'après l'URL.
+ */
+function spherevoices_core_media_presave(MediaInterface $media): void {
+  $name = _spherevoices_core_tweet_media_name($media);
+  if ($name !== NULL) {
+    $media->setName($name);
+  }
+}
+
+/**
+ * Nom lisible d'un média Tweet (« Tweet @compte — identifiant »), NULL si inutile.
+ *
+ * Ne remplace jamais un nom saisi à la main : seul le nom par défaut généré par
+ * Drupal (« media:tweet:… ») ou un nom vide est remplacé.
+ */
+function _spherevoices_core_tweet_media_name(MediaInterface $media): ?string {
+  if ($media->bundle() !== 'tweet' || !$media->hasField('field_media_oembed_tweet')) {
+    return NULL;
+  }
+  $current = (string) $media->label();
+  if ($current !== '' && !str_starts_with($current, 'media:tweet:')) {
+    return NULL;
+  }
+  $url = (string) $media->get('field_media_oembed_tweet')->value;
+  if (!preg_match('~(?:twitter|x)\.com/(?:(?<user>[A-Za-z0-9_]{1,15})|i(?:/web)?)/status(?:es)?/(?<id>\d+)~i', $url, $m)) {
+    return NULL;
+  }
+  $account = ($m['user'] ?? '') !== '' ? '@' . $m['user'] : 'X';
+  return 'Tweet ' . $account . ' — ' . $m['id'];
 }
 
 /**

@@ -1,0 +1,76 @@
+/**
+ * @file
+ * Embeds de posts sociaux (X, Instagram, TikTok, Facebook) dans le corps d'article.
+ *
+ * Volontairement indépendant du thème : l'aperçu d'un article peut s'afficher
+ * dans le thème d'administration.
+ */
+
+.sv-social-embed {
+  display: flex;
+  justify-content: center;
+  clear: both;
+  max-width: 100%;
+  margin: 1.5rem auto;
+}
+
+.sv-social-embed > * {
+  max-width: 100%;
+}
+
+.sv-social-embed iframe {
+  max-width: 100%;
+}
+
+/* Lien de repli (script pas encore chargé, bloqué ou consentement non donné). */
+.sv-social-embed blockquote {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 540px;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(128, 128, 128, 0.35);
+  border-left: 4px solid #b80000;
+  border-radius: 4px;
+  background: rgba(128, 128, 128, 0.07);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.sv-social-embed blockquote a {
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.sv-social-embed blockquote section {
+  margin: 0;
+  padding: 0;
+}
+
+/* Une fois le script du réseau passé, l'embed porte déjà son propre cadre :
+   on retire le style de repli. (TikTok garde son blockquote autour de l'iframe.) */
+.sv-social-embed .twitter-tweet-rendered,
+.sv-social-embed .instagram-media-rendered,
+.sv-social-embed .tiktok-embed {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.sv-social-embed .instagram-media {
+  min-width: 0 !important;
+  max-width: 540px !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+}
+
+.sv-social-embed .tiktok-embed {
+  min-width: 0 !important;
+  margin: 0 auto;
+}
+
+.sv-social-embed .fb-post,
+.sv-social-embed .fb-video {
+  max-width: 100%;
+  overflow: hidden;
+}

@@ -3,7 +3,9 @@ langcode: fr
 status: true
 dependencies:
   module:
+    - ckeditor_media_resize
     - editor
+    - media
 _core:
   default_config_hash: vpZysv3RHJjhYzq7O_q5q8mVlHdrSzKELmXyiX6RtV0
 name: 'HTML complet'
@@ -40,3 +42,18 @@ filters:
     status: true
     weight: 15
     settings: {  }
+  filter_resize_media:
+    id: filter_resize_media
+    provider: ckeditor_media_resize
+    status: true
+    weight: 90
+    settings: {  }
+  media_embed:
+    id: media_embed
+    provider: media
+    status: true
+    weight: 100
+    settings:
+      default_view_mode: default
+      allowed_view_modes: {  }
+      allowed_media_types: {  }

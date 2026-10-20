@@ -37,9 +37,9 @@
     </div>
     <div class="article-featured-content">
       <h2 class="article-featured-title">{% include '@spherevoices_theme/includes/node-title-truncated.html.twig' with { title_render: label } only %}</h2>
-      {% if content.field_summary|render %}
+      {% if article_summary %}
         <div class="article-featured-summary">
-          {{ content.field_summary }}
+          {{ article_summary }}
         </div>
       {% endif %}
       <div class="article-featured-meta">

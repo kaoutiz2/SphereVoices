@@ -601,5 +601,18 @@ function spherevoices_core_update_8021() {
   return t('Ads configuration installed with all placements enabled.');
 }
 
-
-
+/**
+ * Renomme les médias Tweet existants (« media:tweet:{uuid} » -> « Tweet @compte — id »).
+ */
+function spherevoices_core_update_8022() {
+  $storage = \Drupal::entityTypeManager()->getStorage('media');
+  $count = 0;
+  foreach ($storage->loadByProperties(['bundle' => 'tweet']) as $media) {
+    if (str_starts_with((string) $media->label(), 'media:tweet:')) {
+      // hook_media_presave() applique le nouveau nom à l'enregistrement.
+      $media->save();
+      $count++;
+    }
+  }
+  return t('@count média(s) Tweet renommé(s).', ['@count' => $count]);
+}

@@ -72,6 +72,18 @@ twitter_embed:
         async: true
         charset: utf-8
 
+# Embeds de posts sociaux (X, Instagram, TikTok, Facebook) dans le corps d'article.
+social_embeds:
+  css:
+    theme:
+      css/social_embeds.css: {}
+  js:
+    js/social_embeds.js: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+    - core/once
+
 trending_page:
   css:
     theme:

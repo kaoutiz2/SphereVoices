@@ -21,14 +21,23 @@ settings:
       - bulletedList
       - numberedList
       - '|'
+      - alignment
+      - '|'
       - blockQuote
       - drupalInsertImage
+      - drupalMedia
       - '|'
       - heading
       - code
       - '|'
       - sourceEditing
   plugins:
+    ckeditor5_alignment:
+      enabled_alignments:
+        - center
+        - justify
+        - left
+        - right
     ckeditor5_heading:
       enabled_headings:
         - heading2
@@ -58,6 +67,15 @@ settings:
         - '<h4 id>'
         - '<h5 id>'
         - '<h6 id>'
+    ckeditor_media_resize_mediaResize:
+      apply_image_styles: true
+      image_styles:
+        - cke_media_resize_large
+        - cke_media_resize_medium
+        - cke_media_resize_small
+        - cke_media_resize_xl
+    media_media:
+      allow_view_mode_override: false
 image_upload:
   status: true
   scheme: public

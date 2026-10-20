@@ -1076,6 +1076,26 @@ body:has(#toolbar-administration) .header-main {
   margin-bottom: 1.5rem;
 }
 
+/* Alignement du texte (boutons d'alignement de l'éditeur : classes CKEditor 5). */
+.article-body .text-align-left {
+  text-align: left;
+}
+
+.article-body .text-align-center {
+  text-align: center;
+}
+
+.article-body .text-align-right {
+  text-align: right;
+}
+
+.article-body .text-align-justify {
+  text-align: justify;
+  text-justify: inter-word;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+}
+
 .article-body h2 {
   margin-top: 2rem;
   margin-bottom: 1rem;
@@ -1191,9 +1211,16 @@ body:has(#toolbar-administration) .header-main {
 .article-body figure.image-style-align-left img,
 .article-body figure.image-style-align-right img {
   display: block;
-  width: 100%;
   height: auto;
   border-radius: 4px;
+}
+
+/* Sans taille choisie dans l'éditeur : l'image remplit la figure flottante. */
+.article-body figure.align-left img:not([width]),
+.article-body figure.align-right img:not([width]),
+.article-body figure.image-style-align-left img:not([width]),
+.article-body figure.image-style-align-right img:not([width]) {
+  width: 100%;
 }
 
 /* Clearfix : évite que le texte se chevauche avec les images flottantes */
@@ -1230,13 +1257,31 @@ body:has(#toolbar-administration) .header-main {
   border-radius: 4px;
 }
 
-/* --- Taille définie par l'éditeur (attribut width/height inline ou data-width) --- */
-.article-body figure[style] img,
-.article-body figure img[width],
-.article-body figure img[style*="width"] {
+/* --- Taille définie par l'éditeur ---
+   Figure dimensionnée en style inline (ex. width:50 %) : l'image la remplit. */
+.article-body figure[style] img {
   width: 100%;
   max-width: 100%;
   height: auto;
+}
+
+/* Image redimensionnée dans l'éditeur (attribut width/height ou style inline) :
+   on respecte sa taille, sans jamais l'agrandir à 100 %. max-width + height:auto
+   évitent le débordement et la déformation sur petit écran. */
+.article-body img[width],
+.article-body img[style*="width"] {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Figure (légende) non flottante autour d'une image redimensionnée : elle épouse
+   la taille de l'image, centrée, au lieu de s'étirer sur toute la colonne.
+   Les figures flottantes (align-left/right) gardent leur plafond de 45 %. */
+.article-body figure:not(.drupal-media):not(.align-left):not(.align-right):not(.image-style-align-left):not(.image-style-align-right):has(> img[width]) {
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Footer */
